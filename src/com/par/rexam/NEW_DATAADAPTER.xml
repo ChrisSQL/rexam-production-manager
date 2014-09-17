@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<jdbcDataAdapter class="net.sf.jasperreports.data.jdbc.JdbcDataAdapterImpl"><name>SQLite</name><driver>org.sqlite.JDBC</driver><username></username><password>8b177b9f-9bd0-4a50-acf4-19dd18025aa7</password><savePassword>true</savePassword><url>jdbc:sqlite:C:\Users\Chris\Documents\SPRING\Rexam4\test.db</url><database></database><serverAddress></serverAddress></jdbcDataAdapter>

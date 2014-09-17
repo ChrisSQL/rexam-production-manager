@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version 5.6.1.final using JasperReports Library version 5.6.1  -->
+<!-- 2014-09-13T00:36:34 -->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="Optime" pageWidth="842" pageHeight="595" orientation="Landscape" columnWidth="802" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="a76acc9e-df22-47d2-a87d-feb46d9b1b34">
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="New Data Adapter (2)"/>
+	<style name="Title" fontName="Times New Roman" fontSize="50" isBold="true" pdfFontName="Times-Bold"/>
+	<style name="SubTitle" forecolor="#736343" fontName="Arial" fontSize="18"/>
+	<style name="Column header" forecolor="#666666" fontName="Arial" fontSize="12" isBold="true"/>
+	<style name="Detail" fontName="Arial" fontSize="12"/>
+	<style name="Row" mode="Transparent">
+		<conditionalStyle>
+			<conditionExpression><![CDATA[$V{REPORT_COUNT}%2 == 0]]></conditionExpression>
+			<style backcolor="#F0F0F0"/>
+		</conditionalStyle>
+	</style>
+	<parameter name="Date1" class="java.lang.String"/>
+	<parameter name="Shift" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[SELECT Date, Press, Shift, Comment from Stolle where Date LIKE '%$P!{Date1}%']]>
+	</queryString>
+	<field name="Shift" class="java.lang.Object"/>
+	<field name="Comment" class="java.lang.Object"/>
+	<field name="Date" class="java.lang.Object"/>
+	<field name="Press" class="java.lang.Object"/>
+	<sortField name="Press" order="Descending"/>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="136" splitType="Stretch">
+			<staticText>
+				<reportElement x="400" y="0" width="401" height="121" uuid="0f52d155-3463-44f2-b543-c15628b5d794"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="26"/>
+				</textElement>
+				<text><![CDATA[Stolle Comments Report]]></text>
+			</staticText>
+			<image>
+				<reportElement x="32" y="20" width="348" height="101" uuid="95233daf-9b16-43a7-a0d8-e33f40e2c5ac"/>
+				<imageExpression><![CDATA["C:/Users/Chris/Documents/SPRING/Rexam4/rexam.jpg"]]></imageExpression>
+			</image>
+			<textField>
+				<reportElement x="459" y="79" width="291" height="36" forecolor="#0A558F" uuid="4241082e-f3eb-47c2-989c-c57f8a6b65e5"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="16" isBold="true" isUnderline="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$P{Date1}]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+	<pageHeader>
+		<band splitType="Stretch"/>
+	</pageHeader>
+	<columnHeader>
+		<band height="16" splitType="Stretch">
+			<line>
+				<reportElement positionType="FixRelativeToBottom" x="0" y="15" width="802" height="1" uuid="5e66e7eb-9164-46d5-9eef-091b8f93eb3b"/>
+				<graphicElement>
+					<pen lineWidth="0.5" lineColor="#999999"/>
+				</graphicElement>
+			</line>
+			<staticText>
+				<reportElement style="Column header" x="0" y="0" width="51" height="15" forecolor="#736343" uuid="c6dd2c00-468f-4405-b611-e54a356b846d"/>
+				<textElement textAlignment="Center"/>
+				<text><![CDATA[Press]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Column header" x="51" y="0" width="51" height="15" forecolor="#736343" uuid="c6dd2c00-468f-4405-b611-e54a356b846d"/>
+				<textElement textAlignment="Center"/>
+				<text><![CDATA[Shift]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Column header" x="100" y="0" width="700" height="15" forecolor="#736343" uuid="7294e869-8c98-4b56-96af-038bf7307106"/>
+				<textElement textAlignment="Center"/>
+				<text><![CDATA[Comment]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="15" splitType="Stretch">
+			<frame>
+				<reportElement style="Row" mode="Opaque" x="0" y="0" width="802" height="15" uuid="aa78590d-d5e1-4b2c-a0a3-4b8a338adc84"/>
+				<textField isStretchWithOverflow="true">
+					<reportElement style="Detail" x="0" y="0" width="51" height="15" uuid="92fed0c1-8c10-4f0c-afd0-124508a1538e"/>
+					<textElement textAlignment="Center"/>
+					<textFieldExpression><![CDATA[$F{Press}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true">
+					<reportElement style="Detail" x="51" y="0" width="51" height="15" uuid="92fed0c1-8c10-4f0c-afd0-124508a1538e"/>
+					<textElement textAlignment="Center"/>
+					<textFieldExpression><![CDATA[$F{Shift}]]></textFieldExpression>
+				</textField>
+				<textField isStretchWithOverflow="true">
+					<reportElement style="Detail" x="100" y="0" width="700" height="15" uuid="f0328fc6-8c9e-4f6d-8743-46c6476e8484"/>
+					<textElement textAlignment="Center"/>
+					<textFieldExpression><![CDATA[$F{Comment}]]></textFieldExpression>
+				</textField>
+			</frame>
+		</band>
+	</detail>
+	<columnFooter>
+		<band height="6" splitType="Stretch">
+			<line>
+				<reportElement positionType="FixRelativeToBottom" x="0" y="3" width="802" height="1" uuid="83e8502e-7dcc-4fef-8266-606627f531b6"/>
+				<graphicElement>
+					<pen lineWidth="0.5" lineColor="#999999"/>
+				</graphicElement>
+			</line>
+		</band>
+	</columnFooter>
+	<pageFooter>
+		<band height="25" splitType="Stretch">
+			<frame>
+				<reportElement mode="Opaque" x="-21" y="1" width="843" height="24" forecolor="#000000" backcolor="#F0F0F0" uuid="880e7d47-5344-4723-b326-2b1c07dfe5c7"/>
+				<textField evaluationTime="Report">
+					<reportElement style="Column header" x="783" y="1" width="40" height="20" forecolor="#736343" uuid="1cdc215e-773d-4668-a8fa-8807d01bfa46"/>
+					<textElement verticalAlignment="Middle">
+						<font size="10" isBold="false"/>
+					</textElement>
+					<textFieldExpression><![CDATA[" " + $V{PAGE_NUMBER}]]></textFieldExpression>
+				</textField>
+				<textField>
+					<reportElement style="Column header" x="703" y="1" width="80" height="20" forecolor="#736343" uuid="e818a551-4e03-48d1-9fa0-40d327fd3b25"/>
+					<textElement textAlignment="Right" verticalAlignment="Middle">
+						<font size="10" isBold="false"/>
+					</textElement>
+					<textFieldExpression><![CDATA["Page "+$V{PAGE_NUMBER}+" of"]]></textFieldExpression>
+				</textField>
+				<textField pattern="EEEEE dd MMMMM yyyy">
+					<reportElement style="Column header" x="22" y="1" width="197" height="20" forecolor="#736343" uuid="809c49bb-89da-4fe8-be00-f70ed2c301f8"/>
+					<textElement verticalAlignment="Middle">
+						<font size="10" isBold="false"/>
+					</textElement>
+					<textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+				</textField>
+			</frame>
+		</band>
+	</pageFooter>
+	<summary>
+		<band splitType="Stretch"/>
+	</summary>
+</jasperReport>
