@@ -656,7 +656,7 @@ public class LinerDataEntryScreen {
         // if (view == 2) {
         optionsPanel2.add(newEntry);
         optionsPanel2.add(refresh);
-        optionsPanel2.add(print);
+        //optionsPanel2.add(print);
         optionsPanel2.add(ExportToExcel);
         // }
 

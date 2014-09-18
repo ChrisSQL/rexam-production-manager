@@ -619,7 +619,7 @@ public class MeetingQualityIssues {
 
         optionsPanel2.add(addNew);
         optionsPanel2.add(refresh);
-        optionsPanel2.add(print);
+    //   optionsPanel2.add(print);
         optionsPanel2.add(ExportToExcel);
 
         JPanel summaryPanel = SQLiteConnection.MeetingQualityIssuesSummaryTable(1);

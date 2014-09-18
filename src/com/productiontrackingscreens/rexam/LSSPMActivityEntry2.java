@@ -496,7 +496,7 @@ public class LSSPMActivityEntry2 extends JFrame {
         // if (view == 2) {
         optionsPanel2.add(addNew);
         optionsPanel2.add(refresh);
-        optionsPanel2.add(print);
+       // optionsPanel2.add(print);
         optionsPanel2.add(ExportToExcel);
         // }
 

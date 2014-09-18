@@ -1,5 +1,6 @@
 package com.database.rexam;
 
+import com.binentryscreens.rexam.LinerAndShellsEntry;
 import java.awt.BorderLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -424,11 +425,11 @@ public class SQLiteConnection {
         ResultSet rs = null;
 
         if (reportType == 1) {
-            psmt = conn .prepareStatement("SELECT ID, Date, Comment FROM LSSPMEntry ORDER BY Date DESC");
+            psmt = conn.prepareStatement("SELECT ID, Date, Comment FROM LSSPMEntry ORDER BY Date DESC");
             psmt.setQueryTimeout(10);
             rs = psmt.executeQuery();
         } else if (reportType == 2) {
-            psmt = conn .prepareStatement("SELECT ID, Date, Comment FROM LSSPMEntry ORDER BY Date DESC");
+            psmt = conn.prepareStatement("SELECT ID, Date, Comment FROM LSSPMEntry ORDER BY Date DESC");
             psmt.setQueryTimeout(10);
             rs = psmt.executeQuery();
         }
@@ -459,7 +460,6 @@ public class SQLiteConnection {
             row.add(rs.getString(1));
             row.add(rs.getString(2));
             row.add(rs.getString(3));
-            
 
             data.add(row);
         }
@@ -500,7 +500,6 @@ public class SQLiteConnection {
                     } catch (Exception ex) {
                         Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
                     }
-                   
 
                 }
             }
@@ -517,7 +516,7 @@ public class SQLiteConnection {
         return outerPanel;
 
     }
-    
+
     // OPTime Entry
     public static int OPTimeGetHighestID() throws SQLException {
 
@@ -1652,7 +1651,7 @@ public class SQLiteConnection {
         // TableColumn tc = table.getColumnModel().getColumn(9);
         // tc.setCellRenderer(table.getDefaultRenderer(Boolean.class));
         //
-         table.addMouseListener(new MouseAdapter() {
+        table.addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent e) {
 
                 if (e.getClickCount() == 2) {
@@ -2496,48 +2495,48 @@ public class SQLiteConnection {
         table.getColumnModel().getColumn(11).setMaxWidth(35);
         table.getColumnModel().getColumn(12).setMaxWidth(35);
         table.getColumnModel().getColumn(13).setMaxWidth(35);
-        
+
 //        table.getColumnModel().getColumn(7).setMinWidth(80);
         table.getColumnModel().getColumn(14).setMinWidth(500);
         table.getColumnModel().getColumn(15).setMaxWidth(20);
 
         // Render Checkbox
-         TableColumn tc1 = table.getColumnModel().getColumn(6);
-         tc1.setCellRenderer(table.getDefaultRenderer(Boolean.class));
-         TableColumn tc2 = table.getColumnModel().getColumn(7);
-         tc2.setCellRenderer(table.getDefaultRenderer(Boolean.class));
-         TableColumn tc3 = table.getColumnModel().getColumn(8);
-         tc3.setCellRenderer(table.getDefaultRenderer(Boolean.class));
-         TableColumn tc4 = table.getColumnModel().getColumn(9);
-         tc4.setCellRenderer(table.getDefaultRenderer(Boolean.class));
-         TableColumn tc5 = table.getColumnModel().getColumn(10);
-         tc5.setCellRenderer(table.getDefaultRenderer(Boolean.class));
-         TableColumn tc6 = table.getColumnModel().getColumn(11);
-         tc6.setCellRenderer(table.getDefaultRenderer(Boolean.class));
-         TableColumn tc7 = table.getColumnModel().getColumn(12);
-         tc7.setCellRenderer(table.getDefaultRenderer(Boolean.class));
-         TableColumn tc8 = table.getColumnModel().getColumn(13);
-         tc8.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+        TableColumn tc1 = table.getColumnModel().getColumn(6);
+        tc1.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+        TableColumn tc2 = table.getColumnModel().getColumn(7);
+        tc2.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+        TableColumn tc3 = table.getColumnModel().getColumn(8);
+        tc3.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+        TableColumn tc4 = table.getColumnModel().getColumn(9);
+        tc4.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+        TableColumn tc5 = table.getColumnModel().getColumn(10);
+        tc5.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+        TableColumn tc6 = table.getColumnModel().getColumn(11);
+        tc6.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+        TableColumn tc7 = table.getColumnModel().getColumn(12);
+        tc7.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+        TableColumn tc8 = table.getColumnModel().getColumn(13);
+        tc8.setCellRenderer(table.getDefaultRenderer(Boolean.class));
         //
-         table.addMouseListener(new MouseAdapter() {
-         public void mousePressed(MouseEvent e) {
-        
-         if (e.getClickCount() == 2) {
-         JTable target = (JTable) e.getSource();
-        
-         int row = target.getSelectedRow() + 1;
+        table.addMouseListener(new MouseAdapter() {
+            public void mousePressed(MouseEvent e) {
+
+                if (e.getClickCount() == 2) {
+                    JTable target = (JTable) e.getSource();
+
+                    int row = target.getSelectedRow() + 1;
          // int column = target.getSelectedColumn();
-        
-         // System.out.println("Clicked : " + row );
-         System.out.println(table.getValueAt(table.getSelectedRow(), 15).toString());      
-         String idString = table.getValueAt(table.getSelectedRow(), 15).toString();
-         int id = Integer.valueOf(idString);
-         LinerUsageEntryScreen linerUsage = new LinerUsageEntryScreen(1,2);
-         linerUsage.setLinerUsageToId(id);
-        
-         }
-         }
-         });
+
+                    // System.out.println("Clicked : " + row );
+                    System.out.println(table.getValueAt(table.getSelectedRow(), 15).toString());
+                    String idString = table.getValueAt(table.getSelectedRow(), 15).toString();
+                    int id = Integer.valueOf(idString);
+                    LinerUsageEntryScreen linerUsage = new LinerUsageEntryScreen(1, 2);
+                    linerUsage.setLinerUsageToId(id);
+
+                }
+            }
+        });
         JTableHeader header = table.getTableHeader();
 
         outerPanel.add(header, BorderLayout.NORTH);
@@ -2550,8 +2549,7 @@ public class SQLiteConnection {
         return outerPanel;
 
     }
-    
-    
+
     // Meeting Quality Issues
     public static int MeetingQualityGetHighestID() throws SQLException {
 
@@ -2693,7 +2691,6 @@ public class SQLiteConnection {
 //            System.out.println("Ends In HFI " + result[11]);
 //            System.out.println("Quality Equipment " + result[12]);
 //            System.out.println("Audits Due " + result[13]);
-
             rs.close();
             s.close();
             conn.close();
@@ -2917,11 +2914,11 @@ public class SQLiteConnection {
         ResultSet rs = null;
 
         if (reportType == 1) {
-            psmt = conn .prepareStatement("SELECT Date, PercentageChecksDoneDays, PercentageChecksDoneNights, CustomerComplaints, ID FROM MeetingQuality ORDER BY Date DESC");
+            psmt = conn.prepareStatement("SELECT Date, PercentageChecksDoneDays, PercentageChecksDoneNights, CustomerComplaints, ID FROM MeetingQuality ORDER BY Date DESC");
             psmt.setQueryTimeout(10);
             rs = psmt.executeQuery();
         } else if (reportType == 2) {
-            psmt = conn .prepareStatement("SELECT Date, PercentageChecksDoneDays, PercentageChecksDoneNights, CustomerComplaints, ID FROM MeetingQuality ORDER BY Date DESC");
+            psmt = conn.prepareStatement("SELECT Date, PercentageChecksDoneDays, PercentageChecksDoneNights, CustomerComplaints, ID FROM MeetingQuality ORDER BY Date DESC");
             psmt.setQueryTimeout(10);
             rs = psmt.executeQuery();
         }
@@ -2949,9 +2946,8 @@ public class SQLiteConnection {
             row.add(rs.getString(1));
             row.add(rs.getDouble(2));
             row.add(rs.getDouble(3));
-            row.add(rs.getString(4));       
-            row.add(rs.getString(5));  
-            
+            row.add(rs.getString(4));
+            row.add(rs.getString(5));
 
             data.add(row);
         }
@@ -2966,7 +2962,7 @@ public class SQLiteConnection {
         table.getColumnModel().getColumn(2).setMinWidth(100);
         table.getColumnModel().getColumn(4).setMaxWidth(30);
         //table.getColumnModel().getColumn(2).setMinWidth(500);
-	// table.getColumnModel().getColumn(1).setPreferredWidth(6);
+        // table.getColumnModel().getColumn(1).setPreferredWidth(6);
 
         // Render Checkbox
         // TableColumn tc = table.getColumnModel().getColumn(9);
@@ -2981,7 +2977,7 @@ public class SQLiteConnection {
                     int row = target.getSelectedRow() + 1;
                     System.out.println(table.getValueAt(table.getSelectedRow(), 4).toString());
 
-                    String idString = table.getValueAt(table.getSelectedRow(),4).toString();
+                    String idString = table.getValueAt(table.getSelectedRow(), 4).toString();
                     int id = Integer.valueOf(idString);
                     try {
                         MeetingQualityIssues meetingQuality = new MeetingQualityIssues(1, 2);
@@ -2989,7 +2985,6 @@ public class SQLiteConnection {
                     } catch (Exception ex) {
                         Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
                     }
-                   
 
                 }
             }
@@ -3006,7 +3001,7 @@ public class SQLiteConnection {
         return outerPanel;
 
     }
-    
+
     // Production Meeting Inserts
     public static int ProductionMeetingGetHighestID() throws SQLException {
 
@@ -3366,11 +3361,11 @@ public class SQLiteConnection {
         ResultSet rs = null;
 
         if (reportType == 1) {
-            psmt = conn .prepareStatement("SELECT Date, MeetingDate, SafetyIssues, ProductionAction, HygieneManagementOfChange, EngineeringActions, ID  FROM ProductionMeeting ORDER BY Date DESC");
+            psmt = conn.prepareStatement("SELECT Date, MeetingDate, SafetyIssues, ProductionAction, HygieneManagementOfChange, EngineeringActions, ID  FROM ProductionMeeting ORDER BY Date DESC");
             psmt.setQueryTimeout(10);
             rs = psmt.executeQuery();
         } else if (reportType == 2) {
-            psmt = conn .prepareStatement("SELECT Date, MeetingDate, SafetyIssues, ProductionAction, HygieneManagementOfChange, EngineeringActions, ID  FROM ProductionMeeting ORDER BY Date DESC");
+            psmt = conn.prepareStatement("SELECT Date, MeetingDate, SafetyIssues, ProductionAction, HygieneManagementOfChange, EngineeringActions, ID  FROM ProductionMeeting ORDER BY Date DESC");
             psmt.setQueryTimeout(10);
             rs = psmt.executeQuery();
         }
@@ -3405,7 +3400,6 @@ public class SQLiteConnection {
             row.add(rs.getString(5));
             row.add(rs.getString(6));
             row.add(rs.getString(7));
-            
 
             data.add(row);
         }
@@ -3419,7 +3413,7 @@ public class SQLiteConnection {
         table.getColumnModel().getColumn(1).setMaxWidth(100);
         table.getColumnModel().getColumn(6).setMaxWidth(30);
         //table.getColumnModel().getColumn(2).setMinWidth(500);
-	// table.getColumnModel().getColumn(1).setPreferredWidth(6);
+        // table.getColumnModel().getColumn(1).setPreferredWidth(6);
 
         // Render Checkbox
         // TableColumn tc = table.getColumnModel().getColumn(9);
@@ -3434,15 +3428,14 @@ public class SQLiteConnection {
                     int row = target.getSelectedRow() + 1;
                     System.out.println(table.getValueAt(table.getSelectedRow(), 6).toString());
 
-                    String idString = table.getValueAt(table.getSelectedRow(),6).toString();
+                    String idString = table.getValueAt(table.getSelectedRow(), 6).toString();
                     int id = Integer.valueOf(idString);
                     try {
-                        ProductionMeeting production = new ProductionMeeting(2,2);
+                        ProductionMeeting production = new ProductionMeeting(2, 2);
                         production.setProductionToID(id);
                     } catch (Exception ex) {
                         Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
                     }
-                   
 
                 }
             }
@@ -3459,7 +3452,7 @@ public class SQLiteConnection {
         return outerPanel;
 
     }
-    
+
     // Employee Methods
     public static int EmployeeGetHighestID() throws SQLException {
 
@@ -5063,6 +5056,105 @@ public class SQLiteConnection {
         conn.close();
 
         return total;
+    }
+
+    public static JPanel LinersAndShellsSummaryTable(int in) throws SQLException {
+
+        JPanel outerPanel = new JPanel(new BorderLayout());
+
+        Connection conn = Connect();
+        Statement stmt = conn.createStatement();
+        stmt.setQueryTimeout(10);
+
+        PreparedStatement psmt = conn.prepareStatement("SELECT DateString as Date, Optime2, Optime3, Optime4, TotalShells, M1Liner, M2Liner, M3Liner, M4Liner, TotalLIners, ID FROM LinerAndShells ORDER BY Date DESC");
+        psmt.setQueryTimeout(10);
+        ResultSet rs = psmt.executeQuery();
+        DefaultTableModel dm = new DefaultTableModel();
+
+        // get column names
+        int len = rs.getMetaData().getColumnCount();
+        System.out.println("LEN : " + len);
+        Vector cols = new Vector(len);
+        for (int i = 1; i <= len; i++) {// Note starting at 1
+
+            cols.add(rs.getMetaData().getColumnName(i));
+            System.out.println(rs.getMetaData().getColumnName(i));
+
+        }
+
+        // Add Data
+        Vector data = new Vector();
+
+        while (rs.next()) {
+
+            Vector row = new Vector(len);
+
+            row.add(rs.getString(1));
+            row.add(rs.getString(2));
+            row.add(rs.getString(3));
+            row.add(rs.getString(4));
+            row.add(rs.getString(5));
+            row.add(rs.getString(6));
+            row.add(rs.getString(7));
+            row.add(rs.getString(8));
+            row.add(rs.getString(9));
+            row.add(rs.getString(10));
+            row.add(rs.getString(11));
+
+            data.add(row);
+        }
+
+        // Now create the table
+        DefaultTableModel model = new DefaultTableModel(data, cols);
+
+        JTable table = new JTable(model);
+
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        table.getColumnModel().getColumn(0).setMaxWidth(80);
+
+        table.getColumnModel().getColumn(10).setMaxWidth(40);
+
+        // Render Checkbox
+//        TableColumn tc = table.getColumnModel().getColumn(9);
+//        tc.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+                if (e.getClickCount() == 2) {
+                    JTable target = (JTable) e.getSource();
+
+                    int row = target.getSelectedRow() + 1;
+					// int column = target.getSelectedColumn();
+
+                    // System.out.println("Clicked : " + row );
+                    System.out.println(table.getValueAt(table.getSelectedRow(), 10).toString());
+
+                    String idString = table.getValueAt(table.getSelectedRow(), 10).toString();
+                    int id = Integer.valueOf(idString);
+                    LinerAndShellsEntry linersAndShells;
+                    try {
+                        linersAndShells = new LinerAndShellsEntry(1, -2);
+                        linersAndShells.setLinersAndShellsToID(id);
+                    } catch (SQLException ex) {
+                        Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+
+                }
+            }
+        });
+
+        JTableHeader header = table.getTableHeader();
+
+        outerPanel.add(header, BorderLayout.NORTH);
+        outerPanel.add(table, BorderLayout.CENTER);
+
+        psmt.close();
+        stmt.close();
+        conn.close();
+
+        return outerPanel;
+
     }
 
     // Liner Defects
@@ -10781,6 +10873,127 @@ public class SQLiteConnection {
 
                 data.add(row);
             }
+        } else if (type.equalsIgnoreCase("Liners And Shells")) {
+
+            System.out.print(type);
+
+            while (rs.next()) {
+                Vector row = new Vector(len);
+
+                row.add(rs.getString(1));
+                row.add(rs.getString(2));
+                row.add(rs.getString(3));
+                row.add(rs.getString(4));
+                row.add(rs.getString(5));
+                row.add(rs.getString(6));
+                row.add(rs.getString(7));
+                row.add(rs.getString(8));
+                row.add(rs.getString(9));
+                row.add(rs.getString(10));
+                row.add(rs.getString(11));
+                row.add(rs.getString(12));
+
+                data.add(row);
+            }
+        } else if (type.equalsIgnoreCase("Liner Defects")) {
+
+            System.out.print(type);
+
+            while (rs.next()) {
+                Vector row = new Vector(len);
+
+                row.add(rs.getString(1));
+                row.add(rs.getString(2));
+                row.add(rs.getString(3));
+                row.add(rs.getString(4));
+                row.add(rs.getString(5));
+                row.add(rs.getString(6));
+                row.add(rs.getString(7));
+                row.add(rs.getString(8));
+                row.add(rs.getString(9));
+                row.add(rs.getString(10));
+                row.add(rs.getString(11));
+                row.add(rs.getString(12));
+                row.add(rs.getString(13));
+                row.add(rs.getString(14));
+
+                data.add(row);
+            }
+        } else if (type.equalsIgnoreCase("End Counts")) {
+
+            System.out.print(type);
+
+            while (rs.next()) {
+                Vector row = new Vector(len);
+
+                row.add(rs.getString(1));
+                row.add(rs.getString(2));
+                row.add(rs.getString(3));
+                row.add(rs.getString(4));
+                row.add(rs.getString(5));
+                row.add(rs.getString(6));
+                row.add(rs.getString(7));
+                row.add(rs.getString(8));
+                row.add(rs.getString(9));
+                row.add(rs.getString(10));
+                row.add(rs.getString(11));
+                row.add(rs.getString(12));
+                row.add(rs.getString(13));
+                row.add(rs.getString(14));
+                row.add(rs.getString(15));
+                row.add(rs.getString(16));
+                row.add(rs.getString(17));
+
+                data.add(row);
+            }
+        }
+        
+        else if (type.equalsIgnoreCase("Spoilage By Day")) {
+
+            System.out.print(type);
+
+            while (rs.next()) {
+                Vector row = new Vector(len);
+
+                row.add(rs.getString(1));
+                row.add(rs.getString(2));
+                row.add(rs.getString(3));
+                row.add(rs.getString(4));
+                row.add(rs.getString(5));
+                row.add(rs.getString(6));
+                row.add(rs.getString(7));
+                row.add(rs.getString(8));
+                row.add(rs.getString(9));
+                row.add(rs.getString(10));
+                row.add(rs.getString(11));
+                row.add(rs.getString(12));
+                row.add(rs.getString(13));
+                row.add(rs.getString(14));
+                row.add(rs.getString(15));
+                row.add(rs.getString(16));
+                row.add(rs.getString(17));
+                row.add(rs.getString(18));
+                row.add(rs.getString(19));
+                row.add(rs.getString(20));
+                row.add(rs.getString(21));
+                row.add(rs.getString(22));
+                row.add(rs.getString(23));
+                row.add(rs.getString(24));
+                row.add(rs.getString(25));
+                row.add(rs.getString(26));
+                row.add(rs.getString(27));
+                row.add(rs.getString(28));
+                row.add(rs.getString(29));
+                row.add(rs.getString(30));
+                row.add(rs.getString(31));
+                row.add(rs.getString(32));
+                row.add(rs.getString(33));
+                row.add(rs.getString(34));
+                row.add(rs.getString(35));
+                row.add(rs.getString(36));
+
+                data.add(row);
+            }
         }
 
         table = new JTable(data, cols);
@@ -11589,6 +11802,13 @@ public class SQLiteConnection {
         DefaultTableModel model = new DefaultTableModel(data, cols);
 
         JTable table = new JTable(model);
+
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        table.getColumnModel().getColumn(0).setMaxWidth(40);
+        table.getColumnModel().getColumn(1).setMaxWidth(80);
+        table.getColumnModel().getColumn(2).setMaxWidth(40);
+
+        table.getColumnModel().getColumn(9).setMaxWidth(50);
 
         // Render Checkbox
         TableColumn tc = table.getColumnModel().getColumn(9);
@@ -13637,42 +13857,7 @@ public class SQLiteConnection {
             while (rs.next()) {
                 Vector row = new Vector(len);
 
-                row.add(rs.getString(1));
-                row.add(rs.getString(2));
-                row.add(rs.getString(3));
-                row.add(rs.getString(4));
-                row.add(rs.getString(5));
-                row.add(rs.getString(6));
-                row.add(rs.getString(7));
-                row.add(rs.getString(8));
-                row.add(rs.getString(9));
-                row.add(rs.getString(10));
-                row.add(rs.getString(11));
-                row.add(rs.getString(12));
-                row.add(rs.getString(13));
-                row.add(rs.getString(14));
-                row.add(rs.getString(15));
-                row.add(rs.getString(16));
-                row.add(rs.getString(17));
-                row.add(rs.getBoolean(18));
-                row.add(rs.getBoolean(19));
-                row.add(rs.getBoolean(20));
-                row.add(rs.getBoolean(21));
-                row.add(rs.getBoolean(22));
-                row.add(rs.getBoolean(23));
-                row.add(rs.getBoolean(24));
-                row.add(rs.getBoolean(25));
-                row.add(rs.getString(26));
-                row.add(rs.getString(27));
-                row.add(rs.getString(28));
-                row.add(rs.getString(29));
-                row.add(rs.getString(30));
-                row.add(rs.getString(31));
-                row.add(rs.getString(32));
-                row.add(rs.getString(33));
-                row.add(rs.getString(34));
-                row.add(rs.getString(35));
-                row.add(rs.getString(36));
+               
                 row.add(rs.getString(37));
                 row.add(rs.getString(38));
                 row.add(rs.getString(39));
