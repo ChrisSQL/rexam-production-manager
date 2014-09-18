@@ -44,7 +44,7 @@ public class Gui extends JFrame {
 	JPanel outerPanel;
 	JLabel title;
 	String titleString = "Rexam Waterford Production Database";
-	JMenu fileMenu, employeeMenu, dataEntryMenu, reportingMenu, parDatabaseMenu, nonConformanceMenu, binMenu, aboutMenu;
+	JMenu fileMenu, employeeMenu, dataEntryMenu, reportingMenu, parDatabaseMenu, nonConformanceMenu, Maintenance, binMenu, aboutMenu;
 	JMenuBar menuBar;
 	OptimeDataEntryScreen optimeDataEntryScreen;
 	int LSSPMtodaysEntry;
@@ -61,6 +61,17 @@ public class Gui extends JFrame {
 	
 	JMenuItem optimeProductionReport, optimeGroupReport, optimeReport, optimeCommentsLog, shellsByMonth, stolleProductionReport, stolleGroupReport, stolleWeeklyReview,
 			stolleReport, stolleCommentsLog, endsByMonth;
+        
+        JMenuItem ShellPressMenu, BalancerMenu, CompoundLinerMenu, ConversionPressMenu, EHSStatutory, OtherEquipmentMenu, EquipmentOEE, StolleDownTimeShift, StolleDownTimeDay, AnnualEngineeringPMPlan, OtherTrackingInformation;
+        
+        // ShellPressMenu
+        JMenuItem ShellPressProduction, ShellPressMaintenance;
+        // BalancerMenu
+        JMenuItem BalancerProduction, balancerMaintenance;
+        // CompoundLinerMenu
+        JMenuItem LinerProduction, LinerMaintenance, LinerSpoilage;
+        // ConversionPressMenu
+        JMenuItem ConversionPressProduction, ConversionPressMaintenance, ConversionPressSpoilage, TransferBeltReplacementRecord, ScoreTooling, mainTimingBelt, CDLProgression;
 
 	JMenuItem AboutMenu, helpMenu;
 	
