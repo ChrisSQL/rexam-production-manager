@@ -54,6 +54,7 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import com.database.rexam.SQLiteConnection;
 import java.awt.Desktop;
 import java.io.FileOutputStream;
+import java.time.Clock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JTable;
@@ -92,7 +93,7 @@ public class ParEntry {
     static JCheckBox head1CheckBox, head2CheckBox, head3CheckBox, head4CheckBox, head5CheckBox, head6CheckBox, head7CheckBox, head8CheckBox;
     static JCheckBox number1Check, number2Check, number3Check, number4Check, number5Check, number6Check, number7Check, number8Check, number9Check,
             number10Check, number11Check, number12Check, number13Check, number14Check, number15Check, number16Check, number17Check, number18Check,
-            number19Check, number20Check, number21Check, number22Check, number23Check, number24Check;
+            number19Check, number20Check, number21Check, number22Check, number23Check, number24Check, number25Check, number26Check;
     static JTextArea beforeJTextArea, actionTakenJTextArea, afterJTextArea;
 
     // RIGHT SIDE PANEL
@@ -268,7 +269,7 @@ public class ParEntry {
                             number10Check.isSelected(), number11Check.isSelected(), number12Check.isSelected(), number13Check.isSelected(),
                             number14Check.isSelected(), number15Check.isSelected(), number16Check.isSelected(), number17Check.isSelected(),
                             number18Check.isSelected(), number19Check.isSelected(), number20Check.isSelected(), number21Check.isSelected(),
-                            number22Check.isSelected(), number23Check.isSelected(), number24Check.isSelected(), aJCheckBox.isSelected(),
+                            number22Check.isSelected(), number23Check.isSelected(), number24Check.isSelected(), number25Check.isSelected(), number26Check.isSelected(), aJCheckBox.isSelected(),
                             bJCheckBox.isSelected(), cJCheckBox.isSelected(), dJCheckBox.isSelected(),
                             Double.valueOf(score1AJTextField.getText()), Double.valueOf(score1BJTextField.getText()),
                             Double.valueOf(score1CJTextField.getText()), Double.valueOf(score1DJTextField.getText()),
@@ -333,7 +334,7 @@ public class ParEntry {
                             number9Check.isSelected(), number10Check.isSelected(), number11Check.isSelected(), number12Check.isSelected(),
                             number13Check.isSelected(), number14Check.isSelected(), number15Check.isSelected(), number16Check.isSelected(),
                             number17Check.isSelected(), number18Check.isSelected(), number19Check.isSelected(), number20Check.isSelected(),
-                            number21Check.isSelected(), number22Check.isSelected(), number23Check.isSelected(), number24Check.isSelected(),
+                            number21Check.isSelected(), number22Check.isSelected(), number23Check.isSelected(), number24Check.isSelected(), number25Check.isSelected(), number26Check.isSelected(),
                             aJCheckBox.isSelected(), bJCheckBox.isSelected(), cJCheckBox.isSelected(), dJCheckBox.isSelected(),
                             Double.valueOf(score1AJTextField.getText()), Double.valueOf(score1BJTextField.getText()),
                             Double.valueOf(score1CJTextField.getText()), Double.valueOf(score1DJTextField.getText()),
@@ -688,6 +689,7 @@ public class ParEntry {
                     if (Integer.valueOf(formJTextField.getText() + "") == SQLiteConnection.ParDatabaseGetHighestForm()) {
 
                         setParToForm(SQLiteConnection.ParDatabaseGetHighestForm());
+                        System.out.print("Next - Highest Form" + SQLiteConnection.ParDatabaseGetHighestForm()+"");
 
                     } else {
 
@@ -850,6 +852,8 @@ public class ParEntry {
         number22Check = new JCheckBox();
         number23Check = new JCheckBox();
         number24Check = new JCheckBox();
+        number25Check = new JCheckBox();
+        number26Check = new JCheckBox();
 
         JPanel outerPanel = new JPanel(new BorderLayout());
 
@@ -933,6 +937,12 @@ public class ParEntry {
 
         centerPanel2.add(new JLabel("    24"));
         centerPanel2.add(number24Check);
+        
+        centerPanel2.add(new JLabel("    25"));
+        centerPanel2.add(number25Check);
+        
+        centerPanel2.add(new JLabel("    26"));
+        centerPanel2.add(number26Check);
 
         outerPanel.add(centerPanel2, BorderLayout.CENTER);
 
@@ -1357,7 +1367,7 @@ public class ParEntry {
 
     public static void setParToHighestForm() {
 
-        Object[] result = new Object[72];
+        Object[] result = new Object[74];
 
         try {
 
@@ -1414,37 +1424,40 @@ public class ParEntry {
         number22Check.setSelected((boolean) result[38]);
         number23Check.setSelected((boolean) result[39]);
         number24Check.setSelected((boolean) result[40]);
+        number25Check.setSelected((boolean) result[41]);
+        number26Check.setSelected((boolean) result[42]);
 
-        aJCheckBox.setSelected((boolean) result[41]);
-        bJCheckBox.setSelected((boolean) result[42]);
-        cJCheckBox.setSelected((boolean) result[43]);
-        dJCheckBox.setSelected((boolean) result[44]);
+        aJCheckBox.setSelected((boolean) result[43]);
+        bJCheckBox.setSelected((boolean) result[44]);
+        cJCheckBox.setSelected((boolean) result[45]);
+        dJCheckBox.setSelected((boolean) result[46]);
 
-        score1AJTextField.setText(result[45] + "");
-        score1BJTextField.setText(result[46] + "");
-        score1CJTextField.setText(result[47] + "");
-        score1DJTextField.setText(result[48] + "");
-        score3AJTextField.setText(result[49] + "");
-        score3BJTextField.setText(result[50] + "");
-        score3CJTextField.setText(result[51] + "");
-        score3DJTextField.setText(result[52] + "");
-        score6AJTextField.setText(result[53] + "");
-        score6BJTextField.setText(result[54] + "");
-        score6CJTextField.setText(result[55] + "");
-        score6DJTextField.setText(result[56] + "");
-        score9AJTextField.setText(result[57] + "");
-        score9BJTextField.setText(result[58] + "");
-        score9CJTextField.setText(result[59] + "");
-        score9DJTextField.setText(result[60] + "");
+        score1AJTextField.setText(result[47] + "");
+        score1BJTextField.setText(result[48] + "");
+        score1CJTextField.setText(result[49] + "");
+        score1DJTextField.setText(result[50] + "");
+        score3AJTextField.setText(result[51] + "");
+        score3BJTextField.setText(result[52] + "");
+        score3CJTextField.setText(result[53] + "");
+        score3DJTextField.setText(result[54] + "");
+        score6AJTextField.setText(result[55] + "");
+        score6BJTextField.setText(result[56] + "");
+        score6CJTextField.setText(result[57] + "");
+        score6DJTextField.setText(result[58] + "");
+        score9AJTextField.setText(result[59] + "");
+        score9BJTextField.setText(result[60] + "");
+        score9CJTextField.setText(result[61] + "");
+        score9DJTextField.setText(result[62] + "");
 
-        timeStartedJTextField.setText(result[61] + "");
-        timeInToolRoomJTextField.setText(result[62] + "");
-        timeFinishedJTextField.setText(result[63] + "");
+        timeStartedJTextField.setText(result[63] + "");
+        timeInToolRoomJTextField.setText(result[64] + "");
+        timeFinishedJTextField.setText(result[65] + "");
 
-        signedCombo.setSelectedItem(result[64]);
+        signedCombo.setSelectedItem(result[66]);
 
-        String modifiedDate = result[65] + "";
-        String year = modifiedDate.substring(1, 4);
+        String modifiedDate = result[67] + "";
+        System.out.print("modifiedDate" + modifiedDate);
+        String year = modifiedDate.substring(0, 4);
         int yearInt = Integer.parseInt(year);
         String month = modifiedDate.substring(5, 7);
         int monthInt = Integer.parseInt(month) - 1;
@@ -1452,13 +1465,12 @@ public class ParEntry {
         int dayInt = Integer.parseInt(day);
 
         model2.setDate(yearInt, monthInt, dayInt);
-        System.out.println("Date : " + result[65]);
 
-        statusCheckBox.setSelected((boolean) result[66]);
+        statusCheckBox.setSelected((boolean) result[68]);
 
-        beforeJTextArea.setText(result[67] + "");
-        actionTakenJTextArea.setText(result[68] + "");
-        afterJTextArea.setText(result[69] + "");
+        beforeJTextArea.setText(result[69] + "");
+        actionTakenJTextArea.setText(result[70] + "");
+        afterJTextArea.setText(result[71] + "");
 
     }
 
@@ -1521,37 +1533,39 @@ public class ParEntry {
         number22Check.setSelected((boolean) result[38]);
         number23Check.setSelected((boolean) result[39]);
         number24Check.setSelected((boolean) result[40]);
+        number25Check.setSelected((boolean) result[41]);
+        number26Check.setSelected((boolean) result[42]);
 
-        aJCheckBox.setSelected((boolean) result[41]);
-        bJCheckBox.setSelected((boolean) result[42]);
-        cJCheckBox.setSelected((boolean) result[43]);
-        dJCheckBox.setSelected((boolean) result[44]);
+        aJCheckBox.setSelected((boolean) result[43]);
+        bJCheckBox.setSelected((boolean) result[44]);
+        cJCheckBox.setSelected((boolean) result[45]);
+        dJCheckBox.setSelected((boolean) result[46]);
 
-        score1AJTextField.setText(result[45] + "");
-        score1BJTextField.setText(result[46] + "");
-        score1CJTextField.setText(result[47] + "");
-        score1DJTextField.setText(result[48] + "");
-        score3AJTextField.setText(result[49] + "");
-        score3BJTextField.setText(result[50] + "");
-        score3CJTextField.setText(result[51] + "");
-        score3DJTextField.setText(result[52] + "");
-        score6AJTextField.setText(result[53] + "");
-        score6BJTextField.setText(result[54] + "");
-        score6CJTextField.setText(result[55] + "");
-        score6DJTextField.setText(result[56] + "");
-        score9AJTextField.setText(result[57] + "");
-        score9BJTextField.setText(result[58] + "");
-        score9CJTextField.setText(result[59] + "");
-        score9DJTextField.setText(result[60] + "");
+        score1AJTextField.setText(result[47] + "");
+        score1BJTextField.setText(result[48] + "");
+        score1CJTextField.setText(result[49] + "");
+        score1DJTextField.setText(result[50] + "");
+        score3AJTextField.setText(result[51] + "");
+        score3BJTextField.setText(result[52] + "");
+        score3CJTextField.setText(result[53] + "");
+        score3DJTextField.setText(result[54] + "");
+        score6AJTextField.setText(result[55] + "");
+        score6BJTextField.setText(result[56] + "");
+        score6CJTextField.setText(result[57] + "");
+        score6DJTextField.setText(result[58] + "");
+        score9AJTextField.setText(result[59] + "");
+        score9BJTextField.setText(result[60] + "");
+        score9CJTextField.setText(result[61] + "");
+        score9DJTextField.setText(result[62] + "");
 
-        timeStartedJTextField.setText(result[61] + "");
-        timeInToolRoomJTextField.setText(result[62] + "");
-        timeFinishedJTextField.setText(result[63] + "");
+        timeStartedJTextField.setText(result[63] + "");
+        timeInToolRoomJTextField.setText(result[64] + "");
+        timeFinishedJTextField.setText(result[65] + "");
 
-        signedCombo.setSelectedItem(result[64]);
+        signedCombo.setSelectedItem(result[66]);
 
-        String modifiedDate = result[65] + "";
-        String year = modifiedDate.substring(1, 4);
+        String modifiedDate = result[67] + "";
+        String year = modifiedDate.substring(0, 4);
         int yearInt = Integer.parseInt(year);
         String month = modifiedDate.substring(5, 7);
         int monthInt = Integer.parseInt(month) - 1;
@@ -1559,13 +1573,12 @@ public class ParEntry {
         int dayInt = Integer.parseInt(day);
 
         model2.setDate(yearInt, monthInt, dayInt);
-        System.out.println("Date : " + result[65]);
 
-        statusCheckBox.setSelected((boolean) result[66]);
+        statusCheckBox.setSelected((boolean) result[68]);
 
-        beforeJTextArea.setText(result[67] + "");
-        actionTakenJTextArea.setText(result[68] + "");
-        afterJTextArea.setText(result[69] + "");
+        beforeJTextArea.setText(result[69] + "");
+        actionTakenJTextArea.setText(result[70] + "");
+        afterJTextArea.setText(result[71] + "");
 
     }
 
