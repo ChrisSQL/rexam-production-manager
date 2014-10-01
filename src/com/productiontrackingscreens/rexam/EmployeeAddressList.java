@@ -29,10 +29,10 @@ import com.database.rexam.SQLiteConnection;
 public class EmployeeAddressList {
 
     static JButton save, delete, reset, reset2, addNew, confirmDelete, update, confirmUpdate;
-    static JLabel employeeId, name, address, crew, departmentHead, processLeader, shiftManager, technician, operator, engineer, forkliftDriver, toolmaker, fitter, electrician, packer, qcInspector, phoneNumber,
+    static JLabel employeeId, name, address, crew, departmentHead, processLeader, shiftManager, technician, leadHand, operator, engineer, forkliftDriver, toolmaker, fitter, electrician, packer, qcInspector, phoneNumber,
             mobileNumber;
     static JTextField employeeIdText, nametext, addressText, phoneNumberText, mobileNumberText;
-    static JCheckBox departmentHeadJCheckBox, shiftManagerJCheckBox, technicianJCheckBox, operatorJCheckBox, engineerJCheckBox, packerJCheckBox,
+    static JCheckBox departmentHeadJCheckBox, shiftManagerJCheckBox, technicianJCheckBox, leadHandJCheckBox, operatorJCheckBox, engineerJCheckBox, packerJCheckBox,
             qcInspectorJCheckBox, forkliftDriverJCheckBox, processLeaderJCheckBox, toolmakerJCheckBox, fitterJCheckBox, electricianJCheckBox;
     static JComboBox crewCombo, nameAndId, nameCombo;
     static int currentId;
@@ -98,6 +98,7 @@ public class EmployeeAddressList {
         departmentHead = new JLabel("Department Head :", SwingConstants.CENTER);
         shiftManager = new JLabel("Shift Manager :", SwingConstants.CENTER);
         technician = new JLabel("Technician :", SwingConstants.CENTER);
+        leadHand = new JLabel("Lead Hand :", SwingConstants.CENTER);
         operator = new JLabel("Operator :", SwingConstants.CENTER);
         engineer = new JLabel("Engineer :", SwingConstants.CENTER);
         packer = new JLabel("Packer :", SwingConstants.CENTER);
@@ -120,6 +121,7 @@ public class EmployeeAddressList {
         departmentHeadJCheckBox = new JCheckBox();
         shiftManagerJCheckBox = new JCheckBox();
         technicianJCheckBox = new JCheckBox();
+        leadHandJCheckBox = new JCheckBox();
         operatorJCheckBox = new JCheckBox();
         engineerJCheckBox = new JCheckBox();
         packerJCheckBox = new JCheckBox();
@@ -149,6 +151,7 @@ public class EmployeeAddressList {
                 departmentHeadJCheckBox.setSelected(false);
                 shiftManagerJCheckBox.setSelected(false);
                 technicianJCheckBox.setSelected(false);
+                leadHandJCheckBox.setSelected(false);
                 operatorJCheckBox.setSelected(false);
                 engineerJCheckBox.setSelected(false);
                 packerJCheckBox.setSelected(false);
@@ -193,20 +196,20 @@ public class EmployeeAddressList {
                 try {
                     SQLiteConnection.EmployeeInsert(
                             SQLiteConnection.EmployeeGetHighestID() + 1, employeeIdText.getText(), nametext.getText(), addressText.getText(),
-                            (String) crewCombo.getSelectedItem(), 
+                            (String) crewCombo.getSelectedItem(),
                             departmentHeadJCheckBox.isSelected(),
-                            shiftManagerJCheckBox.isSelected(), 
+                            shiftManagerJCheckBox.isSelected(),                          
                             technicianJCheckBox.isSelected(),
-                            operatorJCheckBox.isSelected(), 
+                            leadHandJCheckBox.isSelected(),
+                            operatorJCheckBox.isSelected(),
                             engineerJCheckBox.isSelected(),
-                            packerJCheckBox.isSelected(), 
-                            qcInspectorJCheckBox.isSelected(), 
+                            packerJCheckBox.isSelected(),
+                            qcInspectorJCheckBox.isSelected(),
                             forkliftDriverJCheckBox.isSelected(),
                             processLeaderJCheckBox.isSelected(),
                             toolmakerJCheckBox.isSelected(),
                             fitterJCheckBox.isSelected(),
                             electricianJCheckBox.isSelected(),
-                            
                             phoneNumberText.getText(),
                             mobileNumberText.getText()
                     );
@@ -339,13 +342,14 @@ public class EmployeeAddressList {
         departmentHeadJCheckBox.setSelected((boolean) array[5]);
         shiftManagerJCheckBox.setSelected((boolean) array[6]);
         technicianJCheckBox.setSelected((boolean) array[7]);
-        operatorJCheckBox.setSelected((boolean) array[8]);
-        engineerJCheckBox.setSelected((boolean) array[9]);
-        packerJCheckBox.setSelected((boolean) array[10]);
-        qcInspectorJCheckBox.setSelected((boolean) array[11]);
+        leadHandJCheckBox.setSelected((boolean) array[8]);
+        operatorJCheckBox.setSelected((boolean) array[9]);
+        engineerJCheckBox.setSelected((boolean) array[10]);
+        packerJCheckBox.setSelected((boolean) array[11]);
+        qcInspectorJCheckBox.setSelected((boolean) array[12]);
 
-        phoneNumberText.setText(array[12] + "");
-        mobileNumberText.setText(array[13] + "");
+        phoneNumberText.setText(array[13] + "");
+        mobileNumberText.setText(array[14] + "");
 
     }
 
@@ -373,10 +377,16 @@ public class EmployeeAddressList {
                 departmentHeadJCheckBox.setSelected(false);
                 shiftManagerJCheckBox.setSelected(false);
                 technicianJCheckBox.setSelected(false);
+                leadHandJCheckBox.setSelected(false);
                 operatorJCheckBox.setSelected(false);
                 engineerJCheckBox.setSelected(false);
                 packerJCheckBox.setSelected(false);
                 qcInspectorJCheckBox.setSelected(false);
+                forkliftDriverJCheckBox.setSelected(false);
+                processLeaderJCheckBox.setSelected(false);
+                toolmakerJCheckBox.setSelected(false);
+                fitterJCheckBox.setSelected(false);
+                electricianJCheckBox.setSelected(false);
 
                 phoneNumberText.setText("");
                 mobileNumberText.setText("");
@@ -384,7 +394,7 @@ public class EmployeeAddressList {
             }
         });
 
-        JPanel panel = new JPanel(new GridLayout(19, 2));
+        JPanel panel = new JPanel(new GridLayout(20, 2));
         panel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
         panel.add(employeeId);
@@ -419,6 +429,9 @@ public class EmployeeAddressList {
 
         panel.add(technician);
         panel.add(technicianJCheckBox);
+        
+        panel.add(leadHand);
+        panel.add(leadHandJCheckBox);
 
         panel.add(engineer);
         panel.add(engineerJCheckBox);
@@ -520,20 +533,21 @@ public class EmployeeAddressList {
                     departmentHeadJCheckBox.setSelected((boolean) result[5]);
                     shiftManagerJCheckBox.setSelected((boolean) result[6]);
                     technicianJCheckBox.setSelected((boolean) result[7]);
-                    operatorJCheckBox.setSelected((boolean) result[8]);
-                    engineerJCheckBox.setSelected((boolean) result[9]);
-                    packerJCheckBox.setSelected((boolean) result[10]);
-                    qcInspectorJCheckBox.setSelected((boolean) result[11]);
-                    
-                    forkliftDriverJCheckBox.setSelected((boolean) result[12]);
-                    processLeaderJCheckBox.setSelected((boolean) result[13]);
-                    toolmakerJCheckBox.setSelected((boolean) result[14]);
-                    fitterJCheckBox.setSelected((boolean) result[15]);
-                    electricianJCheckBox.setSelected((boolean) result[16]);
+                    leadHandJCheckBox.setSelected((boolean) result[8]);
+                    operatorJCheckBox.setSelected((boolean) result[9]);
+                    engineerJCheckBox.setSelected((boolean) result[10]);
+                    packerJCheckBox.setSelected((boolean) result[11]);
+                    qcInspectorJCheckBox.setSelected((boolean) result[12]);
 
-                    phoneNumberText.setText(result[17] + "");
-                    mobileNumberText.setText(result[18] + "");
-                    
+                    forkliftDriverJCheckBox.setSelected((boolean) result[13]);
+                    processLeaderJCheckBox.setSelected((boolean) result[14]);
+                    toolmakerJCheckBox.setSelected((boolean) result[15]);
+                    fitterJCheckBox.setSelected((boolean) result[16]);
+                    electricianJCheckBox.setSelected((boolean) result[17]);
+
+                    phoneNumberText.setText(result[18] + "");
+                    mobileNumberText.setText(result[19] + "");
+
                 } catch (Exception e1) {
 
                     e1.printStackTrace();
@@ -560,24 +574,24 @@ public class EmployeeAddressList {
                     System.out.println("name " + nametext.getText());
 
                     SQLiteConnection.EmployeeUpdate(
-                            employeeIdText.getText(), 
-                            nametext.getText(), 
-                            addressText.getText(), 
+                            employeeIdText.getText(),
+                            nametext.getText(),
+                            addressText.getText(),
                             crewCombo.getSelectedItem() + "",
-                            departmentHeadJCheckBox.isSelected(), 
-                            shiftManagerJCheckBox.isSelected(), 
+                            departmentHeadJCheckBox.isSelected(),
+                            shiftManagerJCheckBox.isSelected(),
                             technicianJCheckBox.isSelected(),
-                            operatorJCheckBox.isSelected(), 
-                            engineerJCheckBox.isSelected(), 
+                            leadHandJCheckBox.isSelected(),
+                            operatorJCheckBox.isSelected(),
+                            engineerJCheckBox.isSelected(),
                             packerJCheckBox.isSelected(),
-                            qcInspectorJCheckBox.isSelected(), 
+                            qcInspectorJCheckBox.isSelected(),
                             forkliftDriverJCheckBox.isSelected(),
                             processLeaderJCheckBox.isSelected(),
                             toolmakerJCheckBox.isSelected(),
                             fitterJCheckBox.isSelected(),
                             electricianJCheckBox.isSelected(),
-                            
-                            phoneNumberText.getText(), 
+                            phoneNumberText.getText(),
                             mobileNumberText.getText(), id);
 
                     frame9.dispose();
@@ -614,10 +628,16 @@ public class EmployeeAddressList {
                 departmentHeadJCheckBox.setSelected(false);
                 shiftManagerJCheckBox.setSelected(false);
                 technicianJCheckBox.setSelected(false);
+                leadHandJCheckBox.setSelected(false);
                 operatorJCheckBox.setSelected(false);
                 engineerJCheckBox.setSelected(false);
                 packerJCheckBox.setSelected(false);
                 qcInspectorJCheckBox.setSelected(false);
+                forkliftDriverJCheckBox.setSelected(false);
+                processLeaderJCheckBox.setSelected(false);
+                toolmakerJCheckBox.setSelected(false);
+                fitterJCheckBox.setSelected(false);
+                electricianJCheckBox.setSelected(false);
 
                 phoneNumberText.setText("");
                 mobileNumberText.setText("");
@@ -625,7 +645,7 @@ public class EmployeeAddressList {
             }
         });
 
-        JPanel panel = new JPanel(new GridLayout(20, 2));
+        JPanel panel = new JPanel(new GridLayout(21, 2));
         panel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
         panel.add(new JLabel("Update Employee : ", SwingConstants.CENTER));
@@ -663,13 +683,16 @@ public class EmployeeAddressList {
 
         panel.add(technician);
         panel.add(technicianJCheckBox);
+        
+        panel.add(leadHand);
+        panel.add(leadHandJCheckBox);
 
         panel.add(engineer);
         panel.add(engineerJCheckBox);
 
         panel.add(qcInspector);
         panel.add(qcInspectorJCheckBox);
-      
+
         panel.add(forkliftDriver);
         panel.add(forkliftDriverJCheckBox);
 
@@ -684,7 +707,6 @@ public class EmployeeAddressList {
 
         panel.add(electrician);
         panel.add(electricianJCheckBox);
-
 
         panel.add(reset2);
         panel.add(confirmUpdate);
