@@ -2,7 +2,17 @@ package com.database.rexam;
 
 import com.binentryscreens.rexam.EndCounts;
 import com.binentryscreens.rexam.LinerAndShellsEntry;
+import com.maintenance.rexam.BalancerProduction;
+import com.maintenance.rexam.EHSStatutoryChecks;
+import com.maintenance.rexam.LexanFingerTracking;
+import com.maintenance.rexam.LineBalance;
+import com.maintenance.rexam.LinerProduction;
+import com.maintenance.rexam.LinerSpoilage;
+import com.maintenance.rexam.MachineOEE;
+import com.maintenance.rexam.StolleDowntime;
 import com.maintenance.rexam.ShellPressProduction;
+import com.maintenance.rexam.StolleProduction;
+import com.maintenance.rexam.StolleSpoilage;
 import java.awt.BorderLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -30,10 +40,13 @@ import com.nonconformance.rexam.ShellPressEntryMenu;
 import com.nonconformance.rexam.StolleEntryMenu;
 import com.par.rexam.ParEntry;
 import com.productiontrackingscreens.rexam.LSSPMActivityEntry2;
+import com.productiontrackingscreens.rexam.LinerDataEntryScreen;
 import com.productiontrackingscreens.rexam.LinerUsageEntryScreen;
 import com.productiontrackingscreens.rexam.MeetingQualityIssues;
 import com.productiontrackingscreens.rexam.OptimeDataEntryScreen;
 import com.productiontrackingscreens.rexam.ProductionMeeting;
+import com.productiontrackingscreens.rexam.StolleDataEntryScreen;
+import java.util.Calendar;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -43,6 +56,7 @@ public class SQLiteConnection {
 
         // TODO Auto-generated method stub
         Date date = new Date();
+        MaintenanceMachineOEEgetAverages(30);
     }
 
     public SQLiteConnection() {
@@ -497,7 +511,7 @@ public class SQLiteConnection {
                             0).toString();
                     int id = Integer.valueOf(idString);
                     try {
-                        LSSPMActivityEntry2 lssPM = new LSSPMActivityEntry2(2, "", "", -1);
+                        LSSPMActivityEntry2 lssPM = new LSSPMActivityEntry2(2, "", "", -2);
                         lssPM.setLinerUsageToId(id);
                     } catch (Exception ex) {
                         Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
@@ -1664,13 +1678,18 @@ public class SQLiteConnection {
 
                     // System.out.println("Clicked : " + row );
                     System.out.println("Selected NUmber " + table.getValueAt(table.getSelectedRow(),
-                            0).toString());
+                            10).toString());
 
-                    String idString = table.getValueAt(table.getSelectedRow(), 0).toString();
+                    String idString = table.getValueAt(table.getSelectedRow(), 10).toString();
                     int id = Integer.valueOf(idString);
-                    StolleEntryMenu stolle = new StolleEntryMenu(id);
+                    StolleDataEntryScreen stolle = null;
                     try {
-                        stolle.setStolleEntryToNCR(id);
+                        stolle = new StolleDataEntryScreen(1, -2);
+                    } catch (SQLException ex) {
+                        Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    try {
+                        stolle.setStolleDataEntry(id);
                     } catch (Exception ex) {
                         Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
                     }
@@ -2316,7 +2335,7 @@ public class SQLiteConnection {
 
         if (reportType == 1) {
             psmt = conn
-                    .prepareStatement("SELECT Module, Date, Shift, Crew, Operator, LinerInfeed, ShellsSpoiled, CalculatedSpoilage as Spoilage, Comments FROM LinerEntry ORDER BY Date DESC");
+                    .prepareStatement("SELECT Module, Date, Shift, Crew, Operator, LinerInfeed, ShellsSpoiled, CalculatedSpoilage as Spoilage, ID, Comments FROM LinerEntry ORDER BY Date DESC");
             psmt.setQueryTimeout(10);
             rs = psmt.executeQuery();
         } else if (reportType == 2) {
@@ -2357,7 +2376,7 @@ public class SQLiteConnection {
             row.add(rs.getString(7));
             row.add(rs.getString(8));
             row.add(rs.getString(9));
-//            row.add(rs.getString(10));
+            row.add(rs.getString(10));
 
             data.add(row);
         }
@@ -2369,40 +2388,40 @@ public class SQLiteConnection {
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
         table.getColumnModel().getColumn(0).setMinWidth(80);
-        table.getColumnModel().getColumn(2).setMaxWidth(40);
-        table.getColumnModel().getColumn(3).setMinWidth(80);
+        table.getColumnModel().getColumn(2).setMaxWidth(50);
+        table.getColumnModel().getColumn(3).setMaxWidth(50);
         table.getColumnModel().getColumn(4).setMinWidth(80);
         table.getColumnModel().getColumn(5).setMinWidth(80);
         table.getColumnModel().getColumn(6).setMinWidth(80);
         table.getColumnModel().getColumn(7).setMinWidth(80);
-        table.getColumnModel().getColumn(8).setMinWidth(500);
+        table.getColumnModel().getColumn(8).setMaxWidth(50);
+        table.getColumnModel().getColumn(9).setMinWidth(500);
 
-        // Render Checkbox
-        // TableColumn tc = table.getColumnModel().getColumn(9);
-        // tc.setCellRenderer(table.getDefaultRenderer(Boolean.class));
-        //
-        // table.addMouseListener(new MouseAdapter() {
-        // public void mousePressed(MouseEvent e) {
-        //
-        // if (e.getClickCount() == 2) {
-        // JTable target = (JTable) e.getSource();
-        //
-        // int row = target.getSelectedRow() + 1;
-        // // int column = target.getSelectedColumn();
-        //
-        // // System.out.println("Clicked : " + row );
-        // System.out.println(table.getValueAt(table.getSelectedRow(),
-        // 0).toString());
-        //
-        // String idString = table.getValueAt(table.getSelectedRow(),
-        // 0).toString();
-        // int id = Integer.valueOf(idString);
-        // ParEntry par = new ParEntry(2, "1", "August", "2014");
-        // par.setParToForm(1);
-        //
-        // }
-        // }
-        // });
+        //    Render Checkbox
+//        TableColumn tc = table.getColumnModel().getColumn(9);
+//        tc.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+        table.addMouseListener(new MouseAdapter() {
+            public void mousePressed(MouseEvent e) {
+
+                if (e.getClickCount() == 2) {
+                    JTable target = (JTable) e.getSource();
+
+                    int row = target.getSelectedRow() + 1;
+         // int column = target.getSelectedColumn();
+
+                    // System.out.println("Clicked : " + row );
+                    System.out.println(table.getValueAt(table.getSelectedRow(),
+                            8).toString());
+
+                    String idString = table.getValueAt(table.getSelectedRow(),
+                            8).toString();
+                    int id = Integer.valueOf(idString);
+                    LinerDataEntryScreen par = new LinerDataEntryScreen(1, -1);
+                    par.setLinerDataEntryToID(id);
+
+                }
+            }
+        });
         JTableHeader header = table.getTableHeader();
 
         outerPanel.add(header, BorderLayout.NORTH);
@@ -3558,7 +3577,7 @@ public class SQLiteConnection {
 
     public static Object[] EmployeeReturnEntryByName(String nameIn) throws Exception {
 
-        Object[] result = new Object[20];
+        Object[] result = new Object[21];
 
         Connection conn = Connect();
         Statement s = conn.createStatement();
@@ -3590,10 +3609,11 @@ public class SQLiteConnection {
             result[14] = rs.getBoolean(15);
             result[15] = rs.getBoolean(16);
             result[16] = rs.getBoolean(17);
+            result[17] = rs.getBoolean(18);
 
-            result[17] = rs.getString(18);
             result[18] = rs.getString(19);
             result[19] = rs.getString(20);
+            result[20] = rs.getString(21);
 
             // System.out.println("ID " + result[0]);
             // System.out.println("Name " + result[1]);
@@ -3616,7 +3636,7 @@ public class SQLiteConnection {
 
     public static Object[] EmployeeReturnEntryById(int idIn) throws Exception {
 
-        Object[] result = new Object[15];
+        Object[] result = new Object[21];
 
         Connection conn = Connect();
         Statement s = conn.createStatement();
@@ -3643,9 +3663,16 @@ public class SQLiteConnection {
             result[9] = rs.getBoolean(10);
             result[10] = rs.getBoolean(11);
             result[11] = rs.getBoolean(12);
-            result[12] = rs.getString(13);
-            result[13] = rs.getString(14);
-            result[14] = rs.getString(15);
+            result[12] = rs.getBoolean(13);
+            result[13] = rs.getBoolean(14);
+            result[14] = rs.getBoolean(15);
+            result[15] = rs.getBoolean(16);
+            result[16] = rs.getBoolean(17);
+            result[17] = rs.getBoolean(18);
+
+            result[18] = rs.getString(19);
+            result[19] = rs.getString(20);
+            result[20] = rs.getString(21);
 
         }
 
@@ -3692,7 +3719,7 @@ public class SQLiteConnection {
 
     public static void EmployeeInsert(
             int idIn, String employeeIdIn, String nameIn, String addressIn, String crewIn, Boolean departmentHeadIn, Boolean shiftManagerIn,
-            Boolean technicianIn, Boolean operatorIn, Boolean engineerIn, Boolean packerIn, Boolean qcInspectorIn, Boolean forkliftDriverIn, Boolean ProcessLeaderIn, Boolean ToolmakerIn, Boolean FitterIn, Boolean ElectricianIn, String phoneNumberIn,
+            Boolean technicianIn, Boolean leadHandIn, Boolean operatorIn, Boolean engineerIn, Boolean packerIn, Boolean qcInspectorIn, Boolean forkliftDriverIn, Boolean ProcessLeaderIn, Boolean ToolmakerIn, Boolean FitterIn, Boolean ElectricianIn, String phoneNumberIn,
             String mobileNumberIn
     ) throws SQLException {
 
@@ -3707,7 +3734,7 @@ public class SQLiteConnection {
 
         // QUERY
         // //////////////////////////////////////////////////////////////////////
-        PreparedStatement updateLproductionMeeting = conn.prepareStatement("insert into Employees values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+        PreparedStatement updateLproductionMeeting = conn.prepareStatement("insert into Employees values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
 
         updateLproductionMeeting.setInt(1, idIn);
         updateLproductionMeeting.setString(2, employeeIdIn);
@@ -3717,20 +3744,21 @@ public class SQLiteConnection {
         updateLproductionMeeting.setBoolean(6, departmentHeadIn);
         updateLproductionMeeting.setBoolean(7, shiftManagerIn);
         updateLproductionMeeting.setBoolean(8, technicianIn);
-        updateLproductionMeeting.setBoolean(9, operatorIn);
-        updateLproductionMeeting.setBoolean(10, engineerIn);
-        updateLproductionMeeting.setBoolean(11, packerIn);
-        updateLproductionMeeting.setBoolean(12, qcInspectorIn);
+        updateLproductionMeeting.setBoolean(9, leadHandIn);
+        updateLproductionMeeting.setBoolean(10, operatorIn);
+        updateLproductionMeeting.setBoolean(11, engineerIn);
+        updateLproductionMeeting.setBoolean(12, packerIn);
+        updateLproductionMeeting.setBoolean(13, qcInspectorIn);
 
-        updateLproductionMeeting.setBoolean(13, forkliftDriverIn);
-        updateLproductionMeeting.setBoolean(14, ProcessLeaderIn);
-        updateLproductionMeeting.setBoolean(15, ToolmakerIn);
-        updateLproductionMeeting.setBoolean(16, FitterIn);
-        updateLproductionMeeting.setBoolean(17, ElectricianIn);
+        updateLproductionMeeting.setBoolean(14, forkliftDriverIn);
+        updateLproductionMeeting.setBoolean(15, ProcessLeaderIn);
+        updateLproductionMeeting.setBoolean(16, ToolmakerIn);
+        updateLproductionMeeting.setBoolean(17, FitterIn);
+        updateLproductionMeeting.setBoolean(18, ElectricianIn);
 
-        updateLproductionMeeting.setString(18, phoneNumberIn);
-        updateLproductionMeeting.setString(19, mobileNumberIn);
-        updateLproductionMeeting.setString(20, dateF);
+        updateLproductionMeeting.setString(19, phoneNumberIn);
+        updateLproductionMeeting.setString(20, mobileNumberIn);
+        updateLproductionMeeting.setString(21, dateF);
 
         updateLproductionMeeting.executeUpdate();
 
@@ -3743,7 +3771,7 @@ public class SQLiteConnection {
 
     public static void EmployeeUpdate(
             String employeeIdIn, String nameIn, String addressIn, String crewIn, Boolean departmentHeadIn, Boolean shiftManagerIn, Boolean technicianIn,
-            Boolean operatorIn, Boolean engineerIn, Boolean packerIn, Boolean qcInspectorIn, Boolean forkliftDriverIn, Boolean ProcessLeaderIn,
+            Boolean leadHandIn, Boolean operatorIn, Boolean engineerIn, Boolean packerIn, Boolean qcInspectorIn, Boolean forkliftDriverIn, Boolean ProcessLeaderIn,
             Boolean ToolmakerIn, Boolean FitterIn, Boolean ElectricianIn, String phoneNumberIn, String mobileNumberIn, int idIn
     )
             throws SQLException {
@@ -3755,7 +3783,7 @@ public class SQLiteConnection {
 
         // QUERY
         // //////////////////////////////////////////////////////////////////////
-        String sql = "update Employees set EmployeeID=?, Name=? , Address=? , Crew=? , DepartmentHead=? , ShiftManager=? , Technician=?, Operator=?,  Engineer=?, Packer=?, QCInspector=?, ForkLiftDriver=?,  ProcessLeader=?,  ToolMaker=?,  Fitter=?,   Electrician=?, PhoneNumber=?, MobileNumber=? where ID=?";
+        String sql = "update Employees set EmployeeID=?, Name=? , Address=? , Crew=? , DepartmentHead=? , ShiftManager=? , Technician=?,  LeadHand=?, Operator=?,  Engineer=?, Packer=?, QCInspector=?, ForkLiftDriver=?,  ProcessLeader=?,  ToolMaker=?,  Fitter=?,   Electrician=?, PhoneNumber=?, MobileNumber=? where ID=?";
 
         PreparedStatement updateEmployees = conn.prepareStatement(sql);
         updateEmployees.setQueryTimeout(10);
@@ -3768,20 +3796,21 @@ public class SQLiteConnection {
         updateEmployees.setBoolean(5, departmentHeadIn);
         updateEmployees.setBoolean(6, shiftManagerIn);
         updateEmployees.setBoolean(7, technicianIn);
-        updateEmployees.setBoolean(8, operatorIn);
-        updateEmployees.setBoolean(9, engineerIn);
-        updateEmployees.setBoolean(10, packerIn);
-        updateEmployees.setBoolean(11, qcInspectorIn);
-        updateEmployees.setBoolean(12, forkliftDriverIn);
-        updateEmployees.setBoolean(13, ProcessLeaderIn);
-        updateEmployees.setBoolean(14, ToolmakerIn);
-        updateEmployees.setBoolean(15, FitterIn);
-        updateEmployees.setBoolean(16, ElectricianIn);
+        updateEmployees.setBoolean(8, leadHandIn);
+        updateEmployees.setBoolean(9, operatorIn);
+        updateEmployees.setBoolean(10, engineerIn);
+        updateEmployees.setBoolean(11, packerIn);
+        updateEmployees.setBoolean(12, qcInspectorIn);
+        updateEmployees.setBoolean(13, forkliftDriverIn);
+        updateEmployees.setBoolean(14, ProcessLeaderIn);
+        updateEmployees.setBoolean(15, ToolmakerIn);
+        updateEmployees.setBoolean(16, FitterIn);
+        updateEmployees.setBoolean(17, ElectricianIn);
 
-        updateEmployees.setString(17, phoneNumberIn);
-        updateEmployees.setString(18, mobileNumberIn);
+        updateEmployees.setString(18, phoneNumberIn);
+        updateEmployees.setString(19, mobileNumberIn);
 
-        updateEmployees.setInt(19, idIn);
+        updateEmployees.setInt(20, idIn);
 
         updateEmployees.executeUpdate();
 
@@ -3817,7 +3846,7 @@ public class SQLiteConnection {
 
     public static Object[] EmployeeGetNextEntryById(String nameIn) throws SQLException {
 
-        Object[] result = new Object[8];
+        Object[] result = new Object[21];
 
         Connection conn = Connect();
         Statement s = conn.createStatement();
@@ -3833,15 +3862,27 @@ public class SQLiteConnection {
         while ((rs != null) && (rs.next())) {
 
             result[0] = rs.getInt(1);
-            String df1 = (String) rs.getObject(2);
-            result[1] = df1;
-            String df2 = (String) rs.getObject(3);
-            result[2] = df2;
+            result[1] = rs.getString(2);
+            result[2] = rs.getString(3);
             result[3] = rs.getString(4);
             result[4] = rs.getString(5);
-            result[5] = rs.getString(6);
-            result[6] = rs.getString(7);
-            result[7] = rs.getString(8);
+            result[5] = rs.getBoolean(6);
+            result[6] = rs.getBoolean(7);
+            result[7] = rs.getBoolean(8);
+            result[8] = rs.getBoolean(9);
+            result[9] = rs.getBoolean(10);
+            result[10] = rs.getBoolean(11);
+            result[11] = rs.getBoolean(12);
+            result[12] = rs.getBoolean(13);
+            result[13] = rs.getBoolean(14);
+            result[14] = rs.getBoolean(15);
+            result[15] = rs.getBoolean(16);
+            result[16] = rs.getBoolean(17);
+            result[17] = rs.getBoolean(18);
+
+            result[18] = rs.getString(19);
+            result[19] = rs.getString(20);
+            result[20] = rs.getString(21);
 
             for (int i = 0; i < result.length; i++) {
 
@@ -3861,7 +3902,7 @@ public class SQLiteConnection {
 
     public static Object[] EmployeeGetPreviousEntryById(String nameIn) throws SQLException {
 
-        Object[] result = new Object[8];
+        Object[] result = new Object[21];
 
         Connection conn = Connect();
         Statement s = conn.createStatement();
@@ -3877,15 +3918,27 @@ public class SQLiteConnection {
         while ((rs != null) && (rs.next())) {
 
             result[0] = rs.getInt(1);
-            String df1 = (String) rs.getObject(2);
-            result[1] = df1;
-            String df2 = (String) rs.getObject(3);
-            result[2] = df2;
+            result[1] = rs.getString(2);
+            result[2] = rs.getString(3);
             result[3] = rs.getString(4);
             result[4] = rs.getString(5);
-            result[5] = rs.getString(6);
-            result[6] = rs.getString(7);
-            result[7] = rs.getString(8);
+            result[5] = rs.getBoolean(6);
+            result[6] = rs.getBoolean(7);
+            result[7] = rs.getBoolean(8);
+            result[8] = rs.getBoolean(9);
+            result[9] = rs.getBoolean(10);
+            result[10] = rs.getBoolean(11);
+            result[11] = rs.getBoolean(12);
+            result[12] = rs.getBoolean(13);
+            result[13] = rs.getBoolean(14);
+            result[14] = rs.getBoolean(15);
+            result[15] = rs.getBoolean(16);
+            result[16] = rs.getBoolean(17);
+            result[17] = rs.getBoolean(18);
+
+            result[18] = rs.getString(19);
+            result[19] = rs.getString(20);
+            result[20] = rs.getString(21);
 
             for (int i = 0; i < result.length; i++) {
 
@@ -3955,12 +4008,12 @@ public class SQLiteConnection {
         PreparedStatement psmt = conn.prepareStatement("SELECT "
                 + "Name,"
                 + "EmployeeID, "
-                + "Address, "
                 + "Crew, "
                 + "DepartmentHead, "
                 + "ShiftManager, "
                 + "ProcessLeader, "
                 + "Technician, "
+                + "LeadHand, "
                 + "Operator, "
                 + "Engineer, "
                 + "Packer, "
@@ -3969,9 +4022,8 @@ public class SQLiteConnection {
                 + "Fitter, "
                 + "Electrician, "
                 + "QCInspector, "
-                + "PhoneNumber, "
-                + "MobileNumber, "
-                + "ID FROM Employees ORDER BY Name ASC");
+                + "ID "
+                + "FROM Employees ORDER BY Name ASC");
         psmt.setQueryTimeout(10);
         ResultSet rs = psmt.executeQuery();
         DefaultTableModel dm = new DefaultTableModel();
@@ -3997,7 +4049,7 @@ public class SQLiteConnection {
             row.add(rs.getString(1));
             row.add(rs.getString(2));
             row.add(rs.getString(3));
-            row.add(rs.getString(4));
+            row.add(rs.getBoolean(4));
             row.add(rs.getBoolean(5));
             row.add(rs.getBoolean(6));
             row.add(rs.getBoolean(7));
@@ -4011,8 +4063,6 @@ public class SQLiteConnection {
             row.add(rs.getBoolean(15));
             row.add(rs.getBoolean(16));
             row.add(rs.getString(17));
-            row.add(rs.getString(18));
-            row.add(rs.getString(19));
 
             data.add(row);
         }
@@ -4024,44 +4074,47 @@ public class SQLiteConnection {
 
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
-        table.getColumnModel().getColumn(3).setMaxWidth(40);
-        table.getColumnModel().getColumn(18).setMaxWidth(30);
+        table.getColumnModel().getColumn(2).setMaxWidth(40);
+        table.getColumnModel().getColumn(16).setMaxWidth(30);
 
-        TableColumn tc = table.getColumnModel().getColumn(4);
+        TableColumn tc = table.getColumnModel().getColumn(3);
         tc.setCellRenderer(table.getDefaultRenderer(Boolean.class));
 
-        TableColumn tc1 = table.getColumnModel().getColumn(5);
+        TableColumn tc1 = table.getColumnModel().getColumn(4);
         tc1.setCellRenderer(table.getDefaultRenderer(Boolean.class));
 
-        TableColumn tc2 = table.getColumnModel().getColumn(6);
+        TableColumn tc2 = table.getColumnModel().getColumn(5);
         tc2.setCellRenderer(table.getDefaultRenderer(Boolean.class));
 
-        TableColumn tc3 = table.getColumnModel().getColumn(7);
+        TableColumn tc3 = table.getColumnModel().getColumn(6);
         tc3.setCellRenderer(table.getDefaultRenderer(Boolean.class));
 
-        TableColumn tc4 = table.getColumnModel().getColumn(8);
+        TableColumn tc4 = table.getColumnModel().getColumn(7);
         tc4.setCellRenderer(table.getDefaultRenderer(Boolean.class));
 
-        TableColumn tc5 = table.getColumnModel().getColumn(9);
+        TableColumn tc5 = table.getColumnModel().getColumn(8);
         tc5.setCellRenderer(table.getDefaultRenderer(Boolean.class));
 
-        TableColumn tc6 = table.getColumnModel().getColumn(10);
+        TableColumn tc6 = table.getColumnModel().getColumn(9);
         tc6.setCellRenderer(table.getDefaultRenderer(Boolean.class));
 
-        TableColumn tc7 = table.getColumnModel().getColumn(11);
+        TableColumn tc7 = table.getColumnModel().getColumn(10);
         tc7.setCellRenderer(table.getDefaultRenderer(Boolean.class));
 
-        TableColumn tc8 = table.getColumnModel().getColumn(12);
+        TableColumn tc8 = table.getColumnModel().getColumn(11);
         tc8.setCellRenderer(table.getDefaultRenderer(Boolean.class));
 
-        TableColumn tc9 = table.getColumnModel().getColumn(13);
+        TableColumn tc9 = table.getColumnModel().getColumn(12);
         tc9.setCellRenderer(table.getDefaultRenderer(Boolean.class));
 
-        TableColumn tc10 = table.getColumnModel().getColumn(14);
+        TableColumn tc10 = table.getColumnModel().getColumn(13);
         tc10.setCellRenderer(table.getDefaultRenderer(Boolean.class));
 
-        TableColumn tc11 = table.getColumnModel().getColumn(15);
+        TableColumn tc11 = table.getColumnModel().getColumn(14);
         tc11.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+        
+        TableColumn tc12 = table.getColumnModel().getColumn(15);
+        tc12.setCellRenderer(table.getDefaultRenderer(Boolean.class));
 
         JTableHeader header = table.getTableHeader();
 
@@ -4087,7 +4140,7 @@ public class SQLiteConnection {
         // Read data from a table
         Connection conn = Connect();
         conn.setAutoCommit(false);
-        String sql = "SELECT Name,EmployeeID, Address, Crew, DepartmentHead, ShiftManager, Technician, Operator, Engineer, Packer, QCInspector, PhoneNumber, MobileNumber, ID FROM Employees ORDER BY Name ASC";
+        String sql = "SELECT Name,EmployeeID, Crew, DepartmentHead, ShiftManager, Technician, Operator, Engineer, Packer, QCInspector, ID FROM Employees ORDER BY Name ASC";
         Statement stmt = conn.createStatement();
         stmt.setQueryTimeout(5);
         ResultSet rs = stmt.executeQuery(sql);
@@ -6315,7 +6368,7 @@ public class SQLiteConnection {
 
     public static Object[] SpoilageByDayReturnEntryByDate(Date dateIn) throws Exception {
 
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         String df = (sdf.format(dateIn));
 
         // Need to format dateIn to proper Syntax ----> #2/2/2012#
@@ -7807,7 +7860,7 @@ public class SQLiteConnection {
             month = "12";
         }
 
-        String date = (day + "/" + month + "/" + year);
+        String date = (year + "-" + month + "-" + day);
 
         // Open Connection
         Connection conn = Connect();
@@ -7816,7 +7869,8 @@ public class SQLiteConnection {
 
         // /////////////////////////////////////////////////////////////////////////
         // Day 1
-        date = ("01" + "/" + month + "/" + year);
+        // date = ("01" + "/" + month + "/" + year);
+        date = (year + "-" + month + "-" + "01");
         String dayQuery1 = "SELECT * FROM SpoilageByDay WHERE DateString LIKE '%" + date + "%';";
         s.execute(dayQuery1);
         ResultSet rs1 = s.getResultSet();
@@ -7830,7 +7884,7 @@ public class SQLiteConnection {
 
         // /////////////////////////////////////////////////////////////////////////
         // Day 2
-        date = ("02" + "/" + month + "/" + year);
+        date = (year + "-" + month + "-" + "02");
         // Run Query
         String dayQuery2 = "SELECT * FROM SpoilageByDay WHERE DateString LIKE '%" + date + "%';";
         s.execute(dayQuery2);
@@ -7844,7 +7898,7 @@ public class SQLiteConnection {
         rs2.close();
         // /////////////////////////////////////////////////////////////////////////
         // Day 3
-        date = ("03" + "/" + month + "/" + year);
+        date = (year + "-" + month + "-" + "03");
         // Run Query
         String dayQuery3 = "SELECT * FROM SpoilageByDay WHERE DateString LIKE '%" + date + "%';";
         s.execute(dayQuery3);
@@ -7858,7 +7912,7 @@ public class SQLiteConnection {
         rs3.close();
         // /////////////////////////////////////////////////////////////////////////
         // Day 4
-        date = ("04" + "/" + month + "/" + year);
+        date = (year + "-" + month + "-" + "04");
         // Run Query
         String dayQuery4 = "SELECT * FROM SpoilageByDay WHERE DateString LIKE '%" + date + "%';";
         s.execute(dayQuery4);
@@ -7872,7 +7926,7 @@ public class SQLiteConnection {
         rs4.close();
         // /////////////////////////////////////////////////////////////////////////
         // Day 5
-        date = ("05" + "/" + month + "/" + year);
+        date = (year + "-" + month + "-" + "05");
         // Run Query
         String dayQuery5 = "SELECT * FROM SpoilageByDay WHERE DateString LIKE '%" + date + "%';";
         s.execute(dayQuery5);
@@ -7886,7 +7940,7 @@ public class SQLiteConnection {
         rs5.close();
         // /////////////////////////////////////////////////////////////////////////
         // Day 6
-        date = ("06" + "/" + month + "/" + year);
+        date = (year + "-" + month + "-" + "06");
         // Run Query
         String dayQuery6 = "SELECT * FROM SpoilageByDay WHERE DateString LIKE '%" + date + "%';";
         s.execute(dayQuery6);
@@ -7900,7 +7954,7 @@ public class SQLiteConnection {
         rs6.close();
         // /////////////////////////////////////////////////////////////////////////
         // Day 7
-        date = ("07" + "/" + month + "/" + year);
+        date = (year + "-" + month + "-" + "07");
         // Run Query
         String dayQuery7 = "SELECT * FROM SpoilageByDay WHERE DateString LIKE '%" + date + "%';";
         s.execute(dayQuery7);
@@ -7914,7 +7968,7 @@ public class SQLiteConnection {
         rs7.close();
         // /////////////////////////////////////////////////////////////////////////
         // Day 8
-        date = ("08" + "/" + month + "/" + year);
+        date = (year + "-" + month + "-" + "08");
         // Run Query
         String dayQuery8 = "SELECT * FROM SpoilageByDay WHERE DateString LIKE '%" + date + "%';";
         s.execute(dayQuery8);
@@ -7928,7 +7982,7 @@ public class SQLiteConnection {
         rs8.close();
         // /////////////////////////////////////////////////////////////////////////
         // Day 9
-        date = ("09" + "/" + month + "/" + year);
+        date = (year + "-" + month + "-" + "09");
         // Run Query
         String dayQuery9 = "SELECT * FROM SpoilageByDay WHERE DateString LIKE '%" + date + "%';";
         s.execute(dayQuery9);
@@ -7942,7 +7996,7 @@ public class SQLiteConnection {
         rs9.close();
         // /////////////////////////////////////////////////////////////////////////
         // Day 10
-        date = ("10" + "/" + month + "/" + year);
+        date = (year + "-" + month + "-" + "10");
         // Run Query
         String dayQuery10 = "SELECT * FROM SpoilageByDay WHERE DateString LIKE '%" + date + "%';";
         s.execute(dayQuery10);
@@ -7956,7 +8010,7 @@ public class SQLiteConnection {
         rs10.close();
         // /////////////////////////////////////////////////////////////////////////
         // Day 11
-        date = ("11" + "/" + month + "/" + year);
+        date = (year + "-" + month + "-" + "11");
         // Run Query
         String dayQuery11 = "SELECT * FROM SpoilageByDay WHERE DateString LIKE '%" + date + "%';";
         s.execute(dayQuery11);
@@ -7969,7 +8023,7 @@ public class SQLiteConnection {
         rs11.close();
         // /////////////////////////////////////////////////////////////////////////
         // Day 12
-        date = ("12" + "/" + month + "/" + year);
+        date = (year + "-" + month + "-" + "12");
         // Run Query
         String dayQuery12 = "SELECT * FROM SpoilageByDay WHERE DateString LIKE '%" + date + "%';";
         s.execute(dayQuery12);
@@ -7983,7 +8037,7 @@ public class SQLiteConnection {
         rs12.close();
         // /////////////////////////////////////////////////////////////////////////
         // Day 13
-        date = ("13" + "/" + month + "/" + year);
+        date = (year + "-" + month + "-" + "13");
         // Run Query
         String dayQuery13 = "SELECT * FROM SpoilageByDay WHERE DateString LIKE '%" + date + "%';";
         s.execute(dayQuery13);
@@ -7997,7 +8051,7 @@ public class SQLiteConnection {
         rs13.close();
         // /////////////////////////////////////////////////////////////////////////
         // Day 14
-        date = ("14" + "/" + month + "/" + year);
+        date = (year + "-" + month + "-" + "14");
         // Run Query
         String dayQuery14 = "SELECT * FROM SpoilageByDay WHERE DateString LIKE '%" + date + "%';";
         s.execute(dayQuery14);
@@ -8011,7 +8065,7 @@ public class SQLiteConnection {
         rs14.close();
         // /////////////////////////////////////////////////////////////////////////
         // Day 15
-        date = ("15" + "/" + month + "/" + year);
+        date = (year + "-" + month + "-" + "15");
         // Run Query
         String dayQuery15 = "SELECT * FROM SpoilageByDay WHERE DateString LIKE '%" + date + "%';";
         s.execute(dayQuery15);
@@ -8025,7 +8079,7 @@ public class SQLiteConnection {
         rs15.close();
         // /////////////////////////////////////////////////////////////////////////
         // Day 16
-        date = ("16" + "/" + month + "/" + year);
+        date = (year + "-" + month + "-" + "16");
         // Run Query
         String dayQuery16 = "SELECT * FROM SpoilageByDay WHERE DateString LIKE '%" + date + "%';";
         s.execute(dayQuery16);
@@ -8039,7 +8093,7 @@ public class SQLiteConnection {
         rs16.close();
         // /////////////////////////////////////////////////////////////////////////
         // Day 17
-        date = ("17" + "/" + month + "/" + year);
+        date = (year + "-" + month + "-" + "17");
         // Run Query
         String dayQuery17 = "SELECT * FROM SpoilageByDay WHERE DateString LIKE '%" + date + "%';";
         s.execute(dayQuery17);
@@ -8053,7 +8107,7 @@ public class SQLiteConnection {
         rs17.close();
         // /////////////////////////////////////////////////////////////////////////
         // Day 18
-        date = ("18" + "/" + month + "/" + year);
+        date = (year + "-" + month + "-" + "18");
         // Run Query
         String dayQuery18 = "SELECT * FROM SpoilageByDay WHERE DateString LIKE '%" + date + "%';";
         s.execute(dayQuery18);
@@ -8067,7 +8121,7 @@ public class SQLiteConnection {
         rs18.close();
         // ///////////////////////////////////////////////////////////////////////
         // Day 19
-        date = ("19" + "/" + month + "/" + year);
+        date = (year + "-" + month + "-" + "19");
         // Run Query
         String dayQuery19 = "SELECT * FROM SpoilageByDay WHERE DateString LIKE '%" + date + "%';";
         s.execute(dayQuery19);
@@ -8081,7 +8135,7 @@ public class SQLiteConnection {
         rs19.close();
         // /////////////////////////////////////////////////////////////////////////
         // Day 20
-        date = ("20" + "/" + month + "/" + year);
+        date = (year + "-" + month + "-" + "20");
         // Run Query
         String dayQuery20 = "SELECT * FROM SpoilageByDay WHERE DateString LIKE '%" + date + "%';";
         s.execute(dayQuery20);
@@ -8095,7 +8149,7 @@ public class SQLiteConnection {
         rs20.close();
         // /////////////////////////////////////////////////////////////////////////
         // Day 21
-        date = ("21" + "/" + month + "/" + year);
+        date = (year + "-" + month + "-" + "21");
         // Run Query
         String dayQuery21 = "SELECT * FROM SpoilageByDay WHERE DateString LIKE '%" + date + "%';";
         s.execute(dayQuery21);
@@ -8109,7 +8163,7 @@ public class SQLiteConnection {
         rs21.close();
         // /////////////////////////////////////////////////////////////////////////
         // Day 22
-        date = ("22" + "/" + month + "/" + year);
+        date = (year + "-" + month + "-" + "22");
         // Run Query
         String dayQuery22 = "SELECT * FROM SpoilageByDay WHERE DateString LIKE '%" + date + "%';";
         s.execute(dayQuery22);
@@ -8123,7 +8177,7 @@ public class SQLiteConnection {
         rs22.close();
         // /////////////////////////////////////////////////////////////////////////
         // Day 23
-        date = ("23" + "/" + month + "/" + year);
+        date = (year + "-" + month + "-" + "23");
         // Run Query
         String dayQuery23 = "SELECT * FROM SpoilageByDay WHERE DateString LIKE '%" + date + "%';";
         s.execute(dayQuery23);
@@ -8137,7 +8191,7 @@ public class SQLiteConnection {
         rs23.close();
         // /////////////////////////////////////////////////////////////////////////
         // Day 24
-        date = ("24" + "/" + month + "/" + year);
+        date = (year + "-" + month + "-" + "24");
         // Run Query
         String dayQuery24 = "SELECT * FROM SpoilageByDay WHERE DateString LIKE '%" + date + "%';";
         s.execute(dayQuery24);
@@ -8151,7 +8205,7 @@ public class SQLiteConnection {
         rs24.close();
         // /////////////////////////////////////////////////////////////////////////
         // Day 25
-        date = ("25" + "/" + month + "/" + year);
+        date = (year + "-" + month + "-" + "25");
         // Run Query
         String dayQuery25 = "SELECT * FROM SpoilageByDay WHERE DateString LIKE '%" + date + "%';";
         s.execute(dayQuery25);
@@ -8165,7 +8219,7 @@ public class SQLiteConnection {
         rs25.close();
         // /////////////////////////////////////////////////////////////////////////
         // Day 26
-        date = ("26" + "/" + month + "/" + year);
+        date = (year + "-" + month + "-" + "26");
         // Run Query
         String dayQuery26 = "SELECT * FROM SpoilageByDay WHERE DateString LIKE '%" + date + "%';";
         s.execute(dayQuery26);
@@ -8179,7 +8233,7 @@ public class SQLiteConnection {
         rs26.close();
         // /////////////////////////////////////////////////////////////////////////
         // Day 27
-        date = ("27" + "/" + month + "/" + year);
+        date = (year + "-" + month + "-" + "27");
         // Run Query
         String dayQuery27 = "SELECT * FROM SpoilageByDay WHERE DateString LIKE '%" + date + "%';";
         s.execute(dayQuery27);
@@ -8193,7 +8247,7 @@ public class SQLiteConnection {
         rs27.close();
         // /////////////////////////////////////////////////////////////////////////
         // Day 28
-        date = ("28" + "/" + month + "/" + year);
+        date = (year + "-" + month + "-" + "28");
         // Run Query
         String dayQuery28 = "SELECT * FROM SpoilageByDay WHERE DateString LIKE '%" + date + "%';";
         s.execute(dayQuery28);
@@ -8207,7 +8261,7 @@ public class SQLiteConnection {
         rs28.close();
         // /////////////////////////////////////////////////////////////////////////
         // Day 29
-        date = ("29" + "/" + month + "/" + year);
+        date = (year + "-" + month + "-" + "29");
         // Run Query
         String dayQuery29 = "SELECT * FROM SpoilageByDay WHERE DateString LIKE '%" + date + "%';";
         s.execute(dayQuery29);
@@ -8221,7 +8275,7 @@ public class SQLiteConnection {
         rs29.close();
         // /////////////////////////////////////////////////////////////////////////
         // Day 30
-        date = ("30" + "/" + month + "/" + year);
+        date = (year + "-" + month + "-" + "30");
         // Run Query
         String dayQuery30 = "SELECT * FROM SpoilageByDay WHERE DateString LIKE '%" + date + "%';";
         s.execute(dayQuery30);
@@ -8235,7 +8289,7 @@ public class SQLiteConnection {
         rs30.close();
         // /////////////////////////////////////////////////////////////////////////
         // Day 31
-        date = ("31" + "/" + month + "/" + year);
+        date = (year + "-" + month + "-" + "31");
         // Run Query
         String dayQuery31 = "SELECT * FROM SpoilageByDay WHERE DateString LIKE '%" + date + "%';";
         s.execute(dayQuery31);
@@ -8263,7 +8317,7 @@ public class SQLiteConnection {
     public static int spoilageByDayGetDayTotals(String day, String month, String year) {
 
         int total = 0;
-        String date = (day + "/" + month + "/" + year);
+        String date = (year + "-" + month + "-" + day);
 
         String sql1 = "SELECT SUM(*) FROM SpoilageByDay WHERE DateString LIKE '%" + date + "%';";
         System.out.println(sql1);
@@ -8305,7 +8359,7 @@ public class SQLiteConnection {
             month = "12";
         }
 
-        String date = (dayIn + "/" + month + "/" + year);
+        String date = (year + "-" + month + "-" + dayIn);
 
         Connection conn = Connect();
         Statement s = conn.createStatement();
@@ -8319,7 +8373,7 @@ public class SQLiteConnection {
 
         for (int i = 0; i < 31; i++) {
 
-            date = (days[i] + "/" + month + "/" + year);
+            date = ( year + "-" + month + "-" + days[i]);
             String sql1 = "SELECT SUM (Optime1And2 + Optime3 + M1BBal + M3BBal + M1Liner + M2Liner + Stolle11 + "
                     + "Stolle22 +  M3ABal +  M1ABal + OvecTester + QCLab + BordenNo1 + M4QcArea + Stolle21 + Stolle33 + "
                     + "Stolle12 + Stolle31 + Stolle32 + M2BBal + M2ABal + M3Liners + M3QcArea + Stolle42 + M4B2Bal + "
@@ -10571,15 +10625,6 @@ public class SQLiteConnection {
 
         PreparedStatement psmt = conn.prepareStatement(query);
 
-//        PreparedStatement psmt = conn
-//                .prepareStatement("SELECT NCRNumber, NCRType, DateIssued, Defect, NonConformance, ImmediateActionTaken, PersonsAlerted, ShiftManager, Technician, Operator, Engineer "
-//                        + "FROM NCRliner "
-//                        + "UNION SELECT NCRNumber, NCRType, DateIssued, Defect, NonConformance, ImmediateActionTaken, PersonsAlerted, ShiftManager, Technician, Operator, Engineer "
-//                        + "FROM NCRStolle "
-//                        + "UNION SELECT NCRNumber, NCRType, DateIssued, Defect, NonConformance, ImmediateActionTaken, PersonsAlerted, ShiftManager, Technician, Operator, Engineer "
-//                        + "FROM NCRShellPress "
-//                        + "UNION SELECT NCRNumber, NCRType, DateIssued, Defect, NonConformance, ImmediateActionTaken, PersonsAlerted, ShiftManager, Technician, Operator, Engineer "
-//                        + "FROM NCROther ORDER BY NCRNumber ASC");
         psmt.setQueryTimeout(10);
         ResultSet rs = psmt.executeQuery();
         DefaultTableModel dm = new DefaultTableModel();
@@ -11079,6 +11124,278 @@ public class SQLiteConnection {
 
                 data.add(row);
             }
+        } else if (type.equalsIgnoreCase("Balancer Production")) {
+
+            System.out.print(type);
+
+            while (rs.next()) {
+                Vector row = new Vector(len);
+
+                row.add(rs.getString(1));
+                row.add(rs.getString(2));
+                row.add(rs.getString(3));
+                row.add(rs.getString(4));
+                row.add(rs.getString(5));
+                row.add(rs.getString(6));
+                row.add(rs.getString(7));
+                row.add(rs.getString(8));
+                row.add(rs.getString(9));
+                row.add(rs.getString(10));
+                row.add(rs.getString(11));
+                row.add(rs.getString(12));
+
+                data.add(row);
+            }
+        } else if (type.equalsIgnoreCase("Lexan Finger Tracking")) {
+
+            System.out.print(type);
+
+            while (rs.next()) {
+                Vector row = new Vector(len);
+
+                row.add(rs.getInt(1));
+                row.add(rs.getString(2));
+                row.add(rs.getString(3));
+                row.add(rs.getString(4));
+                row.add(rs.getString(5));
+
+                data.add(row);
+            }
+        } else if (type.equalsIgnoreCase("Liner Production")) {
+
+            System.out.print(type);
+
+            while (rs.next()) {
+                Vector row = new Vector(len);
+
+                row.add(rs.getInt(1));
+                row.add(rs.getString(2));
+                row.add(rs.getInt(3));
+                row.add(rs.getInt(4));
+                row.add(rs.getInt(5));
+                row.add(rs.getInt(6));
+                row.add(rs.getInt(7));
+                row.add(rs.getInt(8));
+                row.add(rs.getInt(9));
+                row.add(rs.getInt(10));
+                row.add(rs.getInt(11));
+                row.add(rs.getInt(12));
+                row.add(rs.getInt(13));
+                row.add(rs.getInt(14));
+                row.add(rs.getInt(15));
+                row.add(rs.getInt(16));
+                row.add(rs.getInt(17));
+                row.add(rs.getInt(18));
+                row.add(rs.getInt(19));
+
+                data.add(row);
+            }
+        } else if (type.equalsIgnoreCase("Liner Spoilage")) {
+
+            System.out.print(type);
+
+            while (rs.next()) {
+                Vector row = new Vector(len);
+
+                row.add(rs.getString(1));
+                row.add(rs.getDouble(2));
+                row.add(rs.getDouble(3));
+                row.add(rs.getDouble(4));
+                row.add(rs.getDouble(5));
+                row.add(rs.getDouble(6));
+                row.add(rs.getDouble(7));
+                row.add(rs.getDouble(8));
+                row.add(rs.getDouble(9));
+                row.add(rs.getDouble(10));
+                row.add(rs.getDouble(11));
+                row.add(rs.getDouble(12));
+                row.add(rs.getDouble(13));
+                row.add(rs.getDouble(14));
+                row.add(rs.getDouble(15));
+                row.add(rs.getDouble(16));
+                row.add(rs.getDouble(17));
+                row.add(rs.getDouble(18));
+                row.add(rs.getString(19));
+
+                data.add(row);
+            }
+            
+        } else if (type.equalsIgnoreCase("Stolle Production")) {
+
+            System.out.print(type);
+
+            while (rs.next()) {
+                Vector row = new Vector(len);
+
+                row.add(rs.getInt(1));
+                row.add(rs.getString(2));
+                row.add(rs.getInt(3));
+                row.add(rs.getInt(4));
+                row.add(rs.getInt(5));
+                row.add(rs.getInt(6));
+                row.add(rs.getInt(7));
+                row.add(rs.getInt(8));
+                row.add(rs.getInt(9));
+                row.add(rs.getInt(10));
+                row.add(rs.getInt(11));
+                row.add(rs.getInt(12));
+                row.add(rs.getInt(13));
+                row.add(rs.getInt(14));
+                row.add(rs.getString(15));
+                
+
+                data.add(row);
+            }
+            
+        } else if (type.equalsIgnoreCase("Stolle Spoilage")) {
+
+            System.out.print(type);
+
+            while (rs.next()) {
+                Vector row = new Vector(len);
+
+                row.add(rs.getInt(1));
+                row.add(rs.getString(2));
+                row.add(rs.getDouble(3));
+                row.add(rs.getDouble(4));
+                row.add(rs.getDouble(5));
+                row.add(rs.getDouble(6));
+                row.add(rs.getDouble(7));
+                row.add(rs.getDouble(8));
+                row.add(rs.getDouble(9));
+                row.add(rs.getDouble(10));
+                row.add(rs.getDouble(11));
+                row.add(rs.getDouble(12));
+                row.add(rs.getDouble(13));
+                row.add(rs.getString(14));
+
+                
+
+                data.add(row);
+            }
+            
+        }else if (type.equalsIgnoreCase("EHS Statutory Checks")) {
+
+            System.out.print(type);
+
+            while (rs.next()) {
+                Vector row = new Vector(len);
+
+                row.add(rs.getInt(1));
+                row.add(rs.getString(2));
+                row.add(rs.getString(3));
+                row.add(rs.getString(4));
+                row.add(rs.getString(5));
+                row.add(rs.getString(6));
+                row.add(rs.getString(7));
+                row.add(rs.getString(8));
+                row.add(rs.getString(9));
+                row.add(rs.getString(10));
+                row.add(rs.getDouble(11));
+                row.add(rs.getString(12));
+                row.add(rs.getDouble(13));
+                row.add(rs.getString(14));
+
+                
+
+                data.add(row);
+            }
+            
+        }else if (type.equalsIgnoreCase("Machine OEE")) {
+
+            System.out.print(type);
+
+            while (rs.next()) {
+                Vector row = new Vector(len);
+
+                row.add(rs.getInt(1));
+                row.add(rs.getString(2));
+                row.add(rs.getInt(3));
+                row.add(rs.getInt(4));
+                row.add(rs.getInt(5));
+                row.add(rs.getInt(6));
+                row.add(rs.getInt(7));
+                row.add(rs.getInt(8));
+                row.add(rs.getInt(9));
+                row.add(rs.getInt(10));
+                row.add(rs.getInt(11));
+                row.add(rs.getInt(12));
+                row.add(rs.getInt(13));
+                row.add(rs.getInt(14));
+                row.add(rs.getInt(15));
+                row.add(rs.getInt(16));
+                row.add(rs.getInt(17));
+                row.add(rs.getInt(18));
+                row.add(rs.getInt(19));
+                row.add(rs.getInt(20));
+                row.add(rs.getInt(21));
+                row.add(rs.getInt(22));
+                row.add(rs.getString(23));
+                
+
+                
+
+                data.add(row);
+            }
+            
+        }else if (type.equalsIgnoreCase("Stolle Downtime")) {
+
+            System.out.print(type);
+
+            while (rs.next()) {
+                Vector row = new Vector(len);
+
+                row.add(rs.getInt(1));
+                row.add(rs.getString(2));
+                row.add(rs.getDouble(3));
+                row.add(rs.getDouble(4));
+                row.add(rs.getDouble(5));
+                row.add(rs.getDouble(6));
+                row.add(rs.getDouble(7));
+                row.add(rs.getDouble(8));
+                row.add(rs.getDouble(9));
+                row.add(rs.getDouble(10));
+                row.add(rs.getDouble(11));
+                row.add(rs.getDouble(12));
+                row.add(rs.getDouble(13));
+                row.add(rs.getDouble(14));
+                row.add(rs.getDouble(15));
+                row.add(rs.getDouble(16));
+                row.add(rs.getDouble(17));
+                row.add(rs.getDouble(18));
+                row.add(rs.getDouble(19));
+                row.add(rs.getDouble(20));
+                row.add(rs.getDouble(21));
+                row.add(rs.getDouble(22));
+                row.add(rs.getDouble(23));
+                row.add(rs.getDouble(24));
+                row.add(rs.getString(25));
+                row.add(rs.getString(26));
+                
+
+                
+
+                data.add(row);
+            }
+            
+        }else if (type.equalsIgnoreCase("Line Balance")) {
+
+            System.out.print(type);
+
+            while (rs.next()) {
+                Vector row = new Vector(len);
+
+                row.add(rs.getInt(1));
+                row.add(rs.getString(2));
+                row.add(rs.getInt(3));
+                row.add(rs.getInt(4));
+                row.add(rs.getInt(5));
+                row.add(rs.getInt(6));
+                row.add(rs.getString(7));
+                
+                data.add(row);
+            }
+            
         }
 
         table = new JTable(data, cols);
@@ -14671,7 +14988,7 @@ public class SQLiteConnection {
 
     public static Object[] MaintenanceShellPressMaintenanceReturnEntryByID(int id) throws Exception {
 
-        Object[] result = new Object[46];
+        Object[] result = new Object[50];
 
         Connection conn = Connect();
         Statement s = conn.createStatement();
@@ -14892,13 +15209,13 @@ public class SQLiteConnection {
     public static void MaintenanceShellPressMaintenanceUpdate(
             String MachineCodeIn,
             String MachineNameIn,
-            int LastMaintenanceDate1In,
-            int LastMaintenanceDate2In,
-            int LastMaintenanceDate3In,
-            int LastMaintenanceDate4In,
-            int LastMaintenanceDate5In,
-            int LastMaintenanceDate6In,
-            int LastMaintenanceDate7In,
+            String LastMaintenanceDate1In,
+            String LastMaintenanceDate2In,
+            String LastMaintenanceDate3In,
+            String LastMaintenanceDate4In,
+            String LastMaintenanceDate5In,
+            String LastMaintenanceDate6In,
+            String LastMaintenanceDate7In,
             int TargetProduction1In,
             int TargetProduction2In,
             int TargetProduction3In,
@@ -14920,13 +15237,13 @@ public class SQLiteConnection {
             int PlusMinus5In,
             int PlusMinus6In,
             int PlusMinus7In,
-            int MaintenanceDueDate1In,
-            int MaintenanceDueDate2In,
-            int MaintenanceDueDate3In,
-            int MaintenanceDueDate4In,
-            int MaintenanceDueDate5In,
-            int MaintenanceDueDate6In,
-            int MaintenanceDueDate7In,
+            String MaintenanceDueDate1In,
+            String MaintenanceDueDate2In,
+            String MaintenanceDueDate3In,
+            String MaintenanceDueDate4In,
+            String MaintenanceDueDate5In,
+            String MaintenanceDueDate6In,
+            String MaintenanceDueDate7In,
             int DaysRemaining1In,
             int DaysRemaining2In,
             int DaysRemaining3In,
@@ -14943,9 +15260,10 @@ public class SQLiteConnection {
 
         // QUERY
         // //////////////////////////////////////////////////////////////////////
-        String sql = 
-                "  update MainShellPressMaintenance "
-                + "setMachineCode=?, \n"
+        String sql
+                = "  update "
+                + "MainShellPressMaintenance set "
+                + "MachineCode=?, "
                 + "MachineName=?, \n"
                 + "LastMaintenanceDate1=?, \n"
                 + "LastMaintenanceDate2=?, \n"
@@ -14988,7 +15306,7 @@ public class SQLiteConnection {
                 + "DaysRemaining4=?, \n"
                 + "DaysRemaining5=?, \n"
                 + "DaysRemaining6=?, \n"
-                + "DaysRemaining7=?, \n"
+                + "DaysRemaining7=? \n"
                 + " where ID=?";
 
         PreparedStatement ShellPressMaintenanceUpdate = conn.prepareStatement(sql);
@@ -14996,13 +15314,13 @@ public class SQLiteConnection {
         ShellPressMaintenanceUpdate.setString(1, MachineCodeIn);
         ShellPressMaintenanceUpdate.setString(2, MachineNameIn);
 
-        ShellPressMaintenanceUpdate.setInt(3, LastMaintenanceDate1In);
-        ShellPressMaintenanceUpdate.setInt(4, LastMaintenanceDate2In);
-        ShellPressMaintenanceUpdate.setInt(5, LastMaintenanceDate3In);
-        ShellPressMaintenanceUpdate.setInt(6, LastMaintenanceDate4In);
-        ShellPressMaintenanceUpdate.setInt(7, LastMaintenanceDate5In);
-        ShellPressMaintenanceUpdate.setInt(8, LastMaintenanceDate6In);
-        ShellPressMaintenanceUpdate.setInt(9, LastMaintenanceDate7In);
+        ShellPressMaintenanceUpdate.setString(3, LastMaintenanceDate1In);
+        ShellPressMaintenanceUpdate.setString(4, LastMaintenanceDate2In);
+        ShellPressMaintenanceUpdate.setString(5, LastMaintenanceDate3In);
+        ShellPressMaintenanceUpdate.setString(6, LastMaintenanceDate4In);
+        ShellPressMaintenanceUpdate.setString(7, LastMaintenanceDate5In);
+        ShellPressMaintenanceUpdate.setString(8, LastMaintenanceDate6In);
+        ShellPressMaintenanceUpdate.setString(9, LastMaintenanceDate7In);
 
         ShellPressMaintenanceUpdate.setInt(10, TargetProduction1In);
         ShellPressMaintenanceUpdate.setInt(11, TargetProduction2In);
@@ -15025,26 +15343,26 @@ public class SQLiteConnection {
         ShellPressMaintenanceUpdate.setInt(26, PlusMinus3In);
         ShellPressMaintenanceUpdate.setInt(27, PlusMinus4In);
         ShellPressMaintenanceUpdate.setInt(28, PlusMinus5In);
-        ShellPressMaintenanceUpdate.setInt(39, PlusMinus6In);
-        ShellPressMaintenanceUpdate.setInt(40, PlusMinus7In);
+        ShellPressMaintenanceUpdate.setInt(29, PlusMinus6In);
+        ShellPressMaintenanceUpdate.setInt(30, PlusMinus7In);
 
-        ShellPressMaintenanceUpdate.setInt(41, MaintenanceDueDate1In);
-        ShellPressMaintenanceUpdate.setInt(42, MaintenanceDueDate2In);
-        ShellPressMaintenanceUpdate.setInt(43, MaintenanceDueDate3In);
-        ShellPressMaintenanceUpdate.setInt(44, MaintenanceDueDate4In);
-        ShellPressMaintenanceUpdate.setInt(45, MaintenanceDueDate5In);
-        ShellPressMaintenanceUpdate.setInt(46, MaintenanceDueDate6In);
-        ShellPressMaintenanceUpdate.setInt(47, MaintenanceDueDate7In);
+        ShellPressMaintenanceUpdate.setString(31, MaintenanceDueDate1In);
+        ShellPressMaintenanceUpdate.setString(32, MaintenanceDueDate2In);
+        ShellPressMaintenanceUpdate.setString(33, MaintenanceDueDate3In);
+        ShellPressMaintenanceUpdate.setString(34, MaintenanceDueDate4In);
+        ShellPressMaintenanceUpdate.setString(35, MaintenanceDueDate5In);
+        ShellPressMaintenanceUpdate.setString(36, MaintenanceDueDate6In);
+        ShellPressMaintenanceUpdate.setString(37, MaintenanceDueDate7In);
 
-        ShellPressMaintenanceUpdate.setInt(48, DaysRemaining1In);
-        ShellPressMaintenanceUpdate.setInt(49, DaysRemaining2In);
-        ShellPressMaintenanceUpdate.setInt(50, DaysRemaining3In);
-        ShellPressMaintenanceUpdate.setInt(51, DaysRemaining4In);
-        ShellPressMaintenanceUpdate.setInt(52, DaysRemaining5In);
-        ShellPressMaintenanceUpdate.setInt(53, DaysRemaining6In);
-        ShellPressMaintenanceUpdate.setInt(54, DaysRemaining7In);
+        ShellPressMaintenanceUpdate.setInt(38, DaysRemaining1In);
+        ShellPressMaintenanceUpdate.setInt(39, DaysRemaining2In);
+        ShellPressMaintenanceUpdate.setInt(40, DaysRemaining3In);
+        ShellPressMaintenanceUpdate.setInt(41, DaysRemaining4In);
+        ShellPressMaintenanceUpdate.setInt(42, DaysRemaining5In);
+        ShellPressMaintenanceUpdate.setInt(43, DaysRemaining6In);
+        ShellPressMaintenanceUpdate.setInt(44, DaysRemaining7In);
 
-        ShellPressMaintenanceUpdate.setInt(55, idIn);
+        ShellPressMaintenanceUpdate.setInt(45, idIn);
 
         ShellPressMaintenanceUpdate.executeUpdate();
 
@@ -15246,7 +15564,296 @@ public class SQLiteConnection {
         return result;
     }
 
-    public static Object[] MaintenanceShellPressMaintenanceCalculateTotalsByMonth(String monthIn, String yearIn) throws SQLException {
+    // Maintenance Balancer Production
+    public static int MaintenanceBalancerProductionGetHighestID() throws SQLException {
+
+        int highestID = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT MAX(MainBalancerProduction.[ID]) FROM MainBalancerProduction;";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            highestID = rs.getInt(1);
+            System.out.println("Highest ID :  " + highestID);
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        return highestID;
+    }
+
+    public static Object[] MaintenanceBalancerProductionReturnEntryByDate(Date dateIn) throws Exception {
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        String df = (sdf.format(dateIn));
+
+        // Need to format dateIn to proper Syntax ----> #2/2/2012#
+        Object[] result = new Object[12];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainBalancerProduction WHERE MainBalancerProduction.Date = \"" + df + "\";";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2);
+            result[1] = df1;
+            result[2] = rs.getInt(3);
+            result[3] = rs.getInt(4);
+            result[4] = rs.getInt(5);
+            result[5] = rs.getInt(6);
+            result[6] = rs.getInt(7);
+            result[7] = rs.getInt(8);
+            result[8] = rs.getInt(9);
+            result[9] = rs.getInt(10);
+            result[10] = rs.getInt(11);
+            result[11] = rs.getString(12);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+
+    }
+
+    public static Object[] MaintenanceBalancerProductionReturnEntryByID(int id) throws Exception {
+
+        Object[] result = new Object[12];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainBalancerProduction WHERE MainBalancerProduction.ID = \"" + id + "\";";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2);
+            result[1] = df1;
+            result[2] = rs.getInt(3);
+            result[3] = rs.getInt(4);
+            result[4] = rs.getInt(5);
+            result[5] = rs.getInt(6);
+            result[6] = rs.getInt(7);
+            result[7] = rs.getInt(8);
+            result[8] = rs.getInt(9);
+            result[9] = rs.getInt(10);
+            result[10] = rs.getInt(11);
+            result[11] = rs.getString(12);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+
+    }
+
+    public static void MaintenanceBalancerProductionInsert(
+            int idIn,
+            String DateIn,
+            int Balancer1AIn,
+            int Balancer2AIn,
+            int Balancer3AIn,
+            int Balancer4AIn,
+            int Balancer4ANewIn,
+            int Balancer1BIn,
+            int Balancer2BIn,
+            int Balancer3BIn,
+            int Balancer4BIn
+    )
+            throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // TimeStamp in String Format
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date date = new Date();
+        String dateF = format.format(date);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        PreparedStatement BalancerProductionInsert = conn.prepareStatement("insert into MainBalancerProduction values(?,?,?,?,?,?,?,?,?,?,?,?)");
+
+        BalancerProductionInsert.setInt(1, idIn);
+        BalancerProductionInsert.setString(2, DateIn);
+        BalancerProductionInsert.setInt(3, Balancer1AIn);
+        BalancerProductionInsert.setInt(4, Balancer2AIn);
+        BalancerProductionInsert.setInt(5, Balancer3AIn);
+        BalancerProductionInsert.setInt(6, Balancer4AIn);
+        BalancerProductionInsert.setInt(7, Balancer4ANewIn);
+        BalancerProductionInsert.setInt(8, Balancer1BIn);
+        BalancerProductionInsert.setInt(9, Balancer2BIn);
+        BalancerProductionInsert.setInt(10, Balancer3BIn);
+        BalancerProductionInsert.setInt(11, Balancer4BIn);
+        BalancerProductionInsert.setString(12, dateF);
+
+        BalancerProductionInsert.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static void MaintenanceBalancerProductionUpdate(
+            String DateIn, int Balancer1AIn, int Balancer2AIn, int Balancer3AIn,
+            int Balancer4AIn, int Balancer4ANewIn, int Balancer1BIn, int Balancer2BIn,
+            int Balancer3BIn, int Balancer4BIn, int idIn
+    ) throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String sql = "update MainBalancerProduction set Date=?, Balancer1A=? , Balancer2A=? , Balancer3A=? , Balancer4A=?, Balancer4ANew=? , "
+                + "Balancer1B=?,  Balancer2B=?, Balancer3B=?, Balancer4B=? where ID=?";
+
+        PreparedStatement BalancerProductionUpdate = conn.prepareStatement(sql);
+
+        BalancerProductionUpdate.setString(1, DateIn);
+        BalancerProductionUpdate.setInt(2, Balancer1AIn);
+        BalancerProductionUpdate.setInt(3, Balancer2AIn);
+        BalancerProductionUpdate.setInt(4, Balancer3AIn);
+        BalancerProductionUpdate.setInt(5, Balancer4AIn);
+        BalancerProductionUpdate.setInt(6, Balancer4ANewIn);
+        BalancerProductionUpdate.setInt(7, Balancer1BIn);
+        BalancerProductionUpdate.setInt(8, Balancer2BIn);
+        BalancerProductionUpdate.setInt(9, Balancer3BIn);
+        BalancerProductionUpdate.setInt(10, Balancer4BIn);
+        BalancerProductionUpdate.setInt(11, idIn);
+
+        BalancerProductionUpdate.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static Object[] MaintenanceBalancerProductionGetNextEntryById(int idIn) throws SQLException {
+
+        Object[] result = new Object[12];
+        int nextId = idIn + 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainBalancerProduction WHERE MainBalancerProduction.ID = \"" + nextId + "\";";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2); // ID
+            result[1] = df1; // Date
+            result[2] = rs.getInt(3);
+            result[3] = rs.getInt(4);
+            result[4] = rs.getInt(5);
+            result[5] = rs.getInt(6);
+            result[6] = rs.getInt(7);
+            result[7] = rs.getInt(8);
+            result[8] = rs.getInt(9);
+            result[9] = rs.getInt(10);
+            result[10] = rs.getInt(11);
+            result[11] = rs.getString(12); // TimeStamp
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    public static Object[] MaintenanceBalancerProductionGetPreviousEntryById(int idIn) throws SQLException {
+
+        Object[] result = new Object[16];
+        int nextId = idIn - 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainBalancerProduction WHERE MainBalancerProduction.ID = \"" + nextId + "\";";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2); // ID
+            result[1] = df1; // Date
+            result[2] = rs.getInt(3);
+            result[3] = rs.getInt(4);
+            result[4] = rs.getInt(5);
+            result[5] = rs.getInt(6);
+            result[6] = rs.getInt(7);
+            result[7] = rs.getInt(8);
+            result[8] = rs.getInt(9);
+            result[9] = rs.getInt(10);
+            result[10] = rs.getInt(11);
+            result[11] = rs.getString(12); // TimeStamp
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    public static Object[] MaintenanceBalancerProductionCalculateTotalsByMonth(String monthIn, String yearIn) throws SQLException {
 
         // Convert Input into Date Range
         String month = "";
@@ -15290,12 +15897,15 @@ public class SQLiteConnection {
         Connection conn = Connect();
         Statement s = conn.createStatement();
 
-        String sql1 = "SELECT SUM(SP01) FROM MainShellPressProduction WHERE Date LIKE '%" + date + "%';";
-        String sql2 = "SELECT SUM(SP02) FROM MainShellPressProduction WHERE Date LIKE '%" + date + "%';";
-        String sql3 = "SELECT SUM(SP03) FROM MainShellPressProduction WHERE Date LIKE '%" + date + "%';";
-        String sql4 = "SELECT SUM(FMI41) FROM MainShellPressProduction WHERE Date LIKE '%" + date + "%';";
-        String sql5 = "SELECT SUM(FMI42) FROM MainShellPressProduction WHERE Date LIKE '%" + date + "%';";
-        String sql6 = "SELECT SUM(SP04) FROM MainShellPressProduction WHERE Date LIKE '%" + date + "%';";
+        String sql1 = "SELECT SUM(Balancer1A) FROM MainBalancerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql2 = "SELECT SUM(Balancer2A) FROM MainBalancerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql3 = "SELECT SUM(Balancer3A) FROM MainBalancerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql4 = "SELECT SUM(Balancer4A) FROM MainBalancerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql5 = "SELECT SUM(Balancer4ANew) FROM MainBalancerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql6 = "SELECT SUM(Balancer1B) FROM MainBalancerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql7 = "SELECT SUM(Balancer2B) FROM MainBalancerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql8 = "SELECT SUM(Balancer3B) FROM MainBalancerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql9 = "SELECT SUM(Balancer4B) FROM MainBalancerProduction WHERE Date LIKE '%" + date + "%';";
 
         s.setQueryTimeout(5);
 
@@ -15353,6 +15963,33 @@ public class SQLiteConnection {
         }
 
         // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql7);
+
+        ResultSet rs7 = s.getResultSet();
+        while ((rs7 != null) && (rs7.next())) {
+            total[6] = rs7.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql8);
+
+        ResultSet rs8 = s.getResultSet();
+        while ((rs8 != null) && (rs8.next())) {
+            total[7] = rs8.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql9);
+
+        ResultSet rs9 = s.getResultSet();
+        while ((rs9 != null) && (rs9.next())) {
+            total[8] = rs9.getInt(1);
+        }
+
+        // ///////////////////////////
         // ///////////////////////////
         rs1.close();
         rs2.close();
@@ -15360,6 +15997,9 @@ public class SQLiteConnection {
         rs4.close();
         rs5.close();
         rs6.close();
+        rs7.close();
+        rs8.close();
+        rs9.close();
 
         s.close();
         conn.close();
@@ -15368,7 +16008,7 @@ public class SQLiteConnection {
         return total;
     }
 
-    public static JPanel MaintenanceShellPressMaintenanceSummaryTable(int in) throws SQLException {
+    public static JPanel MaintenanceBalancerProductionSummaryTable(int in) throws SQLException {
 
         JPanel outerPanel = new JPanel(new BorderLayout());
 
@@ -15376,7 +16016,3950 @@ public class SQLiteConnection {
         Statement stmt = conn.createStatement();
         stmt.setQueryTimeout(10);
 
-        PreparedStatement psmt = conn.prepareStatement("SELECT Date, SP01, SP02, SP03, FMI41, FMI42, SP04, ID FROM MainShellPressProduction ORDER BY Date DESC");
+        PreparedStatement psmt = conn.prepareStatement("SELECT Date, Balancer1A, Balancer2A, Balancer3A, Balancer4A, Balancer4ANew, Balancer1B, Balancer2B, Balancer3B, Balancer4B, ID FROM MainBalancerProduction ORDER BY Date DESC");
+        psmt.setQueryTimeout(10);
+        ResultSet rs = psmt.executeQuery();
+        DefaultTableModel dm = new DefaultTableModel();
+
+        // get column names
+        int len = rs.getMetaData().getColumnCount();
+        System.out.println("LEN : " + len);
+        Vector cols = new Vector(len);
+        for (int i = 1; i <= len; i++) {// Note starting at 1
+
+            cols.add(rs.getMetaData().getColumnName(i));
+            System.out.println(rs.getMetaData().getColumnName(i));
+
+        }
+
+        // Add Data
+        Vector data = new Vector();
+
+        while (rs.next()) {
+
+            Vector row = new Vector(len);
+
+            row.add(rs.getString(1));
+            row.add(rs.getInt(2));
+            row.add(rs.getInt(3));
+            row.add(rs.getInt(4));
+            row.add(rs.getInt(5));
+            row.add(rs.getInt(6));
+            row.add(rs.getInt(7));
+            row.add(rs.getInt(8));
+            row.add(rs.getInt(9));
+            row.add(rs.getInt(10));
+            row.add(rs.getString(11));
+
+            data.add(row);
+        }
+
+        // Now create the table
+        DefaultTableModel model = new DefaultTableModel(data, cols);
+
+        JTable table = new JTable(model);
+
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+        table.getColumnModel().getColumn(10).setMaxWidth(40);
+
+        // Render Checkbox
+//        TableColumn tc = table.getColumnModel().getColumn(9);
+//        tc.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+                if (e.getClickCount() == 2) {
+                    JTable target = (JTable) e.getSource();
+
+                    int row = target.getSelectedRow() + 1;
+					// int column = target.getSelectedColumn();
+
+                    // System.out.println("Clicked : " + row );
+                    System.out.println(table.getValueAt(table.getSelectedRow(), 10).toString());
+
+                    String idString = table.getValueAt(table.getSelectedRow(), 10).toString();
+                    int id = Integer.valueOf(idString);
+                    ShellPressProduction linersAndShells;
+                    try {
+                        BalancerProduction balancerProduction = new BalancerProduction(1, -2);
+                        balancerProduction.setBalancerProductionToID(id);
+                    } catch (SQLException ex) {
+                        Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+
+                }
+            }
+        });
+
+        JTableHeader header = table.getTableHeader();
+
+        outerPanel.add(header, BorderLayout.NORTH);
+        outerPanel.add(table, BorderLayout.CENTER);
+
+        psmt.close();
+        stmt.close();
+        conn.close();
+
+        return outerPanel;
+
+    }
+
+    // Maintenance Liner Production
+    public static int MaintenanceLinerProductionGetHighestID() throws SQLException {
+
+        int highestID = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT MAX(MainLinerProduction.[ID]) FROM MainLinerProduction;";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            highestID = rs.getInt(1);
+            System.out.println("Highest ID :  " + highestID);
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        return highestID;
+    }
+
+    public static Object[] MaintenanceLinerProductionReturnEntryByDate(Date dateIn) throws Exception {
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        String df = (sdf.format(dateIn));
+
+        // Need to format dateIn to proper Syntax ----> #2/2/2012#
+        Object[] result = new Object[19];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainLinerProduction WHERE MainLinerProduction.Date = \"" + df + "\";";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2);
+            result[1] = df1;
+            result[2] = rs.getInt(3);
+            result[3] = rs.getInt(4);
+            result[4] = rs.getInt(5);
+            result[5] = rs.getInt(6);
+            result[6] = rs.getInt(7);
+            result[7] = rs.getInt(8);
+            result[8] = rs.getInt(9);
+            result[9] = rs.getInt(10);
+            result[10] = rs.getInt(11);
+            result[11] = rs.getInt(12);
+            result[12] = rs.getInt(13);
+            result[13] = rs.getInt(14);
+            result[14] = rs.getInt(15);
+            result[15] = rs.getInt(16);
+            result[16] = rs.getInt(17);
+            result[17] = rs.getInt(18);
+            result[18] = rs.getInt(19);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+
+    }
+
+    public static Object[] MaintenanceLinerProductionReturnEntryByID(int id) throws Exception {
+
+        Object[] result = new Object[19];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainLinerProduction WHERE MainLinerProduction.ID = \"" + id + "\";";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2);
+            result[1] = df1;
+            result[2] = rs.getInt(3);
+            result[3] = rs.getInt(4);
+            result[4] = rs.getInt(5);
+            result[5] = rs.getInt(6);
+            result[6] = rs.getInt(7);
+            result[7] = rs.getInt(8);
+            result[8] = rs.getInt(9);
+            result[9] = rs.getInt(10);
+            result[10] = rs.getInt(11);
+            result[11] = rs.getInt(12);
+            result[12] = rs.getInt(13);
+            result[13] = rs.getInt(14);
+            result[14] = rs.getInt(15);
+            result[15] = rs.getInt(16);
+            result[16] = rs.getInt(17);
+            result[17] = rs.getInt(18);
+            result[18] = rs.getInt(19);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+
+    }
+
+    public static void MaintenanceLinerProductionInsert(
+            int idIn,
+            String DateIn,
+            int Liner11In,
+            int Liner12In,
+            int Liner13In,
+            int Liner14In,
+            int Liner21In,
+            int Liner22In,
+            int Liner23In,
+            int Liner24In,
+            int Liner31In,
+            int Liner32In,
+            int Liner33In,
+            int Liner34In,
+            int Liner41In,
+            int Liner42In,
+            int Liner43In,
+            int Liner44In
+    )
+            throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // TimeStamp in String Format
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date date = new Date();
+        String dateF = format.format(date);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        PreparedStatement LinerProductionInsert = conn.prepareStatement("insert into MainLinerProduction values(?,?,?,?,?,?,?,?,?,?, ?,?,?,?,?,?,?,?,?)");
+
+        LinerProductionInsert.setInt(1, idIn);
+        LinerProductionInsert.setString(2, DateIn);
+        LinerProductionInsert.setInt(3, Liner11In);
+        LinerProductionInsert.setInt(4, Liner12In);
+        LinerProductionInsert.setInt(5, Liner13In);
+        LinerProductionInsert.setInt(6, Liner14In);
+        LinerProductionInsert.setInt(7, Liner21In);
+        LinerProductionInsert.setInt(8, Liner22In);
+        LinerProductionInsert.setInt(9, Liner23In);
+        LinerProductionInsert.setInt(10, Liner24In);
+        LinerProductionInsert.setInt(11, Liner31In);
+        LinerProductionInsert.setInt(12, Liner32In);
+        LinerProductionInsert.setInt(13, Liner33In);
+        LinerProductionInsert.setInt(14, Liner34In);
+        LinerProductionInsert.setInt(15, Liner41In);
+        LinerProductionInsert.setInt(16, Liner42In);
+        LinerProductionInsert.setInt(17, Liner43In);
+        LinerProductionInsert.setInt(18, Liner44In);
+        LinerProductionInsert.setString(19, dateF);
+
+        LinerProductionInsert.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static void MaintenanceLinerProductionUpdate(
+            String DateIn,
+            int Liner11In,
+            int Liner12In,
+            int Liner13In,
+            int Liner14In,
+            int Liner21In,
+            int Liner22In,
+            int Liner23In,
+            int Liner24In,
+            int Liner31In,
+            int Liner32In,
+            int Liner33In,
+            int Liner34In,
+            int Liner41In,
+            int Liner42In,
+            int Liner43In,
+            int Liner44In,
+            int idIn
+    ) throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String sql = "update MainLinerProduction set Date=?, Liner11=? , Liner12=? , Liner13=? , Liner14=?, Liner21=? , "
+                + "Liner22=?,  Liner23=?, Liner24=?, Liner31=?, Liner32=?, Liner33=?, Liner34=?, Liner41=?, Liner42=?, Liner43=?, Liner44=? where ID=?";
+
+        PreparedStatement LinerProductionUpdate = conn.prepareStatement(sql);
+
+        LinerProductionUpdate.setString(1, DateIn);
+        LinerProductionUpdate.setInt(2, Liner11In);
+        LinerProductionUpdate.setInt(3, Liner12In);
+        LinerProductionUpdate.setInt(4, Liner13In);
+        LinerProductionUpdate.setInt(5, Liner14In);
+        LinerProductionUpdate.setInt(6, Liner21In);
+        LinerProductionUpdate.setInt(7, Liner22In);
+        LinerProductionUpdate.setInt(8, Liner23In);
+        LinerProductionUpdate.setInt(9, Liner24In);
+        LinerProductionUpdate.setInt(10, Liner31In);
+        LinerProductionUpdate.setInt(11, Liner32In);
+        LinerProductionUpdate.setInt(12, Liner33In);
+        LinerProductionUpdate.setInt(13, Liner34In);
+        LinerProductionUpdate.setInt(14, Liner41In);
+        LinerProductionUpdate.setInt(15, Liner42In);
+        LinerProductionUpdate.setInt(16, Liner43In);
+        LinerProductionUpdate.setInt(17, Liner44In);
+        LinerProductionUpdate.setInt(18, idIn);
+
+        LinerProductionUpdate.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static Object[] MaintenanceLinerProductionGetNextEntryById(int idIn) throws SQLException {
+
+        Object[] result = new Object[19];
+        int nextId = idIn + 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainLinerProduction WHERE MainLinerProduction.ID = \"" + nextId + "\";";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2);
+            result[1] = df1;
+            result[2] = rs.getInt(3);
+            result[3] = rs.getInt(4);
+            result[4] = rs.getInt(5);
+            result[5] = rs.getInt(6);
+            result[6] = rs.getInt(7);
+            result[7] = rs.getInt(8);
+            result[8] = rs.getInt(9);
+            result[9] = rs.getInt(10);
+            result[10] = rs.getInt(11);
+            result[11] = rs.getInt(12);
+            result[12] = rs.getInt(13);
+            result[13] = rs.getInt(14);
+            result[14] = rs.getInt(15);
+            result[15] = rs.getInt(16);
+            result[16] = rs.getInt(17);
+            result[17] = rs.getInt(18);
+            result[18] = rs.getInt(19);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    public static Object[] MaintenanceLinerProductionGetPreviousEntryById(int idIn) throws SQLException {
+
+        Object[] result = new Object[19];
+        int nextId = idIn - 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainLinerProduction WHERE MainLinerProduction.ID = \"" + nextId + "\";";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2);
+            result[1] = df1;
+            result[2] = rs.getInt(3);
+            result[3] = rs.getInt(4);
+            result[4] = rs.getInt(5);
+            result[5] = rs.getInt(6);
+            result[6] = rs.getInt(7);
+            result[7] = rs.getInt(8);
+            result[8] = rs.getInt(9);
+            result[9] = rs.getInt(10);
+            result[10] = rs.getInt(11);
+            result[11] = rs.getInt(12);
+            result[12] = rs.getInt(13);
+            result[13] = rs.getInt(14);
+            result[14] = rs.getInt(15);
+            result[15] = rs.getInt(16);
+            result[16] = rs.getInt(17);
+            result[17] = rs.getInt(18);
+            result[18] = rs.getInt(19);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    public static Object[] MaintenanceLinerProductionCalculateTotalsByMonth(String monthIn, String yearIn) throws SQLException {
+
+        // Convert Input into Date Range
+        String month = "";
+        String year = yearIn;
+
+        if (monthIn.equals("January")) {
+            month = "01";
+        } else if (monthIn.equals("February")) {
+            month = "02";
+        } else if (monthIn.equals("March")) {
+            month = "03";
+        } else if (monthIn.equals("April")) {
+            month = "04";
+        } else if (monthIn.equals("May")) {
+            month = "05";
+        } else if (monthIn.equals("June")) {
+            month = "06";
+        } else if (monthIn.equals("July")) {
+            month = "07";
+        } else if (monthIn.equals("August")) {
+            month = "08";
+        } else if (monthIn.equals("September")) {
+            month = "09";
+        } else if (monthIn.equals("October")) {
+            month = "10";
+        } else if (monthIn.equals("November")) {
+            month = "11";
+        } else if (monthIn.equals("December")) {
+            month = "12";
+        }
+
+        String date = (year + "-" + month);
+
+        System.out.println("Date : " + date);
+
+        Object[] total = new Object[19];
+
+        // Return the sum of the selected month and Line - SQL Query SUM WHERE
+        // Month Contains /06/
+        // Query ////////
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        String sql1 = "SELECT SUM(Liner11) FROM MainLinerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql2 = "SELECT SUM(Liner12) FROM MainLinerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql3 = "SELECT SUM(Liner13) FROM MainLinerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql4 = "SELECT SUM(Liner14) FROM MainLinerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql5 = "SELECT SUM(Liner21) FROM MainLinerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql6 = "SELECT SUM(Liner22) FROM MainLinerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql7 = "SELECT SUM(Liner23) FROM MainLinerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql8 = "SELECT SUM(Liner24) FROM MainLinerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql9 = "SELECT SUM(Liner31) FROM MainLinerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql10 = "SELECT SUM(Liner32) FROM MainLinerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql11 = "SELECT SUM(Liner33) FROM MainLinerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql12 = "SELECT SUM(Liner34) FROM MainLinerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql13 = "SELECT SUM(Liner41) FROM MainLinerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql14 = "SELECT SUM(Liner42) FROM MainLinerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql15 = "SELECT SUM(Liner43) FROM MainLinerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql16 = "SELECT SUM(Liner44) FROM MainLinerProduction WHERE Date LIKE '%" + date + "%';";
+
+        s.setQueryTimeout(5);
+
+        // W11 /////////////////
+        s.execute(sql1);
+
+        ResultSet rs1 = s.getResultSet();
+        while ((rs1 != null) && (rs1.next())) {
+            total[0] = rs1.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W12 //////////////////
+        s.execute(sql2);
+
+        ResultSet rs2 = s.getResultSet();
+        while ((rs2 != null) && (rs2.next())) {
+            total[1] = rs2.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W21 /////////////////
+        s.execute(sql3);
+
+        ResultSet rs3 = s.getResultSet();
+        while ((rs3 != null) && (rs3.next())) {
+            total[2] = rs3.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W22 /////////////////
+        s.execute(sql4);
+
+        ResultSet rs4 = s.getResultSet();
+        while ((rs4 != null) && (rs4.next())) {
+            total[3] = rs4.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql5);
+
+        ResultSet rs5 = s.getResultSet();
+        while ((rs5 != null) && (rs5.next())) {
+            total[4] = rs5.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql6);
+
+        ResultSet rs6 = s.getResultSet();
+        while ((rs6 != null) && (rs6.next())) {
+            total[5] = rs6.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql7);
+
+        ResultSet rs7 = s.getResultSet();
+        while ((rs7 != null) && (rs7.next())) {
+            total[6] = rs7.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql8);
+
+        ResultSet rs8 = s.getResultSet();
+        while ((rs8 != null) && (rs8.next())) {
+            total[7] = rs8.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql9);
+
+        ResultSet rs9 = s.getResultSet();
+        while ((rs9 != null) && (rs9.next())) {
+            total[8] = rs9.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql10);
+
+        ResultSet rs10 = s.getResultSet();
+        while ((rs10 != null) && (rs10.next())) {
+            total[9] = rs10.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql11);
+
+        ResultSet rs11 = s.getResultSet();
+        while ((rs11 != null) && (rs11.next())) {
+            total[10] = rs11.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql12);
+
+        ResultSet rs12 = s.getResultSet();
+        while ((rs12 != null) && (rs12.next())) {
+            total[11] = rs12.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql13);
+
+        ResultSet rs13 = s.getResultSet();
+        while ((rs13 != null) && (rs13.next())) {
+            total[12] = rs13.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql14);
+
+        ResultSet rs14 = s.getResultSet();
+        while ((rs14 != null) && (rs14.next())) {
+            total[13] = rs14.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql15);
+
+        ResultSet rs15 = s.getResultSet();
+        while ((rs15 != null) && (rs15.next())) {
+            total[14] = rs15.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql16);
+
+        ResultSet rs16 = s.getResultSet();
+        while ((rs16 != null) && (rs16.next())) {
+            total[15] = rs16.getInt(1);
+        }
+
+        // ///////////////////////////
+        // ///////////////////////////
+        rs1.close();
+        rs2.close();
+        rs3.close();
+        rs4.close();
+        rs5.close();
+        rs6.close();
+        rs7.close();
+        rs8.close();
+        rs9.close();
+        rs10.close();
+        rs11.close();
+        rs12.close();
+        rs13.close();
+        rs14.close();
+        rs15.close();
+        rs16.close();
+
+        s.close();
+        conn.close();
+
+        // ///////////////
+        return total;
+    }
+
+    public static JPanel MaintenanceLinerProductionSummaryTable(int in) throws SQLException {
+
+        JPanel outerPanel = new JPanel(new BorderLayout());
+
+        Connection conn = Connect();
+        Statement stmt = conn.createStatement();
+        stmt.setQueryTimeout(10);
+
+        PreparedStatement psmt = conn.prepareStatement("SELECT Date, Liner11, Liner12, Liner13, Liner14, Liner21, Liner22, Liner23, Liner24, Liner31, Liner32, Liner33, Liner34, Liner41, Liner42, Liner43, Liner44, ID FROM MainLinerProduction ORDER BY Date DESC");
+        psmt.setQueryTimeout(10);
+        ResultSet rs = psmt.executeQuery();
+        DefaultTableModel dm = new DefaultTableModel();
+
+        // get column names
+        int len = rs.getMetaData().getColumnCount();
+        System.out.println("LEN : " + len);
+        Vector cols = new Vector(len);
+        for (int i = 1; i <= len; i++) {// Note starting at 1
+
+            cols.add(rs.getMetaData().getColumnName(i));
+            System.out.println(rs.getMetaData().getColumnName(i));
+
+        }
+
+        // Add Data
+        Vector data = new Vector();
+
+        while (rs.next()) {
+
+            Vector row = new Vector(len);
+
+            row.add(rs.getString(1));
+            row.add(rs.getInt(2));
+            row.add(rs.getInt(3));
+            row.add(rs.getInt(4));
+            row.add(rs.getInt(5));
+            row.add(rs.getInt(6));
+            row.add(rs.getInt(7));
+            row.add(rs.getInt(8));
+            row.add(rs.getInt(9));
+            row.add(rs.getInt(10));
+            row.add(rs.getInt(11));
+            row.add(rs.getInt(12));
+            row.add(rs.getInt(13));
+            row.add(rs.getInt(14));
+            row.add(rs.getInt(15));
+            row.add(rs.getInt(16));
+            row.add(rs.getString(17));
+            row.add(rs.getString(18));
+
+            data.add(row);
+        }
+
+        // Now create the table
+        DefaultTableModel model = new DefaultTableModel(data, cols);
+
+        JTable table = new JTable(model);
+
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+        table.getColumnModel().getColumn(0).setMinWidth(60);
+        table.getColumnModel().getColumn(17).setMaxWidth(40);
+
+        // Render Checkbox
+//        TableColumn tc = table.getColumnModel().getColumn(9);
+//        tc.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+                if (e.getClickCount() == 2) {
+                    JTable target = (JTable) e.getSource();
+
+                    int row = target.getSelectedRow() + 1;
+					// int column = target.getSelectedColumn();
+
+                    // System.out.println("Clicked : " + row );
+                    System.out.println(table.getValueAt(table.getSelectedRow(), 17).toString());
+
+                    String idString = table.getValueAt(table.getSelectedRow(), 17).toString();
+                    int id = Integer.valueOf(idString);
+                    try {
+                        LinerProduction linerProduction = new LinerProduction(1, -2);
+                        linerProduction.setLinerProductionToID(id);
+                    } catch (SQLException ex) {
+                        Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+
+                }
+            }
+        });
+
+        JTableHeader header = table.getTableHeader();
+
+        outerPanel.add(header, BorderLayout.NORTH);
+        outerPanel.add(table, BorderLayout.CENTER);
+
+        psmt.close();
+        stmt.close();
+        conn.close();
+
+        return outerPanel;
+
+    }
+
+    // Maintenance Line Balance
+    public static int MaintenanceLineBalanceGetHighestID() throws SQLException {
+
+        int highestID = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT MAX(MainLineBalance.[ID]) FROM MainLineBalance;";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            highestID = rs.getInt(1);
+            System.out.println("Highest ID :  " + highestID);
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        return highestID;
+    }
+
+    public static Object[] MaintenanceLineBalanceReturnEntryByDate(Date dateIn) throws Exception {
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        String df = (sdf.format(dateIn));
+
+        // Need to format dateIn to proper Syntax ----> #2/2/2012#
+        Object[] result = new Object[19];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainLineBalance WHERE MainLineBalance.Date = \"" + df + "\";";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2);
+            result[1] = df1;
+            result[2] = rs.getInt(3);
+            result[3] = rs.getInt(4);
+            result[4] = rs.getInt(5);
+            result[5] = rs.getInt(6);
+            result[6] = rs.getString(7);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+
+    }
+
+    public static Object[] MaintenanceLineBalanceReturnEntryByDate2(String dateIn) throws Exception {
+
+//        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+//        String df = (sdf.format(dateIn));
+        System.out.println("DateIn : " + dateIn);
+
+        // Need to format dateIn to proper Syntax ----> #2/2/2012#
+        Object[] result = new Object[60];
+
+        ////////////////////////////////////////////////////////////////////////
+        Connection conn1 = Connect();
+        Statement s1 = conn1.createStatement();
+
+        String selTable2 = "SELECT SUM(SP01), SUM(SP02), SUM(SP03),SUM(FMI41), SUM(FMI42), SUM(SP04) FROM MainShellPressProduction WHERE MainShellPressProduction.Date = \"" + dateIn + "\";";
+        s1.setQueryTimeout(10);
+        s1.execute(selTable2);
+
+        ResultSet rs1 = s1.getResultSet();
+
+        while ((rs1 != null) && (rs1.next())) {
+
+            result[7] = rs1.getInt(1);
+            result[8] = rs1.getInt(2);
+            result[9] = rs1.getInt(3);
+            result[10] = rs1.getInt(1) + rs1.getInt(2) + rs1.getInt(3);
+            result[11] = rs1.getInt(4);
+            result[12] = rs1.getInt(5);
+            result[13] = rs1.getInt(6);
+            result[14] = rs1.getInt(4) + rs1.getInt(5) + rs1.getInt(6);
+
+            rs1.close();
+            s1.close();
+            conn1.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        Connection conn3 = Connect();
+        Statement s3 = conn3.createStatement();
+
+        String selTable4 = "SELECT SUM(Stolle11), SUM(Stolle12), SUM(Stolle21), SUM(Stolle22), SUM(Stolle31), SUM(Stolle32), SUM(Stolle33), SUM(Stolle41), SUM(Stolle42), SUM(Stolle43), SUM(Stolle44) FROM MainStolleProduction WHERE MainStolleProduction.Date = \"" + dateIn + "\";";
+        s3.setQueryTimeout(10);
+        s3.execute(selTable4);
+
+        ResultSet rs3 = s3.getResultSet();
+
+        while ((rs3 != null) && (rs3.next())) {
+
+            result[15] = rs3.getInt(1); //
+            result[16] = rs3.getInt(2); // 
+            result[17] = rs3.getInt(3); // 
+            result[18] = rs3.getInt(4); // 
+            result[19] = rs3.getInt(5); // 
+            result[20] = rs3.getInt(6); // 
+            result[21] = rs3.getInt(7); //           
+            result[22] = rs3.getInt(1) + rs3.getInt(2) + rs3.getInt(3) + rs3.getInt(4) + rs3.getInt(5) + rs3.getInt(6) + rs3.getInt(7);
+            result[23] = rs3.getInt(8); // 
+            result[24] = rs3.getInt(9); // 
+            result[25] = rs3.getInt(10); // 
+            result[26] = rs3.getInt(11); // 
+            result[27] = rs3.getInt(8) + rs3.getInt(9) + rs3.getInt(10) + rs3.getInt(11);
+
+            rs3.close();
+            s3.close();
+            conn3.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        Connection conn4 = Connect();
+        Statement s4 = conn4.createStatement();
+
+        String selTable5 = "SELECT SUM(Liner11), SUM(Liner12), SUM(Liner13), SUM(Liner14), SUM(Liner21), SUM(Liner22), SUM(Liner23), SUM(Liner24), SUM(Liner31), SUM(Liner32), SUM(Liner33), SUM(Liner34), SUM(Liner41), SUM(Liner42), SUM(Liner43) , SUM(Liner44)FROM MainLinerProduction WHERE MainLinerProduction.Date = \"" + dateIn + "\";";
+        s4.setQueryTimeout(10);
+        s4.execute(selTable5);
+
+        ResultSet rs4 = s4.getResultSet();
+
+        while ((rs4 != null) && (rs4.next())) {
+
+            result[28] = rs4.getInt(1); //
+            result[29] = rs4.getInt(2); // 
+            result[30] = rs4.getInt(3); // 
+            result[31] = rs4.getInt(4); // 
+            result[32] = rs4.getInt(5); // 
+            result[33] = rs4.getInt(6); // 
+            result[34] = rs4.getInt(7); //
+            result[35] = rs4.getInt(8); //            
+            result[36] = rs4.getInt(9); // 
+            result[37] = rs4.getInt(10); // 
+            result[38] = rs4.getInt(11); //
+            result[39] = rs4.getInt(1) + rs4.getInt(2) + rs4.getInt(3) + rs4.getInt(4) + rs4.getInt(5) + rs4.getInt(6) + rs4.getInt(7) + rs4.getInt(8) + rs4.getInt(9) + rs4.getInt(10) + rs4.getInt(11);
+
+            result[40] = rs4.getInt(12); //
+            result[41] = rs4.getInt(13); // 
+            result[42] = rs4.getInt(14); // 
+            result[43] = rs4.getInt(12) + rs4.getInt(13) + rs4.getInt(14);
+
+            rs4.close();
+            s4.close();
+            conn4.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+
+    }
+
+    public static Object[] MaintenanceLineBalanceReturnEntryByID(int id) throws Exception {
+
+        Object[] result = new Object[50];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainLineBalance WHERE MainLineBalance.ID = \"" + id + "\";";
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2);
+            result[1] = df1;
+            result[2] = rs.getInt(3);
+            result[3] = rs.getInt(4);
+            result[4] = rs.getInt(5);
+            result[5] = rs.getInt(6);
+            result[6] = rs.getString(7);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        ////////////////////////////////////////////////////////////////////////
+        Connection conn1 = Connect();
+        Statement s1 = conn1.createStatement();
+
+        String selTable2 = "SELECT SUM(SP01), SUM(SP02), SUM(SP03),SUM(FMI41), SUM(FMI42), SUM(SP04) FROM MainShellPressProduction WHERE MainShellPressProduction.Date = \"" + result[1] + "\";";
+        s1.setQueryTimeout(10);
+        s1.execute(selTable2);
+
+        ResultSet rs1 = s1.getResultSet();
+
+        while ((rs1 != null) && (rs1.next())) {
+
+            result[7] = rs1.getInt(1);
+            result[8] = rs1.getInt(2);
+            result[9] = rs1.getInt(3);
+            result[10] = rs1.getInt(1) + rs1.getInt(2) + rs1.getInt(3);
+            result[11] = rs1.getInt(4);
+            result[12] = rs1.getInt(5);
+            result[13] = rs1.getInt(6);
+            result[14] = rs1.getInt(4) + rs1.getInt(5) + rs1.getInt(6);
+
+            rs1.close();
+            s1.close();
+            conn1.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        Connection conn3 = Connect();
+        Statement s3 = conn3.createStatement();
+
+        String selTable4 = "SELECT SUM(Stolle11), SUM(Stolle12), SUM(Stolle21), SUM(Stolle22), SUM(Stolle31), SUM(Stolle32), SUM(Stolle33), SUM(Stolle41), SUM(Stolle42), SUM(Stolle43), SUM(Stolle44) FROM MainStolleProduction WHERE MainStolleProduction.Date = \"" + result[1] + "\";";
+        s3.setQueryTimeout(10);
+        s3.execute(selTable4);
+
+        ResultSet rs3 = s3.getResultSet();
+
+        while ((rs3 != null) && (rs3.next())) {
+
+            result[15] = rs3.getInt(1); //
+            result[16] = rs3.getInt(2); // 
+            result[17] = rs3.getInt(3); // 
+            result[18] = rs3.getInt(4); // 
+            result[19] = rs3.getInt(5); // 
+            result[20] = rs3.getInt(6); // 
+            result[21] = rs3.getInt(7); //           
+            result[22] = rs3.getInt(1) + rs3.getInt(2) + rs3.getInt(3) + rs3.getInt(4) + rs3.getInt(5) + rs3.getInt(6) + rs3.getInt(7);
+            result[23] = rs3.getInt(8); // 
+            result[24] = rs3.getInt(9); // 
+            result[25] = rs3.getInt(10); // 
+            result[26] = rs3.getInt(11); // 
+            result[27] = rs3.getInt(8) + rs3.getInt(9) + rs3.getInt(10) + rs3.getInt(11);
+
+            rs3.close();
+            s3.close();
+            conn3.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        Connection conn4 = Connect();
+        Statement s4 = conn4.createStatement();
+
+        String selTable5 = "SELECT SUM(Liner11), SUM(Liner12), SUM(Liner13), SUM(Liner14), SUM(Liner21), SUM(Liner22), SUM(Liner23), SUM(Liner24), SUM(Liner31), SUM(Liner32), SUM(Liner33), SUM(Liner34), SUM(Liner41), SUM(Liner42), SUM(Liner43) , SUM(Liner44)FROM MainLinerProduction WHERE MainLinerProduction.Date = \"" + result[1] + "\";";
+        s4.setQueryTimeout(10);
+        s4.execute(selTable5);
+
+        ResultSet rs4 = s4.getResultSet();
+
+        while ((rs4 != null) && (rs4.next())) {
+
+            result[28] = rs4.getInt(1); //
+            result[29] = rs4.getInt(2); // 
+            result[30] = rs4.getInt(3); // 
+            result[31] = rs4.getInt(4); // 
+            result[32] = rs4.getInt(5); // 
+            result[33] = rs4.getInt(6); // 
+            result[34] = rs4.getInt(7); //
+            result[35] = rs4.getInt(8); //            
+            result[36] = rs4.getInt(9); // 
+            result[37] = rs4.getInt(10); // 
+            result[38] = rs4.getInt(11); //
+            result[39] = rs4.getInt(1) + rs4.getInt(2) + rs4.getInt(3) + rs4.getInt(4) + rs4.getInt(5) + rs4.getInt(6) + rs4.getInt(7) + rs4.getInt(8) + rs4.getInt(9) + rs4.getInt(10) + rs4.getInt(11);
+
+            result[40] = rs4.getInt(12); //
+            result[41] = rs4.getInt(13); // 
+            result[42] = rs4.getInt(14); // 
+            result[43] = rs4.getInt(12) + rs4.getInt(13) + rs4.getInt(14);
+
+            rs4.close();
+            s4.close();
+            conn4.close();
+
+        }
+
+        System.out.println("Result15 " + result[15]);
+        System.out.println("Result16 " + result[16]);
+        System.out.println("Result17 " + result[17]);
+        System.out.println("Result18 " + result[18]);
+        System.out.println("Result19 " + result[19]);
+        System.out.println("Result20 " + result[20]);
+        System.out.println("Result21 " + result[21]);
+        System.out.println("Result22 " + result[22]);
+
+        return result;
+
+    }
+
+    public static void MaintenanceLineBalanceInsert(
+            int idIn,
+            String DateIn,
+            int Mod123UnlinedIn,
+            int Mod4UnlinedIn,
+            int Mod123linedIn,
+            int Mod4linedIn
+    )
+            throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // TimeStamp in String Format
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date date = new Date();
+        String dateF = format.format(date);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        PreparedStatement LinerProductionInsert = conn.prepareStatement("insert into MainLineBalance values(?,?,?,?,?,?,?)");
+
+        LinerProductionInsert.setInt(1, idIn);
+        LinerProductionInsert.setString(2, DateIn);
+        LinerProductionInsert.setInt(3, Mod123UnlinedIn);
+        LinerProductionInsert.setInt(4, Mod4UnlinedIn);
+        LinerProductionInsert.setInt(5, Mod123linedIn);
+        LinerProductionInsert.setInt(6, Mod4linedIn);
+        LinerProductionInsert.setString(7, dateF);
+
+        LinerProductionInsert.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static void MaintenanceLineBalanceUpdate(
+            String DateIn,
+            int Mod123UnlinedIn,
+            int Mod4UnlinedIn,
+            int Mod123linedIn,
+            int Mod4linedIn,
+            int idIn
+    ) throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String sql = "update MainLineBalance set Date=?, Mod123Unlined=?, Mod4Unlined=? , Mod123lined=? , Mod4lined=? where ID=?";
+
+        PreparedStatement LinerProductionUpdate = conn.prepareStatement(sql);
+
+        LinerProductionUpdate.setString(1, DateIn);
+        LinerProductionUpdate.setInt(2, Mod123UnlinedIn);
+        LinerProductionUpdate.setInt(3, Mod4UnlinedIn);
+        LinerProductionUpdate.setInt(4, Mod123linedIn);
+        LinerProductionUpdate.setInt(5, Mod4linedIn);
+        LinerProductionUpdate.setInt(6, idIn);
+
+        LinerProductionUpdate.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static Object[] MaintenanceLineBalanceGetNextEntryById(int idIn) throws SQLException {
+
+        Object[] result = new Object[7];
+        int nextId = idIn + 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainLineBalance WHERE MainLineBalance.ID = \"" + nextId + "\";";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2);
+            result[1] = df1;
+            result[2] = rs.getInt(3);
+            result[3] = rs.getInt(4);
+            result[4] = rs.getInt(5);
+            result[5] = rs.getInt(6);
+            result[6] = rs.getString(7);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    public static Object[] MaintenanceLineBalanceGetPreviousEntryById(int idIn) throws SQLException {
+
+        Object[] result = new Object[7];
+        int nextId = idIn - 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainLineBalance WHERE MainLineBalance.ID = \"" + nextId + "\";";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2);
+            result[1] = df1;
+            result[2] = rs.getInt(3);
+            result[3] = rs.getInt(4);
+            result[4] = rs.getInt(5);
+            result[5] = rs.getInt(6);
+            result[6] = rs.getString(7);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    public static Object[] MaintenanceLineBalanceCalculateTotalsByMonth(String monthIn, String yearIn) throws SQLException {
+
+        // Convert Input into Date Range
+        String month = "";
+        String year = yearIn;
+
+        if (monthIn.equals("January")) {
+            month = "01";
+        } else if (monthIn.equals("February")) {
+            month = "02";
+        } else if (monthIn.equals("March")) {
+            month = "03";
+        } else if (monthIn.equals("April")) {
+            month = "04";
+        } else if (monthIn.equals("May")) {
+            month = "05";
+        } else if (monthIn.equals("June")) {
+            month = "06";
+        } else if (monthIn.equals("July")) {
+            month = "07";
+        } else if (monthIn.equals("August")) {
+            month = "08";
+        } else if (monthIn.equals("September")) {
+            month = "09";
+        } else if (monthIn.equals("October")) {
+            month = "10";
+        } else if (monthIn.equals("November")) {
+            month = "11";
+        } else if (monthIn.equals("December")) {
+            month = "12";
+        }
+
+        String date = (year + "-" + month);
+
+        System.out.println("Date : " + date);
+
+        Object[] total = new Object[50];
+
+        // Return the sum of the selected month and Line - SQL Query SUM WHERE
+        // Month Contains /06/
+        // Query ////////
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        String sql1 = "SELECT SUM(Mod123Unlined) FROM MainLineBalance WHERE Date LIKE '%" + date + "%';";
+        String sql2 = "SELECT SUM(Mod4Unlined) FROM MainLineBalance WHERE Date LIKE '%" + date + "%';";
+        String sql3 = "SELECT SUM(Mod123Lined) FROM MainLineBalance WHERE Date LIKE '%" + date + "%';";
+        String sql4 = "SELECT SUM(Mod4Lined) FROM MainLineBalance WHERE Date LIKE '%" + date + "%';";
+
+        String sql5 = "SELECT SUM(SP01) FROM MainShellPressProduction WHERE Date LIKE '%" + date + "%';";
+        String sql6 = "SELECT SUM(SP02) FROM MainShellPressProduction WHERE Date LIKE '%" + date + "%';";
+        String sql7 = "SELECT SUM(SP03) FROM MainShellPressProduction WHERE Date LIKE '%" + date + "%';";
+        String sql8 = "SELECT SUM(FMI41) FROM MainShellPressProduction WHERE Date LIKE '%" + date + "%';";
+        String sql9 = "SELECT SUM(FMI42) FROM MainShellPressProduction WHERE Date LIKE '%" + date + "%';";
+        String sql10 = "SELECT SUM(SP04) FROM MainShellPressProduction WHERE Date LIKE '%" + date + "%';";
+
+        String sql11 = "SELECT SUM(Liner11) FROM MainLinerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql12 = "SELECT SUM(Liner12) FROM MainLinerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql13 = "SELECT SUM(Liner21) FROM MainLinerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql14 = "SELECT SUM(Liner22) FROM MainLinerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql15 = "SELECT SUM(Liner23) FROM MainLinerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql16 = "SELECT SUM(Liner24) FROM MainLinerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql17 = "SELECT SUM(Liner31) FROM MainLinerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql18 = "SELECT SUM(Liner32) FROM MainLinerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql19 = "SELECT SUM(Liner33) FROM MainLinerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql20 = "SELECT SUM(Liner34) FROM MainLinerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql21 = "SELECT SUM(Liner41) FROM MainLinerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql22 = "SELECT SUM(Liner42) FROM MainLinerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql23 = "SELECT SUM(Liner43) FROM MainLinerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql24 = "SELECT SUM(Liner44) FROM MainLinerProduction WHERE Date LIKE '%" + date + "%';";
+
+        String sql25 = "SELECT SUM(Stolle11) FROM MainStolleProduction WHERE Date LIKE '%" + date + "%';";
+        String sql26 = "SELECT SUM(Stolle12) FROM MainStolleProduction WHERE Date LIKE '%" + date + "%';";
+        String sql27 = "SELECT SUM(Stolle21) FROM MainStolleProduction WHERE Date LIKE '%" + date + "%';";
+        String sql28 = "SELECT SUM(Stolle22) FROM MainStolleProduction WHERE Date LIKE '%" + date + "%';";
+//        String sql29 = "SELECT SUM(Stolle23) FROM MainStolleProduction WHERE Date LIKE '%" + date + "%';";
+//        String sql30 = "SELECT SUM(Stolle24) FROM MainStolleProduction WHERE Date LIKE '%" + date + "%';";
+        String sql31 = "SELECT SUM(Stolle31) FROM MainStolleProduction WHERE Date LIKE '%" + date + "%';";
+        String sql32 = "SELECT SUM(Stolle32) FROM MainStolleProduction WHERE Date LIKE '%" + date + "%';";
+        String sql33 = "SELECT SUM(Stolle33) FROM MainStolleProduction WHERE Date LIKE '%" + date + "%';";
+        //       String sql34 = "SELECT SUM(Stolle34) FROM MainStolleProduction WHERE Date LIKE '%" + date + "%';";
+        String sql35 = "SELECT SUM(Stolle41) FROM MainStolleProduction WHERE Date LIKE '%" + date + "%';";
+        String sql36 = "SELECT SUM(Stolle42) FROM MainStolleProduction WHERE Date LIKE '%" + date + "%';";
+        String sql37 = "SELECT SUM(Stolle43) FROM MainStolleProduction WHERE Date LIKE '%" + date + "%';";
+        String sql38 = "SELECT SUM(Stolle44) FROM MainStolleProduction WHERE Date LIKE '%" + date + "%';";
+
+        s.setQueryTimeout(5);
+
+        // W11 /////////////////
+        s.execute(sql1);
+
+        ResultSet rs1 = s.getResultSet();
+        while ((rs1 != null) && (rs1.next())) {
+            total[0] = rs1.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W12 //////////////////
+        s.execute(sql2);
+
+        ResultSet rs2 = s.getResultSet();
+        while ((rs2 != null) && (rs2.next())) {
+            total[1] = rs2.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W21 /////////////////
+        s.execute(sql3);
+
+        ResultSet rs3 = s.getResultSet();
+        while ((rs3 != null) && (rs3.next())) {
+            total[2] = rs3.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W22 /////////////////
+        s.execute(sql4);
+
+        ResultSet rs4 = s.getResultSet();
+        while ((rs4 != null) && (rs4.next())) {
+            total[3] = rs4.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql5);
+
+        ResultSet rs5 = s.getResultSet();
+        while ((rs5 != null) && (rs5.next())) {
+            total[4] = rs5.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql6);
+
+        ResultSet rs6 = s.getResultSet();
+        while ((rs6 != null) && (rs6.next())) {
+            total[5] = rs6.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql7);
+
+        ResultSet rs7 = s.getResultSet();
+        while ((rs7 != null) && (rs7.next())) {
+            total[6] = rs7.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql8);
+
+        ResultSet rs8 = s.getResultSet();
+        while ((rs8 != null) && (rs8.next())) {
+            total[7] = rs8.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql9);
+
+        ResultSet rs9 = s.getResultSet();
+        while ((rs9 != null) && (rs9.next())) {
+            total[8] = rs9.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql10);
+
+        ResultSet rs10 = s.getResultSet();
+        while ((rs10 != null) && (rs10.next())) {
+            total[9] = rs10.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql11);
+
+        ResultSet rs11 = s.getResultSet();
+        while ((rs11 != null) && (rs11.next())) {
+            total[10] = rs11.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql12);
+
+        ResultSet rs12 = s.getResultSet();
+        while ((rs12 != null) && (rs12.next())) {
+            total[11] = rs12.getInt(1);
+        }
+
+        // W32 /////////////////
+        s.execute(sql13);
+
+        ResultSet rs13 = s.getResultSet();
+        while ((rs13 != null) && (rs13.next())) {
+            total[12] = rs13.getInt(1);
+        }
+
+        // W32 /////////////////
+        s.execute(sql14);
+
+        ResultSet rs14 = s.getResultSet();
+        while ((rs14 != null) && (rs14.next())) {
+            total[13] = rs14.getInt(1);
+        }
+
+        // W32 /////////////////
+        s.execute(sql15);
+
+        ResultSet rs15 = s.getResultSet();
+        while ((rs15 != null) && (rs15.next())) {
+            total[14] = rs15.getInt(1);
+        }
+
+        // W32 /////////////////
+        s.execute(sql16);
+
+        ResultSet rs16 = s.getResultSet();
+        while ((rs16 != null) && (rs16.next())) {
+            total[15] = rs16.getInt(1);
+        }
+
+        // W32 /////////////////
+        s.execute(sql17);
+
+        ResultSet rs17 = s.getResultSet();
+        while ((rs17 != null) && (rs17.next())) {
+            total[16] = rs17.getInt(1);
+        }
+        // W32 /////////////////
+        s.execute(sql18);
+
+        ResultSet rs18 = s.getResultSet();
+        while ((rs18 != null) && (rs18.next())) {
+            total[17] = rs18.getInt(1);
+        }
+
+        // W32 /////////////////
+        s.execute(sql19);
+
+        ResultSet rs19 = s.getResultSet();
+        while ((rs19 != null) && (rs19.next())) {
+            total[18] = rs19.getInt(1);
+        }
+
+        // W32 /////////////////
+        s.execute(sql20);
+
+        ResultSet rs20 = s.getResultSet();
+        while ((rs20 != null) && (rs20.next())) {
+            total[19] = rs20.getInt(1);
+        }
+        // W32 /////////////////
+        s.execute(sql21);
+
+        ResultSet rs21 = s.getResultSet();
+        while ((rs21 != null) && (rs21.next())) {
+            total[20] = rs21.getInt(1);
+        }
+        // W32 /////////////////
+        s.execute(sql22);
+
+        ResultSet rs22 = s.getResultSet();
+        while ((rs22 != null) && (rs22.next())) {
+            total[21] = rs22.getInt(1);
+        }
+        // W32 /////////////////
+        s.execute(sql23);
+
+        ResultSet rs23 = s.getResultSet();
+        while ((rs23 != null) && (rs23.next())) {
+            total[22] = rs23.getInt(1);
+        }
+        // W32 /////////////////
+        s.execute(sql24);
+
+        ResultSet rs24 = s.getResultSet();
+        while ((rs24 != null) && (rs24.next())) {
+            total[23] = rs24.getInt(1);
+        }
+        // W32 /////////////////
+        s.execute(sql25);
+
+        ResultSet rs25 = s.getResultSet();
+        while ((rs25 != null) && (rs25.next())) {
+            total[24] = rs25.getInt(1);
+        }
+        // W32 /////////////////
+        s.execute(sql26);
+
+        ResultSet rs26 = s.getResultSet();
+        while ((rs26 != null) && (rs26.next())) {
+            total[25] = rs26.getInt(1);
+        }
+        // W32 /////////////////
+        s.execute(sql27);
+
+        ResultSet rs27 = s.getResultSet();
+        while ((rs27 != null) && (rs27.next())) {
+            total[26] = rs27.getInt(1);
+        }
+        // W32 /////////////////
+        s.execute(sql28);
+
+        ResultSet rs28 = s.getResultSet();
+        while ((rs28 != null) && (rs28.next())) {
+            total[27] = rs28.getInt(1);
+        }
+        // W32 /////////////////
+        s.execute(sql31);
+
+        ResultSet rs31 = s.getResultSet();
+        while ((rs31 != null) && (rs31.next())) {
+            total[30] = rs31.getInt(1);
+        }
+        // W32 /////////////////
+        s.execute(sql32);
+
+        ResultSet rs32 = s.getResultSet();
+        while ((rs32 != null) && (rs32.next())) {
+            total[31] = rs32.getInt(1);
+        }
+        // W32 /////////////////
+        s.execute(sql33);
+
+        ResultSet rs33 = s.getResultSet();
+        while ((rs33 != null) && (rs33.next())) {
+            total[32] = rs33.getInt(1);
+        }
+        // W32 /////////////////
+        s.execute(sql35);
+
+        ResultSet rs35 = s.getResultSet();
+        while ((rs35 != null) && (rs35.next())) {
+            total[34] = rs35.getInt(1);
+        }
+        // W32 /////////////////
+        s.execute(sql36);
+
+        ResultSet rs36 = s.getResultSet();
+        while ((rs36 != null) && (rs36.next())) {
+            total[35] = rs36.getInt(1);
+        }// W32 /////////////////
+        s.execute(sql37);
+
+        ResultSet rs37 = s.getResultSet();
+        while ((rs37 != null) && (rs37.next())) {
+            total[36] = rs37.getInt(1);
+        }// W32 /////////////////
+        s.execute(sql38);
+
+        ResultSet rs38 = s.getResultSet();
+        while ((rs38 != null) && (rs38.next())) {
+            total[37] = rs38.getInt(1);
+        }
+
+        total[38] = (int) total[4] + (int) total[5] + (int) total[6]; // Shell Press 123 Monthly
+        total[39] = (int) total[7] + (int) total[8] + (int) total[9]; // Shell Press 4 Monthly
+
+        total[40] = (int) total[10] + (int) total[11] + (int) total[12] + (int) total[13] + (int) total[14] + (int) total[15] + (int) total[16] + (int) total[17] + (int) total[18] + (int) total[19];
+        total[41] = (int) total[21] + (int) total[22] + (int) total[23] + (int) total[24]; // Liners 4
+
+        total[42] = (int) total[24] + (int) total[25] + (int) total[26] + (int) total[27] + (int) total[30] + (int) total[31] + (int) total[32];
+        total[43] = (int) total[34] + (int) total[35] + (int) total[36] + (int) total[37]; // Conversion 4
+
+        // Total
+        total[44] = (int) total[0] + (int) total[1] + (int) total[2] + (int) total[3]; // Conversion 4
+
+        rs1.close();
+        rs2.close();
+        rs3.close();
+        rs4.close();
+        rs5.close();
+        rs6.close();
+        rs7.close();
+        rs8.close();
+        rs9.close();
+        rs10.close();
+        rs11.close();
+        rs12.close();
+        rs13.close();
+        rs14.close();
+        rs15.close();
+        rs16.close();
+        rs17.close();
+        rs18.close();
+        rs19.close();
+        rs20.close();
+        rs21.close();
+        rs22.close();
+        rs23.close();
+        rs24.close();
+        rs25.close();
+        rs26.close();
+        rs27.close();
+        rs28.close();
+        rs31.close();
+        rs32.close();
+        rs33.close();
+        rs35.close();
+        rs36.close();
+        rs37.close();
+        rs38.close();
+
+        s.close();
+        conn.close();
+
+        // ///////////////
+        return total;
+    }
+
+    public static JPanel MaintenanceLineBalanceSummaryTable(int in) throws SQLException {
+
+        JPanel outerPanel = new JPanel(new BorderLayout());
+
+        Connection conn = Connect();
+        Statement stmt = conn.createStatement();
+        stmt.setQueryTimeout(10);
+
+        PreparedStatement psmt = conn.prepareStatement("SELECT "
+                + "Date, Mod123Unlined, Mod4Unlined, Mod123Lined, Mod4Lined, ID FROM MainLineBalance ORDER BY Date DESC");
+        psmt.setQueryTimeout(10);
+        ResultSet rs = psmt.executeQuery();
+        DefaultTableModel dm = new DefaultTableModel();
+
+        // get column names
+        int len = rs.getMetaData().getColumnCount();
+        System.out.println("LEN : " + len);
+        Vector cols = new Vector(len);
+        for (int i = 1; i <= len; i++) {// Note starting at 1
+
+            cols.add(rs.getMetaData().getColumnName(i));
+            System.out.println(rs.getMetaData().getColumnName(i));
+
+        }
+
+        // Add Data
+        Vector data = new Vector();
+
+        while (rs.next()) {
+
+            Vector row = new Vector(len);
+
+            row.add(rs.getString(1));
+            row.add(rs.getInt(2));
+            row.add(rs.getInt(3));
+            row.add(rs.getInt(4));
+            row.add(rs.getInt(5));
+            row.add(rs.getInt(6));
+
+            data.add(row);
+        }
+
+        // Now create the table
+        DefaultTableModel model = new DefaultTableModel(data, cols);
+
+        JTable table = new JTable(model);
+
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+//        table.getColumnModel().getColumn(0).setMinWidth(60);
+//        table.getColumnModel().getColumn(17).setMaxWidth(40);
+        // Render Checkbox
+//        TableColumn tc = table.getColumnModel().getColumn(9);
+//        tc.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+                if (e.getClickCount() == 2) {
+                    JTable target = (JTable) e.getSource();
+
+                    int row = target.getSelectedRow() + 1;
+					// int column = target.getSelectedColumn();
+
+                    // System.out.println("Clicked : " + row );
+                    System.out.println(table.getValueAt(table.getSelectedRow(), 5).toString());
+
+                    String idString = table.getValueAt(table.getSelectedRow(), 5).toString();
+                    int id = Integer.valueOf(idString);
+                    try {
+                        LineBalance linerProduction = new LineBalance(1, -2);
+                        linerProduction.setLineBalanceToID(id);
+                    } catch (SQLException ex) {
+                        Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+
+                }
+            }
+        });
+
+        JTableHeader header = table.getTableHeader();
+
+        outerPanel.add(header, BorderLayout.NORTH);
+        outerPanel.add(table, BorderLayout.CENTER);
+
+        psmt.close();
+        stmt.close();
+        conn.close();
+
+        return outerPanel;
+
+    }
+
+    // Maintenance Liner Spoilage
+    public static int MaintenanceLinerSpoilageGetHighestID() throws SQLException {
+
+        int highestID = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT MAX(MainLinerSpoilage.[ID]) FROM MainLinerSpoilage;";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            highestID = rs.getInt(1);
+            System.out.println("Highest ID :  " + highestID);
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        return highestID;
+    }
+
+    public static Object[] MaintenanceLinerSpoilageReturnEntryByDate(Date dateIn) throws Exception {
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        String df = (sdf.format(dateIn));
+
+        // Need to format dateIn to proper Syntax ----> #2/2/2012#
+        Object[] result = new Object[19];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainLinerSpoilage WHERE MainLinerSpoilage.Date = \"" + df + "\";";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2);
+            result[1] = df1;
+            result[2] = rs.getDouble(3);
+            result[3] = rs.getDouble(4);
+            result[4] = rs.getDouble(5);
+            result[5] = rs.getDouble(6);
+            result[6] = rs.getDouble(7);
+            result[7] = rs.getDouble(8);
+            result[8] = rs.getDouble(9);
+            result[9] = rs.getDouble(10);
+            result[10] = rs.getDouble(11);
+            result[11] = rs.getDouble(12);
+            result[12] = rs.getDouble(13);
+            result[13] = rs.getDouble(14);
+            result[14] = rs.getDouble(15);
+            result[15] = rs.getDouble(16);
+            result[16] = rs.getDouble(17);
+            result[17] = rs.getDouble(18);
+            result[18] = rs.getDouble(19);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+
+    }
+
+    public static Object[] MaintenanceLinerSpoilageReturnEntryByID(int id) throws Exception {
+
+        Object[] result = new Object[19];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainLinerSpoilage WHERE MainLinerSpoilage.ID = \"" + id + "\";";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2);
+            result[1] = df1;
+            result[2] = rs.getDouble(3);
+            result[3] = rs.getDouble(4);
+            result[4] = rs.getDouble(5);
+            result[5] = rs.getDouble(6);
+            result[6] = rs.getDouble(7);
+            result[7] = rs.getDouble(8);
+            result[8] = rs.getDouble(9);
+            result[9] = rs.getDouble(10);
+            result[10] = rs.getDouble(11);
+            result[11] = rs.getDouble(12);
+            result[12] = rs.getDouble(13);
+            result[13] = rs.getDouble(14);
+            result[14] = rs.getDouble(15);
+            result[15] = rs.getDouble(16);
+            result[16] = rs.getDouble(17);
+            result[17] = rs.getDouble(18);
+            result[18] = rs.getDouble(19);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+
+    }
+
+    public static void MaintenanceLinerSpoilageInsert(int idIn, String DateIn, double Liner11In, double Liner12In, double Liner13In, double Liner14In,
+            double Liner21In, double Liner22In, double Liner23In, double Liner24In, double Liner31In, double Liner32In, double Liner33In, double Liner34In,
+            double Liner41In, double Liner42In, double Liner43In, double Liner44In
+    )
+            throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // TimeStamp in String Format
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date date = new Date();
+        String dateF = format.format(date);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        PreparedStatement LinerProductionInsert = conn.prepareStatement("insert into MainLinerSpoilage values(?,?,?,?,?,?,?,?,?,?, ?,?,?,?,?,?,?,?,?)");
+
+        LinerProductionInsert.setInt(1, idIn);
+        LinerProductionInsert.setString(2, DateIn);
+        LinerProductionInsert.setDouble(3, Liner11In);
+        LinerProductionInsert.setDouble(4, Liner12In);
+        LinerProductionInsert.setDouble(5, Liner13In);
+        LinerProductionInsert.setDouble(6, Liner14In);
+        LinerProductionInsert.setDouble(7, Liner21In);
+        LinerProductionInsert.setDouble(8, Liner22In);
+        LinerProductionInsert.setDouble(9, Liner23In);
+        LinerProductionInsert.setDouble(10, Liner24In);
+        LinerProductionInsert.setDouble(11, Liner31In);
+        LinerProductionInsert.setDouble(12, Liner32In);
+        LinerProductionInsert.setDouble(13, Liner33In);
+        LinerProductionInsert.setDouble(14, Liner34In);
+        LinerProductionInsert.setDouble(15, Liner41In);
+        LinerProductionInsert.setDouble(16, Liner42In);
+        LinerProductionInsert.setDouble(17, Liner43In);
+        LinerProductionInsert.setDouble(18, Liner44In);
+        LinerProductionInsert.setString(19, dateF);
+
+        LinerProductionInsert.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static void MaintenanceLinerSpoilageUpdate(
+            String DateIn,
+            double Liner11In,
+            double Liner12In,
+            double Liner13In,
+            double Liner14In,
+            double Liner21In,
+            double Liner22In,
+            double Liner23In,
+            double Liner24In,
+            double Liner31In,
+            double Liner32In,
+            double Liner33In,
+            double Liner34In,
+            double Liner41In,
+            double Liner42In,
+            double Liner43In,
+            double Liner44In,
+            int idIn
+    ) throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String sql = "update MainLinerSpoilage set Date=?, Liner11=? , Liner12=? , Liner13=? , Liner14=?, Liner21=? , "
+                + "Liner22=?,  Liner23=?, Liner24=?, Liner31=?, Liner32=?, Liner33=?, Liner34=?, Liner41=?, Liner42=?, Liner43=?, Liner44=? where ID=?";
+
+        PreparedStatement LinerProductionUpdate = conn.prepareStatement(sql);
+
+        LinerProductionUpdate.setString(1, DateIn);
+        LinerProductionUpdate.setDouble(2, Liner11In);
+        LinerProductionUpdate.setDouble(3, Liner12In);
+        LinerProductionUpdate.setDouble(4, Liner13In);
+        LinerProductionUpdate.setDouble(5, Liner14In);
+        LinerProductionUpdate.setDouble(6, Liner21In);
+        LinerProductionUpdate.setDouble(7, Liner22In);
+        LinerProductionUpdate.setDouble(8, Liner23In);
+        LinerProductionUpdate.setDouble(9, Liner24In);
+        LinerProductionUpdate.setDouble(10, Liner31In);
+        LinerProductionUpdate.setDouble(11, Liner32In);
+        LinerProductionUpdate.setDouble(12, Liner33In);
+        LinerProductionUpdate.setDouble(13, Liner34In);
+        LinerProductionUpdate.setDouble(14, Liner41In);
+        LinerProductionUpdate.setDouble(15, Liner42In);
+        LinerProductionUpdate.setDouble(16, Liner43In);
+        LinerProductionUpdate.setDouble(17, Liner44In);
+        LinerProductionUpdate.setInt(18, idIn);
+
+        LinerProductionUpdate.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static Object[] MaintenanceLinerSpoilageGetNextEntryById(int idIn) throws SQLException {
+
+        Object[] result = new Object[19];
+        int nextId = idIn + 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainLinerSpoilage WHERE MainLinerSpoilage.ID = \"" + nextId + "\";";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2);
+            result[1] = df1;
+            result[2] = rs.getDouble(3);
+            result[3] = rs.getDouble(4);
+            result[4] = rs.getDouble(5);
+            result[5] = rs.getDouble(6);
+            result[6] = rs.getDouble(7);
+            result[7] = rs.getDouble(8);
+            result[8] = rs.getDouble(9);
+            result[9] = rs.getDouble(10);
+            result[10] = rs.getDouble(11);
+            result[11] = rs.getDouble(12);
+            result[12] = rs.getDouble(13);
+            result[13] = rs.getDouble(14);
+            result[14] = rs.getDouble(15);
+            result[15] = rs.getDouble(16);
+            result[16] = rs.getDouble(17);
+            result[17] = rs.getDouble(18);
+            result[18] = rs.getDouble(19);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    public static Object[] MaintenanceLinerSpoilageGetPreviousEntryById(int idIn) throws SQLException {
+
+        Object[] result = new Object[19];
+        int nextId = idIn - 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainLinerSpoilage WHERE MainLinerSpoilage.ID = \"" + nextId + "\";";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2);
+            result[1] = df1;
+            result[2] = rs.getDouble(3);
+            result[3] = rs.getDouble(4);
+            result[4] = rs.getDouble(5);
+            result[5] = rs.getDouble(6);
+            result[6] = rs.getDouble(7);
+            result[7] = rs.getDouble(8);
+            result[8] = rs.getDouble(9);
+            result[9] = rs.getDouble(10);
+            result[10] = rs.getDouble(11);
+            result[11] = rs.getDouble(12);
+            result[12] = rs.getDouble(13);
+            result[13] = rs.getDouble(14);
+            result[14] = rs.getDouble(15);
+            result[15] = rs.getDouble(16);
+            result[16] = rs.getDouble(17);
+            result[17] = rs.getDouble(18);
+            result[18] = rs.getDouble(19);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    public static Object[] MaintenanceLinerSpoilageCalculateTotalsByMonth(String monthIn, String yearIn) throws SQLException {
+
+        // Convert Input into Date Range
+        String month = "";
+        String year = yearIn;
+
+        if (monthIn.equals("January")) {
+            month = "01";
+        } else if (monthIn.equals("February")) {
+            month = "02";
+        } else if (monthIn.equals("March")) {
+            month = "03";
+        } else if (monthIn.equals("April")) {
+            month = "04";
+        } else if (monthIn.equals("May")) {
+            month = "05";
+        } else if (monthIn.equals("June")) {
+            month = "06";
+        } else if (monthIn.equals("July")) {
+            month = "07";
+        } else if (monthIn.equals("August")) {
+            month = "08";
+        } else if (monthIn.equals("September")) {
+            month = "09";
+        } else if (monthIn.equals("October")) {
+            month = "10";
+        } else if (monthIn.equals("November")) {
+            month = "11";
+        } else if (monthIn.equals("December")) {
+            month = "12";
+        }
+
+        String date = (year + "-" + month);
+
+        System.out.println("Date : " + date);
+
+        Object[] total = new Object[19];
+
+        // Return the sum of the selected month and Line - SQL Query SUM WHERE
+        // Month Contains /06/
+        // Query ////////
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        String sql1 = "SELECT SUM(Liner11) FROM MainLinerSpoilage WHERE Date LIKE '%" + date + "%';";
+        String sql2 = "SELECT SUM(Liner12) FROM MainLinerSpoilage WHERE Date LIKE '%" + date + "%';";
+        String sql3 = "SELECT SUM(Liner13) FROM MainLinerSpoilage WHERE Date LIKE '%" + date + "%';";
+        String sql4 = "SELECT SUM(Liner14) FROM MainLinerSpoilage WHERE Date LIKE '%" + date + "%';";
+        String sql5 = "SELECT SUM(Liner21) FROM MainLinerSpoilage WHERE Date LIKE '%" + date + "%';";
+        String sql6 = "SELECT SUM(Liner22) FROM MainLinerSpoilage WHERE Date LIKE '%" + date + "%';";
+        String sql7 = "SELECT SUM(Liner23) FROM MainLinerSpoilage WHERE Date LIKE '%" + date + "%';";
+        String sql8 = "SELECT SUM(Liner24) FROM MainLinerSpoilage WHERE Date LIKE '%" + date + "%';";
+        String sql9 = "SELECT SUM(Liner31) FROM MainLinerSpoilage WHERE Date LIKE '%" + date + "%';";
+        String sql10 = "SELECT SUM(Liner32) FROM MainLinerSpoilage WHERE Date LIKE '%" + date + "%';";
+        String sql11 = "SELECT SUM(Liner33) FROM MainLinerSpoilage WHERE Date LIKE '%" + date + "%';";
+        String sql12 = "SELECT SUM(Liner34) FROM MainLinerSpoilage WHERE Date LIKE '%" + date + "%';";
+        String sql13 = "SELECT SUM(Liner41) FROM MainLinerSpoilage WHERE Date LIKE '%" + date + "%';";
+        String sql14 = "SELECT SUM(Liner42) FROM MainLinerSpoilage WHERE Date LIKE '%" + date + "%';";
+        String sql15 = "SELECT SUM(Liner43) FROM MainLinerSpoilage WHERE Date LIKE '%" + date + "%';";
+        String sql16 = "SELECT SUM(Liner44) FROM MainLinerSpoilage WHERE Date LIKE '%" + date + "%';";
+
+        s.setQueryTimeout(5);
+
+        // W11 /////////////////
+        s.execute(sql1);
+
+        ResultSet rs1 = s.getResultSet();
+        while ((rs1 != null) && (rs1.next())) {
+            total[0] = rs1.getDouble(1);
+        }
+
+        // ///////////////////////////
+        // W12 //////////////////
+        s.execute(sql2);
+
+        ResultSet rs2 = s.getResultSet();
+        while ((rs2 != null) && (rs2.next())) {
+            total[1] = rs2.getDouble(1);
+        }
+
+        // ///////////////////////////
+        // W21 /////////////////
+        s.execute(sql3);
+
+        ResultSet rs3 = s.getResultSet();
+        while ((rs3 != null) && (rs3.next())) {
+            total[2] = rs3.getDouble(1);
+        }
+
+        // ///////////////////////////
+        // W22 /////////////////
+        s.execute(sql4);
+
+        ResultSet rs4 = s.getResultSet();
+        while ((rs4 != null) && (rs4.next())) {
+            total[3] = rs4.getDouble(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql5);
+
+        ResultSet rs5 = s.getResultSet();
+        while ((rs5 != null) && (rs5.next())) {
+            total[4] = rs5.getDouble(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql6);
+
+        ResultSet rs6 = s.getResultSet();
+        while ((rs6 != null) && (rs6.next())) {
+            total[5] = rs6.getDouble(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql7);
+
+        ResultSet rs7 = s.getResultSet();
+        while ((rs7 != null) && (rs7.next())) {
+            total[6] = rs7.getDouble(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql8);
+
+        ResultSet rs8 = s.getResultSet();
+        while ((rs8 != null) && (rs8.next())) {
+            total[7] = rs8.getDouble(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql9);
+
+        ResultSet rs9 = s.getResultSet();
+        while ((rs9 != null) && (rs9.next())) {
+            total[8] = rs9.getDouble(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql10);
+
+        ResultSet rs10 = s.getResultSet();
+        while ((rs10 != null) && (rs10.next())) {
+            total[9] = rs10.getDouble(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql11);
+
+        ResultSet rs11 = s.getResultSet();
+        while ((rs11 != null) && (rs11.next())) {
+            total[10] = rs11.getDouble(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql12);
+
+        ResultSet rs12 = s.getResultSet();
+        while ((rs12 != null) && (rs12.next())) {
+            total[11] = rs12.getDouble(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql13);
+
+        ResultSet rs13 = s.getResultSet();
+        while ((rs13 != null) && (rs13.next())) {
+            total[12] = rs13.getDouble(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql14);
+
+        ResultSet rs14 = s.getResultSet();
+        while ((rs14 != null) && (rs14.next())) {
+            total[13] = rs14.getDouble(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql15);
+
+        ResultSet rs15 = s.getResultSet();
+        while ((rs15 != null) && (rs15.next())) {
+            total[14] = rs15.getDouble(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql16);
+
+        ResultSet rs16 = s.getResultSet();
+        while ((rs16 != null) && (rs16.next())) {
+            total[15] = rs16.getDouble(1);
+        }
+
+        // ///////////////////////////
+        // ///////////////////////////
+        rs1.close();
+        rs2.close();
+        rs3.close();
+        rs4.close();
+        rs5.close();
+        rs6.close();
+        rs7.close();
+        rs8.close();
+        rs9.close();
+        rs10.close();
+        rs11.close();
+        rs12.close();
+        rs13.close();
+        rs14.close();
+        rs15.close();
+        rs16.close();
+
+        s.close();
+        conn.close();
+
+        // ///////////////
+        return total;
+    }
+
+    public static JPanel MaintenanceLinerSpoilageSummaryTable(int in) throws SQLException {
+
+        JPanel outerPanel = new JPanel(new BorderLayout());
+
+        Connection conn = Connect();
+        Statement stmt = conn.createStatement();
+        stmt.setQueryTimeout(10);
+
+        PreparedStatement psmt = conn.prepareStatement("SELECT Date, Liner11, Liner12, Liner13, Liner14, Liner21, Liner22, Liner23, Liner24, Liner31, Liner32, Liner33, Liner34, Liner41, Liner42, Liner43, Liner44, ID FROM MainLinerSpoilage ORDER BY Date DESC");
+        psmt.setQueryTimeout(10);
+        ResultSet rs = psmt.executeQuery();
+        DefaultTableModel dm = new DefaultTableModel();
+
+        // get column names
+        int len = rs.getMetaData().getColumnCount();
+        System.out.println("LEN : " + len);
+        Vector cols = new Vector(len);
+        for (int i = 1; i <= len; i++) {// Note starting at 1
+
+            cols.add(rs.getMetaData().getColumnName(i));
+            System.out.println(rs.getMetaData().getColumnName(i));
+
+        }
+
+        // Add Data
+        Vector data = new Vector();
+
+        while (rs.next()) {
+
+            Vector row = new Vector(len);
+
+            row.add(rs.getString(1));
+            row.add(rs.getDouble(2));
+            row.add(rs.getDouble(3));
+            row.add(rs.getDouble(4));
+            row.add(rs.getDouble(5));
+            row.add(rs.getDouble(6));
+            row.add(rs.getDouble(7));
+            row.add(rs.getDouble(8));
+            row.add(rs.getDouble(9));
+            row.add(rs.getDouble(10));
+            row.add(rs.getDouble(11));
+            row.add(rs.getDouble(12));
+            row.add(rs.getDouble(13));
+            row.add(rs.getDouble(14));
+            row.add(rs.getDouble(15));
+            row.add(rs.getDouble(16));
+            row.add(rs.getDouble(17));
+            row.add(rs.getString(18));
+
+            data.add(row);
+        }
+
+        // Now create the table
+        DefaultTableModel model = new DefaultTableModel(data, cols);
+
+        JTable table = new JTable(model);
+
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+        table.getColumnModel().getColumn(0).setMinWidth(75);
+        //       table.getColumnModel().getColumn(17).setMaxWidth(40);
+        // Render Checkbox
+//        TableColumn tc = table.getColumnModel().getColumn(9);
+//        tc.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+                if (e.getClickCount() == 2) {
+                    JTable target = (JTable) e.getSource();
+
+                    int row = target.getSelectedRow() + 1;
+					// int column = target.getSelectedColumn();
+
+                    // System.out.println("Clicked : " + row );
+                    System.out.println(table.getValueAt(table.getSelectedRow(), 17).toString());
+
+                    String idString = table.getValueAt(table.getSelectedRow(), 17).toString();
+                    int id = Integer.valueOf(idString);
+                    try {
+                        LinerSpoilage linerSpoilage = new LinerSpoilage(1, -2);
+                        linerSpoilage.setLinerSpoilageToID(id);
+                    } catch (SQLException ex) {
+                        Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+
+                }
+            }
+        });
+
+        JTableHeader header = table.getTableHeader();
+
+        outerPanel.add(header, BorderLayout.NORTH);
+        outerPanel.add(table, BorderLayout.CENTER);
+
+        psmt.close();
+        stmt.close();
+        conn.close();
+
+        return outerPanel;
+
+    }
+
+    public static String[] MaintenanceLinerSPoilageSevenDaysAverages() throws SQLException {
+
+        String[] averages = new String[16];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        String sql1 = "SELECT AVG(Liner11) FROM MainLinerSpoilage WHERE Date BETWEEN date('now', '-7 day') AND date('now');";
+        String sql2 = "SELECT AVG(Liner12) FROM MainLinerSpoilage WHERE Date BETWEEN date('now', '-7 day') AND date('now');";
+        String sql3 = "SELECT AVG(Liner13) FROM MainLinerSpoilage WHERE Date BETWEEN date('now', '-7 day') AND date('now');";
+        String sql4 = "SELECT AVG(Liner14) FROM MainLinerSpoilage WHERE Date BETWEEN date('now', '-7 day') AND date('now');";
+
+        String sql5 = "SELECT AVG(Liner21) FROM MainLinerSpoilage WHERE Date BETWEEN date('now', '-7 day') AND date('now');";
+        String sql6 = "SELECT AVG(Liner22) FROM MainLinerSpoilage WHERE Date BETWEEN date('now', '-7 day') AND date('now');";
+        String sql7 = "SELECT AVG(Liner23) FROM MainLinerSpoilage WHERE Date BETWEEN date('now', '-7 day') AND date('now');";
+        String sql8 = "SELECT AVG(Liner24) FROM MainLinerSpoilage WHERE Date BETWEEN date('now', '-7 day') AND date('now');";
+
+        String sql9 = "SELECT AVG(Liner31) FROM MainLinerSpoilage WHERE Date BETWEEN date('now', '-7 day') AND date('now');";
+        String sql10 = "SELECT AVG(Liner32) FROM MainLinerSpoilage WHERE Date BETWEEN date('now', '-7 day') AND date('now');";
+        String sql11 = "SELECT AVG(Liner33) FROM MainLinerSpoilage WHERE Date BETWEEN date('now', '-7 day') AND date('now');";
+        String sql12 = "SELECT AVG(Liner34) FROM MainLinerSpoilage WHERE Date BETWEEN date('now', '-7 day') AND date('now');";
+
+        String sql13 = "SELECT AVG(Liner41) FROM MainLinerSpoilage WHERE Date BETWEEN date('now', '-7 day') AND date('now');";
+        String sql14 = "SELECT AVG(Liner42) FROM MainLinerSpoilage WHERE Date BETWEEN date('now', '-7 day') AND date('now');";
+        String sql15 = "SELECT AVG(Liner43) FROM MainLinerSpoilage WHERE Date BETWEEN date('now', '-7 day') AND date('now');";
+        String sql16 = "SELECT AVG(Liner44) FROM MainLinerSpoilage WHERE Date BETWEEN date('now', '-7 day') AND date('now');";
+
+        // W32 /////////////////
+        s.execute(sql1);
+
+        ResultSet rs1 = s.getResultSet();
+        while ((rs1 != null) && (rs1.next())) {
+            averages[0] = rs1.getString(1);
+        }
+
+        // ///////////////////////////
+        s.execute(sql2);
+
+        ResultSet rs2 = s.getResultSet();
+        while ((rs2 != null) && (rs2.next())) {
+            averages[1] = rs2.getString(1);
+        }
+
+        // ///////////////////////////
+        s.execute(sql3);
+
+        ResultSet rs3 = s.getResultSet();
+        while ((rs3 != null) && (rs3.next())) {
+            averages[2] = rs3.getString(1);
+        }
+
+        // ///////////////////////////
+        s.execute(sql4);
+
+        ResultSet rs4 = s.getResultSet();
+        while ((rs4 != null) && (rs4.next())) {
+            averages[3] = rs4.getString(1);
+        }
+
+        // ///////////////////////////
+        s.execute(sql4);
+
+        ResultSet rs5 = s.getResultSet();
+        while ((rs5 != null) && (rs5.next())) {
+            averages[4] = rs5.getString(1);
+        }
+
+        // ///////////////////////////
+        s.execute(sql4);
+
+        ResultSet rs6 = s.getResultSet();
+        while ((rs6 != null) && (rs6.next())) {
+            averages[5] = rs6.getString(1);
+        }
+
+        // ///////////////////////////
+        s.execute(sql4);
+
+        ResultSet rs7 = s.getResultSet();
+        while ((rs7 != null) && (rs7.next())) {
+            averages[6] = rs7.getString(1);
+        }
+
+        // ///////////////////////////
+        s.execute(sql4);
+
+        ResultSet rs8 = s.getResultSet();
+        while ((rs8 != null) && (rs8.next())) {
+            averages[7] = rs8.getString(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql1);
+
+        ResultSet rs9 = s.getResultSet();
+        while ((rs9 != null) && (rs9.next())) {
+            averages[8] = rs9.getString(1);
+        }
+
+        // ///////////////////////////
+        s.execute(sql2);
+
+        ResultSet rs10 = s.getResultSet();
+        while ((rs10 != null) && (rs10.next())) {
+            averages[9] = rs10.getString(1);
+        }
+
+        // ///////////////////////////
+        s.execute(sql3);
+
+        ResultSet rs11 = s.getResultSet();
+        while ((rs11 != null) && (rs11.next())) {
+            averages[10] = rs11.getString(1);
+        }
+
+        // ///////////////////////////
+        s.execute(sql4);
+
+        ResultSet rs12 = s.getResultSet();
+        while ((rs12 != null) && (rs12.next())) {
+            averages[11] = rs12.getString(1);
+        }
+
+        // ///////////////////////////
+        s.execute(sql4);
+
+        ResultSet rs13 = s.getResultSet();
+        while ((rs13 != null) && (rs13.next())) {
+            averages[12] = rs13.getString(1);
+        }
+
+        // ///////////////////////////
+        s.execute(sql4);
+
+        ResultSet rs14 = s.getResultSet();
+        while ((rs14 != null) && (rs14.next())) {
+            averages[13] = rs14.getString(1);
+        }
+
+        // ///////////////////////////
+        s.execute(sql4);
+
+        ResultSet rs15 = s.getResultSet();
+        while ((rs15 != null) && (rs15.next())) {
+            averages[14] = rs15.getString(1);
+        }
+
+        // ///////////////////////////
+        s.execute(sql4);
+
+        ResultSet rs16 = s.getResultSet();
+        while ((rs16 != null) && (rs16.next())) {
+            averages[15] = rs16.getString(1);
+        }
+
+        // ///////////////////////////
+        conn.close();
+
+        return averages;
+
+    }
+
+    // Maintenance Balancer Maintenance
+    public static int MaintenanceBalancerMaintenanceGetHighestID() throws SQLException {
+
+        int highestID = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT MAX(MainBalancerMaintenance.[ID]) FROM MainShellPressMaintenance;";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            highestID = rs.getInt(1);
+            System.out.println("Highest ID :  " + highestID);
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        return highestID;
+    }
+
+    public static Object[] MaintenanceBalancerMaintenanceReturnEntryByDate(Date dateIn) throws Exception {
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        String df = (sdf.format(dateIn));
+
+        // Need to format dateIn to proper Syntax ----> #2/2/2012#
+        Object[] result = new Object[34];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainBalancerMaintenance WHERE MainBalancerMaintenance.Date = \"" + df + "\";";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            result[1] = rs.getString(2);
+            result[2] = rs.getString(3);
+
+            String df1 = (String) rs.getObject(4);
+            result[3] = df1;
+            String df2 = (String) rs.getObject(5);
+            result[4] = df2;
+            String df3 = (String) rs.getObject(6);
+            result[5] = df3;
+            String df4 = (String) rs.getObject(7);
+            result[6] = df4;
+            String df5 = (String) rs.getObject(8);
+            result[7] = df5;
+
+            result[8] = rs.getInt(9);
+            result[9] = rs.getInt(10);
+            result[10] = rs.getInt(11);
+            result[11] = rs.getInt(12);
+            result[12] = rs.getInt(13);
+
+            result[13] = rs.getInt(14);
+            result[14] = rs.getInt(15);
+            result[15] = rs.getInt(16);
+            result[16] = rs.getInt(17);
+            result[17] = rs.getInt(18);
+
+            result[18] = rs.getInt(19);
+            result[19] = rs.getInt(20);
+            result[20] = rs.getInt(21);
+            result[21] = rs.getInt(22);
+            result[22] = rs.getInt(23);
+
+            String df8 = (String) rs.getObject(24);
+            result[23] = df8;
+            String df9 = (String) rs.getObject(25);
+            result[24] = df9;
+            String df10 = (String) rs.getObject(26);
+            result[25] = df10;
+            String df11 = (String) rs.getObject(27);
+            result[26] = df11;
+            String df12 = (String) rs.getObject(28);
+            result[27] = df12;
+
+            result[28] = rs.getInt(29);
+            result[29] = rs.getInt(30);
+            result[30] = rs.getInt(31);
+            result[31] = rs.getInt(32);
+            result[32] = rs.getInt(33);
+
+            result[33] = rs.getInt(34);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+
+    }
+
+    public static Object[] MaintenanceBalancerMaintenanceReturnEntryByID(int id) throws Exception {
+
+        Object[] result = new Object[34];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainBalancerMaintenance WHERE MainBalancerMaintenance.ID = \"" + id + "\";";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            result[1] = rs.getString(2);
+            result[2] = rs.getString(3);
+
+            String df1 = (String) rs.getObject(4);
+            result[3] = df1;
+            String df2 = (String) rs.getObject(5);
+            result[4] = df2;
+            String df3 = (String) rs.getObject(6);
+            result[5] = df3;
+            String df4 = (String) rs.getObject(7);
+            result[6] = df4;
+            String df5 = (String) rs.getObject(8);
+            result[7] = df5;
+
+            result[8] = rs.getInt(9);
+            result[9] = rs.getInt(10);
+            result[10] = rs.getInt(11);
+            result[11] = rs.getInt(12);
+            result[12] = rs.getInt(13);
+
+            result[13] = rs.getInt(14);
+            result[14] = rs.getInt(15);
+            result[15] = rs.getInt(16);
+            result[16] = rs.getInt(17);
+            result[17] = rs.getInt(18);
+
+            result[18] = rs.getInt(19);
+            result[19] = rs.getInt(20);
+            result[20] = rs.getInt(21);
+            result[21] = rs.getInt(22);
+            result[22] = rs.getInt(23);
+
+            String df8 = (String) rs.getObject(24);
+            result[23] = df8;
+            String df9 = (String) rs.getObject(25);
+            result[24] = df9;
+            String df10 = (String) rs.getObject(26);
+            result[25] = df10;
+            String df11 = (String) rs.getObject(27);
+            result[26] = df11;
+            String df12 = (String) rs.getObject(28);
+            result[27] = df12;
+
+            result[28] = rs.getInt(29);
+            result[29] = rs.getInt(30);
+            result[30] = rs.getInt(31);
+            result[31] = rs.getInt(32);
+            result[32] = rs.getInt(33);
+
+            result[33] = rs.getInt(34);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+
+    }
+
+    public static void MaintenanceBalancerMaintenanceInsert(
+            int idIn, String MachineCodeIn,
+            String MachineNameIn,
+            int LastMaintenanceDate1In,
+            int LastMaintenanceDate2In,
+            int LastMaintenanceDate3In,
+            int LastMaintenanceDate4In,
+            int LastMaintenanceDate7In,
+            int TargetProduction1In,
+            int TargetProduction2In,
+            int TargetProduction3In,
+            int TargetProduction4In,
+            int TargetProduction7In,
+            int Production1In,
+            int Production2In,
+            int Production3In,
+            int Production4In,
+            int Production7In,
+            int PlusMinus1In,
+            int PlusMinus2In,
+            int PlusMinus3In,
+            int PlusMinus4In,
+            int PlusMinus7In,
+            int MaintenanceDueDate1In,
+            int MaintenanceDueDate2In,
+            int MaintenanceDueDate3In,
+            int MaintenanceDueDate4In,
+            int MaintenanceDueDate7In,
+            int DaysRemaining1In,
+            int DaysRemaining2In,
+            int DaysRemaining3In,
+            int DaysRemaining4In,
+            int DaysRemaining7In
+    )
+            throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // TimeStamp in String Format
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date date = new Date();
+        String dateF = format.format(date);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        PreparedStatement BalancerMaintenanceInsert = conn.prepareStatement("insert into MainBalancerMaintenance values(?,?,?,?,?,?,?,?,?,?,  ?,?,?,?,?,?,?,?,?,?, ?,?,?,?,?,?,?,?,?,?, ?,?,?,?)");
+
+        BalancerMaintenanceInsert.setInt(1, idIn);
+        BalancerMaintenanceInsert.setString(2, MachineCodeIn);
+        BalancerMaintenanceInsert.setString(3, MachineNameIn);
+
+        BalancerMaintenanceInsert.setInt(4, LastMaintenanceDate1In);
+        BalancerMaintenanceInsert.setInt(5, LastMaintenanceDate2In);
+        BalancerMaintenanceInsert.setInt(6, LastMaintenanceDate3In);
+        BalancerMaintenanceInsert.setInt(7, LastMaintenanceDate4In);
+        BalancerMaintenanceInsert.setInt(8, LastMaintenanceDate7In);
+
+        BalancerMaintenanceInsert.setInt(9, TargetProduction1In);
+        BalancerMaintenanceInsert.setInt(10, TargetProduction2In);
+        BalancerMaintenanceInsert.setInt(11, TargetProduction3In);
+        BalancerMaintenanceInsert.setInt(12, TargetProduction4In);
+        BalancerMaintenanceInsert.setInt(13, TargetProduction7In);
+
+        BalancerMaintenanceInsert.setInt(14, Production1In);
+        BalancerMaintenanceInsert.setInt(15, Production2In);
+        BalancerMaintenanceInsert.setInt(16, Production3In);
+        BalancerMaintenanceInsert.setInt(17, Production4In);
+        BalancerMaintenanceInsert.setInt(18, Production7In);
+
+        BalancerMaintenanceInsert.setInt(19, PlusMinus1In);
+        BalancerMaintenanceInsert.setInt(20, PlusMinus2In);
+        BalancerMaintenanceInsert.setInt(21, PlusMinus3In);
+        BalancerMaintenanceInsert.setInt(22, PlusMinus4In);
+        BalancerMaintenanceInsert.setInt(23, PlusMinus7In);
+
+        BalancerMaintenanceInsert.setInt(24, MaintenanceDueDate1In);
+        BalancerMaintenanceInsert.setInt(25, MaintenanceDueDate2In);
+        BalancerMaintenanceInsert.setInt(26, MaintenanceDueDate3In);
+        BalancerMaintenanceInsert.setInt(27, MaintenanceDueDate4In);
+        BalancerMaintenanceInsert.setInt(28, MaintenanceDueDate7In);
+
+        BalancerMaintenanceInsert.setInt(29, DaysRemaining1In);
+        BalancerMaintenanceInsert.setInt(30, DaysRemaining2In);
+        BalancerMaintenanceInsert.setInt(31, DaysRemaining3In);
+        BalancerMaintenanceInsert.setInt(32, DaysRemaining4In);
+        BalancerMaintenanceInsert.setInt(33, DaysRemaining7In);
+
+        BalancerMaintenanceInsert.setString(34, dateF);
+
+        BalancerMaintenanceInsert.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static void MaintenanceBalancerMaintenanceUpdate(
+            String MachineCodeIn,
+            String MachineNameIn,
+            String LastMaintenanceDate1In,
+            String LastMaintenanceDate2In,
+            String LastMaintenanceDate3In,
+            String LastMaintenanceDate4In,
+            String LastMaintenanceDate7In,
+            int TargetProduction1In,
+            int TargetProduction2In,
+            int TargetProduction3In,
+            int TargetProduction4In,
+            int TargetProduction7In,
+            int Production1In,
+            int Production2In,
+            int Production3In,
+            int Production4In,
+            int Production7In,
+            int PlusMinus1In,
+            int PlusMinus2In,
+            int PlusMinus3In,
+            int PlusMinus4In,
+            int PlusMinus7In,
+            String MaintenanceDueDate1In,
+            String MaintenanceDueDate2In,
+            String MaintenanceDueDate3In,
+            String MaintenanceDueDate4In,
+            String MaintenanceDueDate7In,
+            int DaysRemaining1In,
+            int DaysRemaining2In,
+            int DaysRemaining3In,
+            int DaysRemaining4In,
+            int DaysRemaining7In,
+            int idIn
+    ) throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String sql
+                = "  update "
+                + "MainBalancerMaintenance set "
+                + "MachineCode=?, "
+                + "MachineName=?, \n"
+                + "LastMaintenanceDate1=?, \n"
+                + "LastMaintenanceDate2=?, \n"
+                + "LastMaintenanceDate3=?, \n"
+                + "LastMaintenanceDate4=?, \n"
+                + "LastMaintenanceDate7=?, \n"
+                + "TargetProduction1=?, \n"
+                + "TargetProduction2=?, \n"
+                + "TargetProduction3=?, \n"
+                + "TargetProduction4=?, \n"
+                + "TargetProduction7=?, \n"
+                + "Production1=?, \n"
+                + "Production2=?, \n"
+                + "Production3=?, \n"
+                + "Production4=?, \n"
+                + "Production7=?, \n"
+                + "PlusMinus1=?, \n"
+                + "PlusMinus2=?, \n"
+                + "PlusMinus3=?, \n"
+                + "PlusMinus4=?, \n"
+                + "PlusMinus7=?, \n"
+                + "MaintenanceDueDate1=?, \n"
+                + "MaintenanceDueDate2=?, \n"
+                + "MaintenanceDueDate3=?, \n"
+                + "MaintenanceDueDate4=?, \n"
+                + "MaintenanceDueDate7=?, \n"
+                + "DaysRemaining1=?, \n"
+                + "DaysRemaining2=?, \n"
+                + "DaysRemaining3=?, \n"
+                + "DaysRemaining4=?, \n"
+                + "DaysRemaining7=? \n"
+                + " where ID=?";
+
+        PreparedStatement BalancerMaintenanceUpdate = conn.prepareStatement(sql);
+
+        BalancerMaintenanceUpdate.setString(1, MachineCodeIn);
+        BalancerMaintenanceUpdate.setString(2, MachineNameIn);
+
+        BalancerMaintenanceUpdate.setString(3, LastMaintenanceDate1In);
+        BalancerMaintenanceUpdate.setString(4, LastMaintenanceDate2In);
+        BalancerMaintenanceUpdate.setString(5, LastMaintenanceDate3In);
+        BalancerMaintenanceUpdate.setString(6, LastMaintenanceDate4In);
+        BalancerMaintenanceUpdate.setString(7, LastMaintenanceDate7In);
+
+        BalancerMaintenanceUpdate.setInt(8, TargetProduction1In);
+        BalancerMaintenanceUpdate.setInt(9, TargetProduction2In);
+        BalancerMaintenanceUpdate.setInt(10, TargetProduction3In);
+        BalancerMaintenanceUpdate.setInt(11, TargetProduction4In);
+        BalancerMaintenanceUpdate.setInt(12, TargetProduction7In);
+
+        BalancerMaintenanceUpdate.setInt(13, Production1In);
+        BalancerMaintenanceUpdate.setInt(14, Production2In);
+        BalancerMaintenanceUpdate.setInt(15, Production3In);
+        BalancerMaintenanceUpdate.setInt(16, Production4In);
+        BalancerMaintenanceUpdate.setInt(17, Production7In);
+
+        BalancerMaintenanceUpdate.setInt(18, PlusMinus1In);
+        BalancerMaintenanceUpdate.setInt(19, PlusMinus2In);
+        BalancerMaintenanceUpdate.setInt(20, PlusMinus3In);
+        BalancerMaintenanceUpdate.setInt(21, PlusMinus4In);
+        BalancerMaintenanceUpdate.setInt(22, PlusMinus7In);
+
+        BalancerMaintenanceUpdate.setString(23, MaintenanceDueDate1In);
+        BalancerMaintenanceUpdate.setString(24, MaintenanceDueDate2In);
+        BalancerMaintenanceUpdate.setString(25, MaintenanceDueDate3In);
+        BalancerMaintenanceUpdate.setString(26, MaintenanceDueDate4In);
+        BalancerMaintenanceUpdate.setString(27, MaintenanceDueDate7In);
+
+        BalancerMaintenanceUpdate.setInt(28, DaysRemaining1In);
+        BalancerMaintenanceUpdate.setInt(29, DaysRemaining2In);
+        BalancerMaintenanceUpdate.setInt(30, DaysRemaining3In);
+        BalancerMaintenanceUpdate.setInt(31, DaysRemaining4In);
+        BalancerMaintenanceUpdate.setInt(32, DaysRemaining7In);
+
+        BalancerMaintenanceUpdate.setInt(33, idIn);
+
+        BalancerMaintenanceUpdate.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static Object[] MaintenanceBalancerMaintenanceGetNextEntryById(int idIn) throws SQLException {
+
+        Object[] result = new Object[46];
+        int nextId = idIn + 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainBalancerMaintenance WHERE MainBalancerMaintenance.ID = \"" + nextId + "\";";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            result[1] = rs.getString(2);
+            result[2] = rs.getString(3);
+
+            String df1 = (String) rs.getObject(4);
+            result[3] = df1;
+            String df2 = (String) rs.getObject(5);
+            result[4] = df2;
+            String df3 = (String) rs.getObject(6);
+            result[5] = df3;
+            String df4 = (String) rs.getObject(7);
+            result[6] = df4;
+            String df7 = (String) rs.getObject(8);
+            result[7] = df7;
+
+            result[8] = rs.getInt(9);
+            result[9] = rs.getInt(10);
+            result[10] = rs.getInt(11);
+            result[11] = rs.getInt(12);
+            result[12] = rs.getInt(13);
+
+            result[13] = rs.getInt(14);
+            result[14] = rs.getInt(15);
+            result[15] = rs.getInt(16);
+            result[16] = rs.getInt(17);
+            result[17] = rs.getInt(18);
+
+            result[18] = rs.getInt(19);
+            result[19] = rs.getInt(20);
+            result[20] = rs.getInt(21);
+            result[21] = rs.getInt(22);
+            result[22] = rs.getInt(23);
+
+            String df8 = (String) rs.getObject(24);
+            result[23] = df8;
+            String df9 = (String) rs.getObject(25);
+            result[24] = df9;
+            String df10 = (String) rs.getObject(26);
+            result[25] = df10;
+            String df11 = (String) rs.getObject(27);
+            result[26] = df11;
+            String df14 = (String) rs.getObject(28);
+            result[27] = df14;
+
+            result[28] = rs.getInt(29);
+            result[29] = rs.getInt(30);
+            result[30] = rs.getInt(31);
+            result[31] = rs.getInt(32);
+            result[32] = rs.getInt(33);
+
+            result[33] = rs.getInt(34);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    public static Object[] MaintenanceBalancerMaintenanceGetPreviousEntryById(int idIn) throws SQLException {
+
+        Object[] result = new Object[34];
+        int nextId = idIn - 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainBalancerMaintenance WHERE MainBalancerMaintenance.ID = \"" + nextId + "\";";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            result[1] = rs.getString(2);
+            result[2] = rs.getString(3);
+
+            String df1 = (String) rs.getObject(4);
+            result[3] = df1;
+            String df2 = (String) rs.getObject(5);
+            result[4] = df2;
+            String df3 = (String) rs.getObject(6);
+            result[5] = df3;
+            String df4 = (String) rs.getObject(7);
+            result[6] = df4;
+            String df7 = (String) rs.getObject(8);
+            result[7] = df7;
+
+            result[8] = rs.getInt(9);
+            result[9] = rs.getInt(10);
+            result[10] = rs.getInt(11);
+            result[11] = rs.getInt(12);
+            result[12] = rs.getInt(13);
+
+            result[13] = rs.getInt(14);
+            result[14] = rs.getInt(15);
+            result[15] = rs.getInt(16);
+            result[16] = rs.getInt(17);
+            result[17] = rs.getInt(18);
+
+            result[18] = rs.getInt(19);
+            result[19] = rs.getInt(20);
+            result[20] = rs.getInt(21);
+            result[21] = rs.getInt(22);
+            result[22] = rs.getInt(23);
+
+            String df8 = (String) rs.getObject(24);
+            result[23] = df8;
+            String df9 = (String) rs.getObject(25);
+            result[24] = df9;
+            String df10 = (String) rs.getObject(26);
+            result[25] = df10;
+            String df11 = (String) rs.getObject(27);
+            result[26] = df11;
+            String df14 = (String) rs.getObject(28);
+            result[27] = df14;
+
+            result[28] = rs.getInt(29);
+            result[29] = rs.getInt(30);
+            result[30] = rs.getInt(31);
+            result[31] = rs.getInt(32);
+            result[32] = rs.getInt(33);
+
+            result[33] = rs.getInt(34);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    //  Maintenance Liner Maintanence
+    public static int MaintenanceLinerMaintenanceGetHighestID() throws SQLException {
+
+        int highestID = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT MAX(MainLinerMaintenance.[ID]) FROM MainLinerMaintenance;";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            highestID = rs.getInt(1);
+            System.out.println("Highest ID :  " + highestID);
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        return highestID;
+    }
+
+    public static Object[] MaintenanceLinerMaintenanceReturnEntryByDate(Date dateIn) throws Exception {
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        String df = (sdf.format(dateIn));
+
+        // Need to format dateIn to proper Syntax ----> #2/2/2012#
+        Object[] result = new Object[34];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainLinerMaintenance WHERE MainLinerMaintenance.Date = \"" + df + "\";";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            result[1] = rs.getString(2);
+            result[2] = rs.getString(3);
+
+            String df1 = (String) rs.getObject(4);
+            result[3] = df1;
+            String df2 = (String) rs.getObject(5);
+            result[4] = df2;
+            String df5 = (String) rs.getObject(6);
+            result[5] = df5;
+
+            result[6] = rs.getInt(7);
+            result[7] = rs.getInt(8);
+            result[8] = rs.getInt(9);
+
+            result[9] = rs.getInt(10);
+            result[10] = rs.getInt(11);
+            result[11] = rs.getInt(12);
+
+            result[12] = rs.getInt(13);
+            result[13] = rs.getInt(14);
+            result[14] = rs.getInt(15);
+
+            String df8 = (String) rs.getObject(16);
+            result[15] = df8;
+            String df9 = (String) rs.getObject(17);
+            result[16] = df9;
+            String df12 = (String) rs.getObject(18);
+            result[17] = df12;
+
+            result[18] = rs.getInt(19);
+            result[19] = rs.getInt(20);
+            result[20] = rs.getInt(21);
+
+            result[21] = rs.getInt(22);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+
+    }
+
+    public static Object[] MaintenanceLinerMaintenanceReturnEntryByID(int id) throws Exception {
+
+        Object[] result = new Object[34];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainLinerMaintenance WHERE MainLinerMaintenance.ID = \"" + id + "\";";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            result[1] = rs.getString(2);
+            result[2] = rs.getString(3);
+
+            String df1 = (String) rs.getObject(4);
+            result[3] = df1;
+            String df2 = (String) rs.getObject(5);
+            result[4] = df2;
+            String df5 = (String) rs.getObject(6);
+            result[5] = df5;
+
+            result[6] = rs.getInt(7);
+            result[7] = rs.getInt(8);
+            result[8] = rs.getInt(9);
+
+            result[9] = rs.getInt(10);
+            result[10] = rs.getInt(11);
+            result[11] = rs.getInt(12);
+
+            result[12] = rs.getInt(13);
+            result[13] = rs.getInt(14);
+            result[14] = rs.getInt(15);
+
+            String df8 = (String) rs.getObject(16);
+            result[15] = df8;
+            String df9 = (String) rs.getObject(17);
+            result[16] = df9;
+            String df12 = (String) rs.getObject(18);
+            result[17] = df12;
+
+            result[18] = rs.getInt(19);
+            result[19] = rs.getInt(20);
+            result[20] = rs.getInt(21);
+
+            result[21] = rs.getInt(22);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+
+    }
+
+    public static void MaintenanceLinerMaintenanceInsert(
+            int idIn, String MachineCodeIn,
+            String MachineNameIn,
+            int LastMaintenanceDate1In,
+            int LastMaintenanceDate2In,
+            int LastMaintenanceDate7In,
+            int TargetProduction1In,
+            int TargetProduction2In,
+            int TargetProduction7In,
+            int Production1In,
+            int Production2In,
+            int Production7In,
+            int PlusMinus1In,
+            int PlusMinus2In,
+            int PlusMinus7In,
+            int MaintenanceDueDate1In,
+            int MaintenanceDueDate2In,
+            int MaintenanceDueDate7In,
+            int DaysRemaining1In,
+            int DaysRemaining2In,
+            int DaysRemaining7In
+    )
+            throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // TimeStamp in String Format
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date date = new Date();
+        String dateF = format.format(date);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        PreparedStatement BalancerMaintenanceInsert = conn.prepareStatement("insert into MainLinerMaintenance values(?,?,?,?,?,?,?,?,?,?,  ?,?,?,?,?,?,?,?,?,?, ?,?,?,?,?,?,?,?,?,?, ?,?,?,?)");
+
+        BalancerMaintenanceInsert.setInt(1, idIn);
+        BalancerMaintenanceInsert.setString(2, MachineCodeIn);
+        BalancerMaintenanceInsert.setString(3, MachineNameIn);
+
+        BalancerMaintenanceInsert.setInt(4, LastMaintenanceDate1In);
+        BalancerMaintenanceInsert.setInt(5, LastMaintenanceDate2In);
+        BalancerMaintenanceInsert.setInt(6, LastMaintenanceDate7In);
+
+        BalancerMaintenanceInsert.setInt(7, TargetProduction1In);
+        BalancerMaintenanceInsert.setInt(8, TargetProduction2In);
+        BalancerMaintenanceInsert.setInt(9, TargetProduction7In);
+
+        BalancerMaintenanceInsert.setInt(10, Production1In);
+        BalancerMaintenanceInsert.setInt(11, Production2In);
+        BalancerMaintenanceInsert.setInt(12, Production7In);
+
+        BalancerMaintenanceInsert.setInt(13, PlusMinus1In);
+        BalancerMaintenanceInsert.setInt(14, PlusMinus2In);
+        BalancerMaintenanceInsert.setInt(15, PlusMinus7In);
+
+        BalancerMaintenanceInsert.setInt(16, MaintenanceDueDate1In);
+        BalancerMaintenanceInsert.setInt(17, MaintenanceDueDate2In);
+        BalancerMaintenanceInsert.setInt(18, MaintenanceDueDate7In);
+
+        BalancerMaintenanceInsert.setInt(19, DaysRemaining1In);
+        BalancerMaintenanceInsert.setInt(20, DaysRemaining2In);
+        BalancerMaintenanceInsert.setInt(21, DaysRemaining7In);
+
+        BalancerMaintenanceInsert.setString(22, dateF);
+
+        BalancerMaintenanceInsert.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static void MaintenanceLinerMaintenanceUpdate(
+            String MachineCodeIn,
+            String MachineNameIn,
+            String LastMaintenanceDate1In,
+            String LastMaintenanceDate2In,
+            String LastMaintenanceDate7In,
+            int TargetProduction1In,
+            int TargetProduction2In,
+            int TargetProduction7In,
+            int Production1In,
+            int Production2In,
+            int Production7In,
+            int PlusMinus1In,
+            int PlusMinus2In,
+            int PlusMinus7In,
+            String MaintenanceDueDate1In,
+            String MaintenanceDueDate2In,
+            String MaintenanceDueDate7In,
+            int DaysRemaining1In,
+            int DaysRemaining2In,
+            int DaysRemaining7In,
+            int idIn
+    ) throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String sql
+                = "  update "
+                + "MainLinerMaintenance set "
+                + "MachineCode=?, "
+                + "MachineName=?, \n"
+                + "LastMaintenanceDate1=?, \n"
+                + "LastMaintenanceDate2=?, \n"
+                + "LastMaintenanceDate7=?, \n"
+                + "TargetProduction1=?, \n"
+                + "TargetProduction2=?, \n"
+                + "TargetProduction7=?, \n"
+                + "Production1=?, \n"
+                + "Production2=?, \n"
+                + "Production7=?, \n"
+                + "PlusMinus1=?, \n"
+                + "PlusMinus2=?, \n"
+                + "PlusMinus7=?, \n"
+                + "MaintenanceDueDate1=?, \n"
+                + "MaintenanceDueDate2=?, \n"
+                + "MaintenanceDueDate7=?, \n"
+                + "DaysRemaining1=?, \n"
+                + "DaysRemaining2=?, \n"
+                + "DaysRemaining7=? \n"
+                + " where ID=?";
+
+        PreparedStatement BalancerMaintenanceUpdate = conn.prepareStatement(sql);
+
+        BalancerMaintenanceUpdate.setString(1, MachineCodeIn);
+        BalancerMaintenanceUpdate.setString(2, MachineNameIn);
+
+        BalancerMaintenanceUpdate.setString(3, LastMaintenanceDate1In);
+        BalancerMaintenanceUpdate.setString(4, LastMaintenanceDate2In);
+        BalancerMaintenanceUpdate.setString(5, LastMaintenanceDate7In);
+
+        BalancerMaintenanceUpdate.setInt(6, TargetProduction1In);
+        BalancerMaintenanceUpdate.setInt(7, TargetProduction2In);
+        BalancerMaintenanceUpdate.setInt(8, TargetProduction7In);
+
+        BalancerMaintenanceUpdate.setInt(9, Production1In);
+        BalancerMaintenanceUpdate.setInt(10, Production2In);
+        BalancerMaintenanceUpdate.setInt(11, Production7In);
+
+        BalancerMaintenanceUpdate.setInt(12, PlusMinus1In);
+        BalancerMaintenanceUpdate.setInt(13, PlusMinus2In);
+        BalancerMaintenanceUpdate.setInt(14, PlusMinus7In);
+
+        BalancerMaintenanceUpdate.setString(15, MaintenanceDueDate1In);
+        BalancerMaintenanceUpdate.setString(16, MaintenanceDueDate2In);
+        BalancerMaintenanceUpdate.setString(17, MaintenanceDueDate7In);
+
+        BalancerMaintenanceUpdate.setInt(18, DaysRemaining1In);
+        BalancerMaintenanceUpdate.setInt(19, DaysRemaining2In);
+        BalancerMaintenanceUpdate.setInt(20, DaysRemaining7In);
+
+        BalancerMaintenanceUpdate.setInt(21, idIn);
+
+        BalancerMaintenanceUpdate.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static Object[] MaintenanceLinerMaintenanceGetNextEntryById(int idIn) throws SQLException {
+
+        Object[] result = new Object[46];
+        int nextId = idIn + 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainLinerMaintenance WHERE MainLinerMaintenance.ID = \"" + nextId + "\";";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            result[1] = rs.getString(2);
+            result[2] = rs.getString(3);
+
+            String df1 = (String) rs.getObject(4);
+            result[3] = df1;
+            String df2 = (String) rs.getObject(5);
+            result[4] = df2;
+            String df5 = (String) rs.getObject(6);
+            result[5] = df5;
+
+            result[6] = rs.getInt(7);
+            result[7] = rs.getInt(8);
+            result[8] = rs.getInt(9);
+
+            result[9] = rs.getInt(10);
+            result[10] = rs.getInt(11);
+            result[11] = rs.getInt(12);
+
+            result[12] = rs.getInt(13);
+            result[13] = rs.getInt(14);
+            result[14] = rs.getInt(15);
+
+            String df8 = (String) rs.getObject(16);
+            result[15] = df8;
+            String df9 = (String) rs.getObject(17);
+            result[16] = df9;
+            String df12 = (String) rs.getObject(18);
+            result[17] = df12;
+
+            result[18] = rs.getInt(19);
+            result[19] = rs.getInt(20);
+            result[20] = rs.getInt(21);
+
+            result[21] = rs.getInt(22);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    public static Object[] MaintenanceLinerMaintenanceGetPreviousEntryById(int idIn) throws SQLException {
+
+        Object[] result = new Object[34];
+        int nextId = idIn - 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainLinerMaintenance WHERE MainLinerMaintenance.ID = \"" + nextId + "\";";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            result[1] = rs.getString(2);
+            result[2] = rs.getString(3);
+
+            String df1 = (String) rs.getObject(4);
+            result[3] = df1;
+            String df2 = (String) rs.getObject(5);
+            result[4] = df2;
+            String df5 = (String) rs.getObject(6);
+            result[5] = df5;
+
+            result[6] = rs.getInt(7);
+            result[7] = rs.getInt(8);
+            result[8] = rs.getInt(9);
+
+            result[9] = rs.getInt(10);
+            result[10] = rs.getInt(11);
+            result[11] = rs.getInt(12);
+
+            result[12] = rs.getInt(13);
+            result[13] = rs.getInt(14);
+            result[14] = rs.getInt(15);
+
+            String df8 = (String) rs.getObject(16);
+            result[15] = df8;
+            String df9 = (String) rs.getObject(17);
+            result[16] = df9;
+            String df12 = (String) rs.getObject(18);
+            result[17] = df12;
+
+            result[18] = rs.getInt(19);
+            result[19] = rs.getInt(20);
+            result[20] = rs.getInt(21);
+
+            result[21] = rs.getInt(22);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    // Lexan Finger Tracking
+    public static int MaintenanceLexanFingerTrackingGetHighestID() throws SQLException {
+
+        int highestID = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT MAX(MainLexanFingerTracking.[ID]) FROM MainLexanFingerTracking;";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            highestID = rs.getInt(1);
+            System.out.println("Highest ID :  " + highestID);
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        return highestID;
+    }
+
+    public static Object[] MaintenanceLexanFingerTrackingReturnEntryByID(int id) throws Exception {
+
+        Object[] result = new Object[34];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainLexanFingerTracking WHERE MainLexanFingerTracking.ID = \"" + id + "\";";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+
+            String df1 = (String) rs.getObject(2);
+            result[1] = df1;
+
+            result[2] = rs.getString(3);
+            result[3] = rs.getString(4);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+
+    }
+
+    public static void MaintenanceLexanFingerTrackingInsert(
+            int idIn,
+            String dateIn,
+            String balancerIn,
+            String subIn
+    )
+            throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // TimeStamp in String Format
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date date = new Date();
+        String dateF = format.format(date);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        PreparedStatement BalancerMaintenanceInsert = conn.prepareStatement("insert into MainLexanFingerTracking values(?,?,?,?,?)");
+
+        BalancerMaintenanceInsert.setInt(1, idIn);
+        BalancerMaintenanceInsert.setString(2, dateIn);
+        BalancerMaintenanceInsert.setString(3, balancerIn);
+        BalancerMaintenanceInsert.setString(4, subIn);
+        BalancerMaintenanceInsert.setString(5, dateF);
+
+        BalancerMaintenanceInsert.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static void MaintenanceLexanFingerTrackingUpdate(
+            String dateIn,
+            String balancerIn,
+            String subIn,
+            int idIn
+    ) throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String sql
+                = "  UPDATE "
+                + "MainLexanFingerTracking set "
+                + "Date=?, "
+                + "Balancer=?, \n"
+                + "Sub=? "
+                + "WHERE ID=?";
+
+        PreparedStatement BalancerMaintenanceUpdate = conn.prepareStatement(sql);
+
+        BalancerMaintenanceUpdate.setString(1, dateIn);
+        BalancerMaintenanceUpdate.setString(2, balancerIn);
+
+        BalancerMaintenanceUpdate.setString(3, subIn);
+        BalancerMaintenanceUpdate.setInt(4, idIn);
+
+        BalancerMaintenanceUpdate.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static Object[] MaintenanceLexanFingerTrackingGetNextEntryById(int idIn) throws SQLException {
+
+        Object[] result = new Object[46];
+        int nextId = idIn + 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainLexanFingerTracking WHERE MainLexanFingerTracking.ID = \"" + nextId + "\";";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            result[1] = rs.getString(2);
+            result[2] = rs.getString(3);
+
+            String df1 = (String) rs.getObject(4);
+            result[3] = df1;
+            String df2 = (String) rs.getObject(5);
+            result[4] = df2;
+            String df3 = (String) rs.getObject(6);
+            result[5] = df3;
+            String df4 = (String) rs.getObject(7);
+            result[6] = df4;
+            String df7 = (String) rs.getObject(8);
+            result[7] = df7;
+
+            result[8] = rs.getInt(9);
+            result[9] = rs.getInt(10);
+            result[10] = rs.getInt(11);
+            result[11] = rs.getInt(12);
+            result[12] = rs.getInt(13);
+
+            result[13] = rs.getInt(14);
+            result[14] = rs.getInt(15);
+            result[15] = rs.getInt(16);
+            result[16] = rs.getInt(17);
+            result[17] = rs.getInt(18);
+
+            result[18] = rs.getInt(19);
+            result[19] = rs.getInt(20);
+            result[20] = rs.getInt(21);
+            result[21] = rs.getInt(22);
+            result[22] = rs.getInt(23);
+
+            String df8 = (String) rs.getObject(24);
+            result[23] = df8;
+            String df9 = (String) rs.getObject(25);
+            result[24] = df9;
+            String df10 = (String) rs.getObject(26);
+            result[25] = df10;
+            String df11 = (String) rs.getObject(27);
+            result[26] = df11;
+            String df14 = (String) rs.getObject(28);
+            result[27] = df14;
+
+            result[28] = rs.getInt(29);
+            result[29] = rs.getInt(30);
+            result[30] = rs.getInt(31);
+            result[31] = rs.getInt(32);
+            result[32] = rs.getInt(33);
+
+            result[33] = rs.getInt(34);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    public static Object[] MaintenanceLexanFingerTrackingGetPreviousEntryById(int idIn) throws SQLException {
+
+        Object[] result = new Object[34];
+        int nextId = idIn - 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainLexanFingerTracking WHERE MainLexanFingerTracking.ID = \"" + nextId + "\";";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            result[1] = rs.getString(2);
+            result[2] = rs.getString(3);
+
+            String df1 = (String) rs.getObject(4);
+            result[3] = df1;
+            String df2 = (String) rs.getObject(5);
+            result[4] = df2;
+            String df3 = (String) rs.getObject(6);
+            result[5] = df3;
+            String df4 = (String) rs.getObject(7);
+            result[6] = df4;
+            String df7 = (String) rs.getObject(8);
+            result[7] = df7;
+
+            result[8] = rs.getInt(9);
+            result[9] = rs.getInt(10);
+            result[10] = rs.getInt(11);
+            result[11] = rs.getInt(12);
+            result[12] = rs.getInt(13);
+
+            result[13] = rs.getInt(14);
+            result[14] = rs.getInt(15);
+            result[15] = rs.getInt(16);
+            result[16] = rs.getInt(17);
+            result[17] = rs.getInt(18);
+
+            result[18] = rs.getInt(19);
+            result[19] = rs.getInt(20);
+            result[20] = rs.getInt(21);
+            result[21] = rs.getInt(22);
+            result[22] = rs.getInt(23);
+
+            String df8 = (String) rs.getObject(24);
+            result[23] = df8;
+            String df9 = (String) rs.getObject(25);
+            result[24] = df9;
+            String df10 = (String) rs.getObject(26);
+            result[25] = df10;
+            String df11 = (String) rs.getObject(27);
+            result[26] = df11;
+            String df14 = (String) rs.getObject(28);
+            result[27] = df14;
+
+            result[28] = rs.getInt(29);
+            result[29] = rs.getInt(30);
+            result[30] = rs.getInt(31);
+            result[31] = rs.getInt(32);
+            result[32] = rs.getInt(33);
+
+            result[33] = rs.getInt(34);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    public static JPanel MaintenanceLexanFingerTrackingSummaryTable(int in) throws SQLException {
+
+        JPanel outerPanel = new JPanel(new BorderLayout());
+
+        Connection conn = Connect();
+        Statement stmt = conn.createStatement();
+        stmt.setQueryTimeout(10);
+
+        PreparedStatement psmt = conn.prepareStatement("SELECT Date, Balancer, Sub, ID FROM MainLexanFingerTracking ORDER BY Balancer DESC");
         psmt.setQueryTimeout(10);
         ResultSet rs = psmt.executeQuery();
         DefaultTableModel dm = new DefaultTableModel();
@@ -15403,10 +19986,6 @@ public class SQLiteConnection {
             row.add(rs.getString(2));
             row.add(rs.getString(3));
             row.add(rs.getString(4));
-            row.add(rs.getString(5));
-            row.add(rs.getString(6));
-            row.add(rs.getString(7));
-            row.add(rs.getString(8));
 
             data.add(row);
         }
@@ -15418,7 +19997,7 @@ public class SQLiteConnection {
 
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
-        table.getColumnModel().getColumn(7).setMaxWidth(40);
+        table.getColumnModel().getColumn(3).setMaxWidth(40);
 
         // Render Checkbox
 //        TableColumn tc = table.getColumnModel().getColumn(9);
@@ -15434,14 +20013,5399 @@ public class SQLiteConnection {
 					// int column = target.getSelectedColumn();
 
                     // System.out.println("Clicked : " + row );
-                    System.out.println(table.getValueAt(table.getSelectedRow(), 7).toString());
+                    System.out.println(table.getValueAt(table.getSelectedRow(), 3).toString());
 
-                    String idString = table.getValueAt(table.getSelectedRow(), 7).toString();
+                    String idString = table.getValueAt(table.getSelectedRow(), 3).toString();
                     int id = Integer.valueOf(idString);
                     ShellPressProduction linersAndShells;
                     try {
-                        ShellPressProduction shellPressProduction = new ShellPressProduction(1, -2);
-                        shellPressProduction.setShellPressProductionToID(id);
+                        LexanFingerTracking lexanFingerTracking = new LexanFingerTracking(1, -2);
+                        lexanFingerTracking.setFingerLexanTrackingProductionToID(id);
+                    } catch (SQLException ex) {
+                        Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+
+                }
+            }
+        });
+
+        JTableHeader header = table.getTableHeader();
+
+        outerPanel.add(header, BorderLayout.NORTH);
+        outerPanel.add(table, BorderLayout.CENTER);
+
+        psmt.close();
+        stmt.close();
+        conn.close();
+
+        return outerPanel;
+
+    }
+
+    // Maintenance Stolle Production
+    public static int MaintenanceStolleProductionGetHighestID() throws SQLException {
+
+        int highestID = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT MAX(MainStolleProduction.[ID]) FROM MainStolleProduction;";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            highestID = rs.getInt(1);
+            System.out.println("Highest ID :  " + highestID);
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        return highestID;
+    }
+
+    public static Object[] MaintenanceStolleProductionReturnEntryByDate(Date dateIn) throws Exception {
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        String df = (sdf.format(dateIn));
+
+        // Need to format dateIn to proper Syntax ----> #2/2/2012#
+        Object[] result = new Object[12];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainStolleProduction WHERE MainStolleProduction.Date = \"" + df + "\";";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2);
+            result[1] = df1;
+            result[2] = rs.getInt(3);
+            result[3] = rs.getInt(4);
+            result[4] = rs.getInt(5);
+            result[5] = rs.getInt(6);
+            result[6] = rs.getInt(7);
+            result[7] = rs.getInt(8);
+            result[8] = rs.getInt(9);
+            result[9] = rs.getInt(10);
+            result[10] = rs.getInt(11);
+            result[11] = rs.getInt(12);
+            result[12] = rs.getInt(13);
+            result[13] = rs.getString(14);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+
+    }
+
+    public static Object[] MaintenanceStolleProductionReturnEntryByID(int id) throws Exception {
+
+        Object[] result = new Object[13];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainStolleProduction WHERE MainStolleProduction.ID = \"" + id + "\";";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2);
+            result[1] = df1;
+            result[2] = rs.getInt(3);
+            result[3] = rs.getInt(4);
+            result[4] = rs.getInt(5);
+            result[5] = rs.getInt(6);
+            result[6] = rs.getInt(7);
+            result[7] = rs.getInt(8);
+            result[8] = rs.getInt(9);
+            result[9] = rs.getInt(10);
+            result[10] = rs.getInt(11);
+            result[11] = rs.getInt(12);
+            result[12] = rs.getString(13);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+
+    }
+
+    public static void MaintenanceStolleProductionInsert(
+            int idIn,
+            String DateIn,
+            int stolle11In,
+            int stolle12In,
+            int stolle21In,
+            int stolle22In,
+            int stolle31In,
+            int stolle32In,
+            int stolle33In,
+            int stolle41In,
+            int stolle42In,
+            int stolle43In,
+            int stolle44In,
+            int dailyTotalIn
+    )
+            throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // TimeStamp in String Format
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date date = new Date();
+        String dateF = format.format(date);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        PreparedStatement BalancerProductionInsert = conn.prepareStatement("insert into MainStolleProduction values(?,?,?,?,?,?,?,?,?, ?,?,?,?,?,?)");
+
+        BalancerProductionInsert.setInt(1, idIn);
+        BalancerProductionInsert.setString(2, DateIn);
+
+        BalancerProductionInsert.setInt(3, stolle11In);
+        BalancerProductionInsert.setInt(4, stolle12In);
+
+        BalancerProductionInsert.setInt(5, stolle21In);
+        BalancerProductionInsert.setInt(6, stolle22In);
+
+        BalancerProductionInsert.setInt(7, stolle31In);
+        BalancerProductionInsert.setInt(8, stolle32In);
+        BalancerProductionInsert.setInt(9, stolle33In);
+
+        BalancerProductionInsert.setInt(10, stolle41In);
+        BalancerProductionInsert.setInt(11, stolle42In);
+        BalancerProductionInsert.setInt(12, stolle43In);
+        BalancerProductionInsert.setInt(13, stolle44In);
+
+        BalancerProductionInsert.setInt(14, dailyTotalIn);
+        BalancerProductionInsert.setString(15, dateF);
+
+        BalancerProductionInsert.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static void MaintenanceStolleProductionUpdate(
+            String DateIn,
+            int stolle11In,
+            int stolle12In,
+            int stolle21In,
+            int stolle22In,
+            int stolle31In,
+            int stolle32In,
+            int stolle33In,
+            int stolle41In,
+            int stolle42In,
+            int stolle43In,
+            int stolle44In,
+            int dailyTotalIn,
+            int idIn
+    ) throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String sql = "update "
+                + "MainStolleProduction set "
+                + "Date=?, "
+                + "Stolle11=? , "
+                + "Stolle12=? , "
+                + "Stolle21=? , "
+                + "Stolle22=?, "
+                + "Stolle31=? , "
+                + "Stolle32=?,  "
+                + "Stolle33=?, "
+                + "Stolle41=?, "
+                + "Stolle42=?, "
+                + "Stolle43=?, "
+                + "Stolle44=?, "
+                + "dailyTotal=? "
+                + "where ID=?";
+
+        PreparedStatement BalancerProductionUpdate = conn.prepareStatement(sql);
+
+        BalancerProductionUpdate.setString(1, DateIn);
+        BalancerProductionUpdate.setInt(2, stolle11In);
+        BalancerProductionUpdate.setInt(3, stolle12In);
+        BalancerProductionUpdate.setInt(4, stolle21In);
+        BalancerProductionUpdate.setInt(5, stolle22In);
+        BalancerProductionUpdate.setInt(6, stolle31In);
+        BalancerProductionUpdate.setInt(7, stolle32In);
+        BalancerProductionUpdate.setInt(8, stolle33In);
+        BalancerProductionUpdate.setInt(9, stolle41In);
+        BalancerProductionUpdate.setInt(10, stolle42In);
+        BalancerProductionUpdate.setInt(11, stolle43In);
+        BalancerProductionUpdate.setInt(12, stolle44In);
+        BalancerProductionUpdate.setInt(13, dailyTotalIn);
+        BalancerProductionUpdate.setInt(14, idIn);
+
+        BalancerProductionUpdate.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static Object[] MaintenanceStolleProductionGetNextEntryById(int idIn) throws SQLException {
+
+        Object[] result = new Object[16];
+        int nextId = idIn + 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainStolleProduction WHERE MainStolleProduction.ID = \"" + nextId + "\";";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2);
+            result[1] = df1;
+            result[2] = rs.getInt(3);
+            result[3] = rs.getInt(4);
+            result[4] = rs.getInt(5);
+            result[5] = rs.getInt(6);
+            result[6] = rs.getInt(7);
+            result[7] = rs.getInt(8);
+            result[8] = rs.getInt(9);
+            result[9] = rs.getInt(10);
+            result[10] = rs.getInt(11);
+            result[11] = rs.getInt(12);
+            result[12] = rs.getInt(13);
+            result[13] = rs.getString(14);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    public static Object[] MaintenanceStolleProductionGetPreviousEntryById(int idIn) throws SQLException {
+
+        Object[] result = new Object[16];
+        int nextId = idIn - 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainStolleProduction WHERE MainStolleProduction.ID = \"" + nextId + "\";";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2); // ID
+            result[1] = df1; // Date
+            result[2] = rs.getInt(3);
+            result[3] = rs.getInt(4);
+            result[4] = rs.getInt(5);
+            result[5] = rs.getInt(6);
+            result[6] = rs.getInt(7);
+            result[7] = rs.getInt(8);
+            result[8] = rs.getInt(9);
+            result[9] = rs.getInt(10);
+            result[10] = rs.getInt(11);
+            result[10] = rs.getInt(12);
+            result[11] = rs.getInt(13);
+            result[12] = rs.getString(14); // TimeStamp
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    public static Object[] MaintenanceStolleProductionCalculateTotalsByMonth(String monthIn, String yearIn) throws SQLException {
+
+        // Convert Input into Date Range
+        String month = "";
+        String year = yearIn;
+
+        if (monthIn.equals("January")) {
+            month = "01";
+        } else if (monthIn.equals("February")) {
+            month = "02";
+        } else if (monthIn.equals("March")) {
+            month = "03";
+        } else if (monthIn.equals("April")) {
+            month = "04";
+        } else if (monthIn.equals("May")) {
+            month = "05";
+        } else if (monthIn.equals("June")) {
+            month = "06";
+        } else if (monthIn.equals("July")) {
+            month = "07";
+        } else if (monthIn.equals("August")) {
+            month = "08";
+        } else if (monthIn.equals("September")) {
+            month = "09";
+        } else if (monthIn.equals("October")) {
+            month = "10";
+        } else if (monthIn.equals("November")) {
+            month = "11";
+        } else if (monthIn.equals("December")) {
+            month = "12";
+        }
+
+        String date = (year + "-" + month);
+
+        System.out.println("Date : " + date);
+
+        Object[] total = new Object[15];
+
+        // Return the sum of the selected month and Line - SQL Query SUM WHERE
+        // Month Contains /06/
+        // Query ////////
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        String sql1 = "SELECT SUM(Stolle11) FROM MainStolleProduction WHERE Date LIKE '%" + date + "%';";
+        String sql2 = "SELECT SUM(Stolle12) FROM MainStolleProduction WHERE Date LIKE '%" + date + "%';";
+        String sql3 = "SELECT SUM(Stolle21) FROM MainStolleProduction WHERE Date LIKE '%" + date + "%';";
+        String sql4 = "SELECT SUM(Stolle22) FROM MainStolleProduction WHERE Date LIKE '%" + date + "%';";
+        String sql5 = "SELECT SUM(Stolle31) FROM MainStolleProduction WHERE Date LIKE '%" + date + "%';";
+        String sql6 = "SELECT SUM(Stolle32) FROM MainStolleProduction WHERE Date LIKE '%" + date + "%';";
+        String sql7 = "SELECT SUM(Stolle33) FROM MainStolleProduction WHERE Date LIKE '%" + date + "%';";
+        String sql8 = "SELECT SUM(Stolle41) FROM MainStolleProduction WHERE Date LIKE '%" + date + "%';";
+        String sql9 = "SELECT SUM(Stolle42) FROM MainStolleProduction WHERE Date LIKE '%" + date + "%';";
+        String sql10 = "SELECT SUM(Stolle43) FROM MainStolleProduction WHERE Date LIKE '%" + date + "%';";
+        String sql11 = "SELECT SUM(Stolle44) FROM MainStolleProduction WHERE Date LIKE '%" + date + "%';";
+
+        String sql12 = "SELECT AVG(Stolle11 + Stolle12 + Stolle21 + Stolle22 + Stolle31 + Stolle32 + Stolle33 + Stolle41 + Stolle42 + Stolle43 + Stolle44) FROM MainStolleProduction WHERE Date BETWEEN date('now', '-1 month') AND date('now');";
+
+        s.setQueryTimeout(5);
+
+        // W11 /////////////////
+        s.execute(sql1);
+
+        ResultSet rs1 = s.getResultSet();
+        while ((rs1 != null) && (rs1.next())) {
+            total[0] = rs1.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W12 //////////////////
+        s.execute(sql2);
+
+        ResultSet rs2 = s.getResultSet();
+        while ((rs2 != null) && (rs2.next())) {
+            total[1] = rs2.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W21 /////////////////
+        s.execute(sql3);
+
+        ResultSet rs3 = s.getResultSet();
+        while ((rs3 != null) && (rs3.next())) {
+            total[2] = rs3.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W22 /////////////////
+        s.execute(sql4);
+
+        ResultSet rs4 = s.getResultSet();
+        while ((rs4 != null) && (rs4.next())) {
+            total[3] = rs4.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql5);
+
+        ResultSet rs5 = s.getResultSet();
+        while ((rs5 != null) && (rs5.next())) {
+            total[4] = rs5.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql6);
+
+        ResultSet rs6 = s.getResultSet();
+        while ((rs6 != null) && (rs6.next())) {
+            total[5] = rs6.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql7);
+
+        ResultSet rs7 = s.getResultSet();
+        while ((rs7 != null) && (rs7.next())) {
+            total[6] = rs7.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql8);
+
+        ResultSet rs8 = s.getResultSet();
+        while ((rs8 != null) && (rs8.next())) {
+            total[7] = rs8.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql9);
+
+        ResultSet rs9 = s.getResultSet();
+        while ((rs9 != null) && (rs9.next())) {
+            total[8] = rs9.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql10);
+
+        ResultSet rs10 = s.getResultSet();
+        while ((rs10 != null) && (rs10.next())) {
+            total[9] = rs10.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql11);
+
+        ResultSet rs11 = s.getResultSet();
+        while ((rs11 != null) && (rs11.next())) {
+            total[10] = rs11.getInt(1);
+        }
+
+        // ///////////////////////////
+        s.execute(sql12);
+
+        ResultSet rs12 = s.getResultSet();
+        while ((rs12 != null) && (rs12.next())) {
+            total[11] = rs12.getInt(1);
+        }
+
+        // ///////////////////////////
+        // ///////////////////////////
+        rs1.close();
+        rs2.close();
+        rs3.close();
+        rs4.close();
+        rs5.close();
+        rs6.close();
+        rs7.close();
+        rs8.close();
+        rs9.close();
+        rs10.close();
+        rs11.close();
+        rs12.close();
+
+        s.close();
+        conn.close();
+
+        // ///////////////
+        return total;
+    }
+
+    public static JPanel MaintenanceStolleProductionSummaryTable(int in) throws SQLException {
+
+        JPanel outerPanel = new JPanel(new BorderLayout());
+
+        Connection conn = Connect();
+        Statement stmt = conn.createStatement();
+        stmt.setQueryTimeout(10);
+
+        PreparedStatement psmt = conn.prepareStatement("SELECT Date, Stolle11, Stolle12, Stolle21, Stolle22, Stolle31, Stolle32, Stolle33, Stolle41, Stolle42, Stolle43, Stolle44,DailyTotal, (DailyTotal/10) AS DailyAverage, ID FROM MainStolleProduction ORDER BY Date DESC");
+        psmt.setQueryTimeout(10);
+        ResultSet rs = psmt.executeQuery();
+        DefaultTableModel dm = new DefaultTableModel();
+
+        // get column names
+        int len = rs.getMetaData().getColumnCount();
+        System.out.println("LEN : " + len);
+        Vector cols = new Vector(len);
+        for (int i = 1; i <= len; i++) {// Note starting at 1
+
+            cols.add(rs.getMetaData().getColumnName(i));
+            System.out.println(rs.getMetaData().getColumnName(i));
+
+        }
+
+        // Add Data
+        Vector data = new Vector();
+
+        while (rs.next()) {
+
+            Vector row = new Vector(len);
+
+            row.add(rs.getString(1));
+            row.add(rs.getInt(2));
+            row.add(rs.getInt(3));
+            row.add(rs.getInt(4));
+            row.add(rs.getInt(5));
+            row.add(rs.getInt(6));
+            row.add(rs.getInt(7));
+            row.add(rs.getInt(8));
+            row.add(rs.getInt(9));
+            row.add(rs.getInt(10));
+            row.add(rs.getInt(11));
+            row.add(rs.getInt(12));
+            row.add(rs.getInt(13));
+            row.add(rs.getInt(14));
+            row.add(rs.getString(15));
+
+            data.add(row);
+        }
+
+        // Now create the table
+        DefaultTableModel model = new DefaultTableModel(data, cols);
+
+        JTable table = new JTable(model);
+
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+        table.getColumnModel().getColumn(14).setMaxWidth(40);
+
+        // Render Checkbox
+//        TableColumn tc = table.getColumnModel().getColumn(9);
+//        tc.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+                if (e.getClickCount() == 2) {
+                    JTable target = (JTable) e.getSource();
+
+                    int row = target.getSelectedRow() + 1;
+					// int column = target.getSelectedColumn();
+
+                    // System.out.println("Clicked : " + row );
+                    System.out.println(table.getValueAt(table.getSelectedRow(), 14).toString());
+
+                    String idString = table.getValueAt(table.getSelectedRow(), 14).toString();
+                    int id = Integer.valueOf(idString);
+                    try {
+                        StolleProduction stolleProduction = new StolleProduction(1, -2);
+                        stolleProduction.setStolleProductionToID(id);
+                    } catch (SQLException ex) {
+                        Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+
+                }
+            }
+        });
+
+        JTableHeader header = table.getTableHeader();
+
+        outerPanel.add(header, BorderLayout.NORTH);
+        outerPanel.add(table, BorderLayout.CENTER);
+
+        psmt.close();
+        stmt.close();
+        conn.close();
+
+        return outerPanel;
+
+    }
+
+    //  Maintenance Stolle Maintanence
+    public static int MaintenanceStolleMaintenanceGetHighestID() throws SQLException {
+
+        int highestID = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT MAX(MainStolleMaintenance.[ID]) FROM MainStolleMaintenance;";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            highestID = rs.getInt(1);
+            System.out.println("Highest ID :  " + highestID);
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        return highestID;
+    }
+
+    public static Object[] MaintenanceStolleMaintenanceReturnEntryByDate(Date dateIn) throws Exception {
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        String df = (sdf.format(dateIn));
+
+        // Need to format dateIn to proper Syntax ----> #2/2/2012#
+        Object[] result = new Object[34];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainStolleMaintenance WHERE MainStolleMaintenance.Date = \"" + df + "\";";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            result[1] = rs.getString(2);
+            result[2] = rs.getString(3);
+
+            String df1 = (String) rs.getObject(4);
+            result[3] = df1;
+            String df2 = (String) rs.getObject(5);
+            result[4] = df2;
+            String df5 = (String) rs.getObject(6);
+            result[5] = df5;
+
+            result[6] = rs.getInt(7);
+            result[7] = rs.getInt(8);
+            result[8] = rs.getInt(9);
+
+            result[9] = rs.getInt(10);
+            result[10] = rs.getInt(11);
+            result[11] = rs.getInt(12);
+
+            result[12] = rs.getInt(13);
+            result[13] = rs.getInt(14);
+            result[14] = rs.getInt(15);
+
+            String df8 = (String) rs.getObject(16);
+            result[15] = df8;
+            String df9 = (String) rs.getObject(17);
+            result[16] = df9;
+            String df12 = (String) rs.getObject(18);
+            result[17] = df12;
+
+            result[18] = rs.getInt(19);
+            result[19] = rs.getInt(20);
+            result[20] = rs.getInt(21);
+
+            result[21] = rs.getInt(22);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+
+    }
+
+    public static Object[] MaintenanceStolleMaintenanceReturnEntryByID(int id) throws Exception {
+
+        Object[] result = new Object[16];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainStolleMaintenance WHERE MainStolleMaintenance.ID = \"" + id + "\";";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            result[1] = rs.getString(2);
+            result[2] = rs.getString(3);
+
+            String df1 = (String) rs.getObject(4);
+            result[3] = df1;
+            String df5 = (String) rs.getObject(5);
+            result[4] = df5;
+
+            result[5] = rs.getInt(6);
+            result[6] = rs.getInt(7);
+
+            result[7] = rs.getInt(8);
+            result[8] = rs.getInt(9);
+
+            result[9] = rs.getInt(10);
+            result[10] = rs.getInt(11);
+
+            String df8 = (String) rs.getObject(12);
+            result[11] = df8;
+            String df12 = (String) rs.getObject(13);
+            result[12] = df12;
+
+            result[13] = rs.getInt(14);
+            result[14] = rs.getInt(15);
+
+            result[15] = rs.getInt(16);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+
+    }
+
+    public static void MaintenanceStolleMaintenanceInsert(
+            int idIn, String MachineCodeIn,
+            String MachineNameIn,
+            int LastMaintenanceDate1In,
+            int LastMaintenanceDate2In,
+            int LastMaintenanceDate7In,
+            int TargetProduction1In,
+            int TargetProduction2In,
+            int TargetProduction7In,
+            int Production1In,
+            int Production2In,
+            int Production7In,
+            int PlusMinus1In,
+            int PlusMinus2In,
+            int PlusMinus7In,
+            int MaintenanceDueDate1In,
+            int MaintenanceDueDate2In,
+            int MaintenanceDueDate7In,
+            int DaysRemaining1In,
+            int DaysRemaining2In,
+            int DaysRemaining7In
+    )
+            throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // TimeStamp in String Format
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date date = new Date();
+        String dateF = format.format(date);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        PreparedStatement BalancerMaintenanceInsert = conn.prepareStatement("insert into MainStolleMaintenance values(?,?,?,?,?,?,?,?,?,?,  ?,?,?,?,?,?,?,?,?,?, ?,?,?,?,?,?,?,?,?,?, ?,?,?,?)");
+
+        BalancerMaintenanceInsert.setInt(1, idIn);
+        BalancerMaintenanceInsert.setString(2, MachineCodeIn);
+        BalancerMaintenanceInsert.setString(3, MachineNameIn);
+
+        BalancerMaintenanceInsert.setInt(4, LastMaintenanceDate1In);
+        BalancerMaintenanceInsert.setInt(5, LastMaintenanceDate2In);
+        BalancerMaintenanceInsert.setInt(6, LastMaintenanceDate7In);
+
+        BalancerMaintenanceInsert.setInt(7, TargetProduction1In);
+        BalancerMaintenanceInsert.setInt(8, TargetProduction2In);
+        BalancerMaintenanceInsert.setInt(9, TargetProduction7In);
+
+        BalancerMaintenanceInsert.setInt(10, Production1In);
+        BalancerMaintenanceInsert.setInt(11, Production2In);
+        BalancerMaintenanceInsert.setInt(12, Production7In);
+
+        BalancerMaintenanceInsert.setInt(13, PlusMinus1In);
+        BalancerMaintenanceInsert.setInt(14, PlusMinus2In);
+        BalancerMaintenanceInsert.setInt(15, PlusMinus7In);
+
+        BalancerMaintenanceInsert.setInt(16, MaintenanceDueDate1In);
+        BalancerMaintenanceInsert.setInt(17, MaintenanceDueDate2In);
+        BalancerMaintenanceInsert.setInt(18, MaintenanceDueDate7In);
+
+        BalancerMaintenanceInsert.setInt(19, DaysRemaining1In);
+        BalancerMaintenanceInsert.setInt(20, DaysRemaining2In);
+        BalancerMaintenanceInsert.setInt(21, DaysRemaining7In);
+
+        BalancerMaintenanceInsert.setString(22, dateF);
+
+        BalancerMaintenanceInsert.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static void MaintenanceStolleMaintenanceUpdate(
+            String MachineCodeIn,
+            String MachineNameIn,
+            String LastMaintenanceDate1In,
+            String LastMaintenanceDate7In,
+            int TargetProduction1In,
+            int TargetProduction7In,
+            int Production1In,
+            int Production7In,
+            int PlusMinus1In,
+            int PlusMinus7In,
+            String MaintenanceDueDate1In,
+            String MaintenanceDueDate7In,
+            int DaysRemaining1In,
+            int DaysRemaining7In,
+            int idIn
+    ) throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String sql
+                = "  UPDATE "
+                + "MainStolleMaintenance set "
+                + "MachineCode=?, "
+                + "MachineName=?, \n"
+                + "LastMaintenanceDate1=?, \n"
+                + "LastMaintenanceDate7=?, \n"
+                + "TargetProduction1=?, \n"
+                + "TargetProduction7=?, \n"
+                + "Production1=?, \n"
+                + "Production7=?, \n"
+                + "PlusMinus1=?, \n"
+                + "PlusMinus7=?, \n"
+                + "MaintenanceDueDate1=?, \n"
+                + "MaintenanceDueDate7=?, \n"
+                + "DaysRemaining1=?, \n"
+                + "DaysRemaining7=? \n"
+                + " where ID=?";
+
+        PreparedStatement BalancerMaintenanceUpdate = conn.prepareStatement(sql);
+
+        BalancerMaintenanceUpdate.setString(1, MachineCodeIn);
+        BalancerMaintenanceUpdate.setString(2, MachineNameIn);
+
+        BalancerMaintenanceUpdate.setString(3, LastMaintenanceDate1In);
+        BalancerMaintenanceUpdate.setString(4, LastMaintenanceDate7In);
+
+        BalancerMaintenanceUpdate.setInt(5, TargetProduction1In);
+        BalancerMaintenanceUpdate.setInt(6, TargetProduction7In);
+
+        BalancerMaintenanceUpdate.setInt(7, Production1In);
+        BalancerMaintenanceUpdate.setInt(8, Production7In);
+
+        BalancerMaintenanceUpdate.setInt(9, PlusMinus1In);
+        BalancerMaintenanceUpdate.setInt(10, PlusMinus7In);
+
+        BalancerMaintenanceUpdate.setString(11, MaintenanceDueDate1In);
+        BalancerMaintenanceUpdate.setString(12, MaintenanceDueDate7In);
+
+        BalancerMaintenanceUpdate.setInt(13, DaysRemaining1In);
+        BalancerMaintenanceUpdate.setInt(14, DaysRemaining7In);
+
+        BalancerMaintenanceUpdate.setInt(15, idIn);
+
+        BalancerMaintenanceUpdate.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static Object[] MaintenanceStolleMaintenanceGetNextEntryById(int idIn) throws SQLException {
+
+        Object[] result = new Object[46];
+        int nextId = idIn + 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainStolleMaintenance WHERE MainStolleMaintenance.ID = \"" + nextId + "\";";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            result[1] = rs.getString(2);
+            result[2] = rs.getString(3);
+
+            String df1 = (String) rs.getObject(4);
+            result[3] = df1;
+            String df2 = (String) rs.getObject(5);
+            result[4] = df2;
+            String df5 = (String) rs.getObject(6);
+            result[5] = df5;
+
+            result[6] = rs.getInt(7);
+            result[7] = rs.getInt(8);
+            result[8] = rs.getInt(9);
+
+            result[9] = rs.getInt(10);
+            result[10] = rs.getInt(11);
+            result[11] = rs.getInt(12);
+
+            result[12] = rs.getInt(13);
+            result[13] = rs.getInt(14);
+            result[14] = rs.getInt(15);
+
+            String df8 = (String) rs.getObject(16);
+            result[15] = df8;
+            String df9 = (String) rs.getObject(17);
+            result[16] = df9;
+            String df12 = (String) rs.getObject(18);
+            result[17] = df12;
+
+            result[18] = rs.getInt(19);
+            result[19] = rs.getInt(20);
+            result[20] = rs.getInt(21);
+
+            result[21] = rs.getInt(22);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    public static Object[] MaintenanceStolleMaintenanceGetPreviousEntryById(int idIn) throws SQLException {
+
+        Object[] result = new Object[34];
+        int nextId = idIn - 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainStolleMaintenance WHERE MainStolleMaintenance.ID = \"" + nextId + "\";";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            result[1] = rs.getString(2);
+            result[2] = rs.getString(3);
+
+            String df1 = (String) rs.getObject(4);
+            result[3] = df1;
+            String df2 = (String) rs.getObject(5);
+            result[4] = df2;
+            String df5 = (String) rs.getObject(6);
+            result[5] = df5;
+
+            result[6] = rs.getInt(7);
+            result[7] = rs.getInt(8);
+            result[8] = rs.getInt(9);
+
+            result[9] = rs.getInt(10);
+            result[10] = rs.getInt(11);
+            result[11] = rs.getInt(12);
+
+            result[12] = rs.getInt(13);
+            result[13] = rs.getInt(14);
+            result[14] = rs.getInt(15);
+
+            String df8 = (String) rs.getObject(16);
+            result[15] = df8;
+            String df9 = (String) rs.getObject(17);
+            result[16] = df9;
+            String df12 = (String) rs.getObject(18);
+            result[17] = df12;
+
+            result[18] = rs.getInt(19);
+            result[19] = rs.getInt(20);
+            result[20] = rs.getInt(21);
+
+            result[21] = rs.getInt(22);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    // Maintenance Stolle Spoilage
+    public static int MaintenanceStolleSpoilageGetHighestID() throws SQLException {
+
+        int highestID = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT MAX(MainStolleSpoilage.[ID]) FROM MainStolleSpoilage;";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            highestID = rs.getInt(1);
+            System.out.println("Highest ID :  " + highestID);
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        return highestID;
+    }
+
+    public static Object[] MaintenanceStolleSpoilageReturnEntryByDate(Date dateIn) throws Exception {
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        String df = (sdf.format(dateIn));
+
+        // Need to format dateIn to proper Syntax ----> #2/2/2012#
+        Object[] result = new Object[19];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainStolleSpoilage WHERE MainStolleSpoilage.Date = \"" + df + "\";";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2);
+            result[1] = df1;
+            result[2] = rs.getDouble(3);
+            result[3] = rs.getDouble(4);
+            result[4] = rs.getDouble(5);
+            result[5] = rs.getDouble(6);
+            result[6] = rs.getDouble(7);
+            result[7] = rs.getDouble(8);
+            result[8] = rs.getDouble(9);
+            result[9] = rs.getDouble(10);
+            result[10] = rs.getDouble(11);
+            result[11] = rs.getDouble(12);
+            result[12] = rs.getDouble(13);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+
+    }
+
+    public static Object[] MaintenanceStolleSpoilageReturnEntryByID(int id) throws Exception {
+
+        Object[] result = new Object[19];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainStolleSpoilage WHERE MainStolleSpoilage.ID = \"" + id + "\";";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2);
+            result[1] = df1;
+            result[2] = rs.getDouble(3);
+            result[3] = rs.getDouble(4);
+            result[4] = rs.getDouble(5);
+            result[5] = rs.getDouble(6);
+            result[6] = rs.getDouble(7);
+            result[7] = rs.getDouble(8);
+            result[8] = rs.getDouble(9);
+            result[9] = rs.getDouble(10);
+            result[10] = rs.getDouble(11);
+            result[11] = rs.getDouble(12);
+            result[12] = rs.getDouble(13);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+
+    }
+
+    public static void MaintenanceStolleSpoilageInsert(
+            int idIn,
+            String DateIn,
+            double Stolle11In,
+            double Stolle12In,
+            double Stolle21In,
+            double Stolle22In,
+            double Stolle31In,
+            double Stolle32In,
+            double Stolle33In,
+            double Stolle41In,
+            double Stolle42In,
+            double Stolle43In,
+            double Stolle44In
+    )
+            throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // TimeStamp in String Format
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date date = new Date();
+        String dateF = format.format(date);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        PreparedStatement LinerProductionInsert = conn.prepareStatement("insert into MainStolleSpoilage values(?,?,?,?,?,?,?,?,?,?,?, ?,?,?)");
+
+        LinerProductionInsert.setInt(1, idIn);
+        LinerProductionInsert.setString(2, DateIn);
+        LinerProductionInsert.setDouble(3, Stolle11In);
+        LinerProductionInsert.setDouble(4, Stolle12In);
+        LinerProductionInsert.setDouble(5, Stolle21In);
+        LinerProductionInsert.setDouble(6, Stolle22In);
+        LinerProductionInsert.setDouble(7, Stolle31In);
+        LinerProductionInsert.setDouble(8, Stolle32In);
+        LinerProductionInsert.setDouble(9, Stolle33In);
+        LinerProductionInsert.setDouble(10, Stolle41In);
+        LinerProductionInsert.setDouble(11, Stolle42In);
+        LinerProductionInsert.setDouble(12, Stolle43In);
+        LinerProductionInsert.setDouble(13, Stolle44In);
+        LinerProductionInsert.setString(14, dateF);
+
+        LinerProductionInsert.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static void MaintenanceStolleSpoilageUpdate(
+            String DateIn,
+            double Stolle11In,
+            double Stolle12In,
+            double Stolle21In,
+            double Stolle22In,
+            double Stolle31In,
+            double Stolle32In,
+            double Stolle33In,
+            double Stolle41In,
+            double Stolle42In,
+            double Stolle43In,
+            double Stolle44In,
+            int idIn
+    ) throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String sql = "update "
+                + "MainStolleSpoilage set "
+                + "Date=?, "
+                + "Stolle11=? , "
+                + "Stolle12=? , "
+                + "Stolle21=? , "
+                + "Stolle22=?,  "
+                + "Stolle31=?, "
+                + "Stolle32=?, "
+                + "Stolle33=?, "
+                + "Stolle41=?, "
+                + "Stolle42=?, "
+                + "Stolle43=?, "
+                + "Stolle44=? "
+                + "where "
+                + "ID=?";
+
+        PreparedStatement LinerProductionUpdate = conn.prepareStatement(sql);
+
+        LinerProductionUpdate.setString(1, DateIn);
+        LinerProductionUpdate.setDouble(2, Stolle11In);
+        LinerProductionUpdate.setDouble(3, Stolle12In);
+        LinerProductionUpdate.setDouble(4, Stolle21In);
+        LinerProductionUpdate.setDouble(5, Stolle22In);
+        LinerProductionUpdate.setDouble(6, Stolle31In);
+        LinerProductionUpdate.setDouble(7, Stolle32In);
+        LinerProductionUpdate.setDouble(8, Stolle33In);
+        LinerProductionUpdate.setDouble(9, Stolle41In);
+        LinerProductionUpdate.setDouble(10, Stolle42In);
+        LinerProductionUpdate.setDouble(11, Stolle43In);
+        LinerProductionUpdate.setDouble(12, Stolle44In);
+        LinerProductionUpdate.setInt(13, idIn);
+
+        LinerProductionUpdate.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static Object[] MaintenanceStolleSpoilageGetNextEntryById(int idIn) throws SQLException {
+
+        Object[] result = new Object[19];
+        int nextId = idIn + 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainStolleSpoilage WHERE MainStolleSpoilage.ID = \"" + nextId + "\";";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2);
+            result[1] = df1;
+            result[2] = rs.getDouble(3);
+            result[3] = rs.getDouble(4);
+            result[4] = rs.getDouble(5);
+            result[5] = rs.getDouble(6);
+            result[6] = rs.getDouble(7);
+            result[7] = rs.getDouble(8);
+            result[8] = rs.getDouble(9);
+            result[9] = rs.getDouble(10);
+            result[10] = rs.getDouble(11);
+            result[11] = rs.getDouble(12);
+            result[12] = rs.getDouble(13);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    public static Object[] MaintenanceStolleSpoilageGetPreviousEntryById(int idIn) throws SQLException {
+
+        Object[] result = new Object[19];
+        int nextId = idIn - 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainStolleSpoilage WHERE MainStolleSpoilage.ID = \"" + nextId + "\";";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2);
+            result[1] = df1;
+            result[2] = rs.getDouble(3);
+            result[3] = rs.getDouble(4);
+            result[4] = rs.getDouble(5);
+            result[5] = rs.getDouble(6);
+            result[6] = rs.getDouble(7);
+            result[7] = rs.getDouble(8);
+            result[8] = rs.getDouble(9);
+            result[9] = rs.getDouble(10);
+            result[10] = rs.getDouble(11);
+            result[11] = rs.getDouble(12);
+            result[12] = rs.getDouble(13);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    public static Object[] MaintenanceStolleSpoilageCalculateTotalsByMonth(String monthIn, String yearIn) throws SQLException {
+
+        // Convert Input into Date Range
+        String month = "";
+        String year = yearIn;
+
+        if (monthIn.equals("January")) {
+            month = "01";
+        } else if (monthIn.equals("February")) {
+            month = "02";
+        } else if (monthIn.equals("March")) {
+            month = "03";
+        } else if (monthIn.equals("April")) {
+            month = "04";
+        } else if (monthIn.equals("May")) {
+            month = "05";
+        } else if (monthIn.equals("June")) {
+            month = "06";
+        } else if (monthIn.equals("July")) {
+            month = "07";
+        } else if (monthIn.equals("August")) {
+            month = "08";
+        } else if (monthIn.equals("September")) {
+            month = "09";
+        } else if (monthIn.equals("October")) {
+            month = "10";
+        } else if (monthIn.equals("November")) {
+            month = "11";
+        } else if (monthIn.equals("December")) {
+            month = "12";
+        }
+
+        String date = (year + "-" + month);
+
+        System.out.println("Date : " + date);
+
+        Object[] total = new Object[19];
+
+        // Return the sum of the selected month and Line - SQL Query SUM WHERE
+        // Month Contains /06/
+        // Query ////////
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        String sql1 = "SELECT SUM(Stolle11) FROM MainStolleSpoilage WHERE Date LIKE '%" + date + "%';";
+        String sql2 = "SELECT SUM(Stolle12) FROM MainStolleSpoilage WHERE Date LIKE '%" + date + "%';";
+        String sql3 = "SELECT SUM(Stolle21) FROM MainStolleSpoilage WHERE Date LIKE '%" + date + "%';";
+        String sql4 = "SELECT SUM(Stolle22) FROM MainStolleSpoilage WHERE Date LIKE '%" + date + "%';";
+        String sql5 = "SELECT SUM(Stolle31) FROM MainStolleSpoilage WHERE Date LIKE '%" + date + "%';";
+        String sql6 = "SELECT SUM(Stolle32) FROM MainStolleSpoilage WHERE Date LIKE '%" + date + "%';";
+        String sql7 = "SELECT SUM(Stolle33) FROM MainStolleSpoilage WHERE Date LIKE '%" + date + "%';";
+        String sql8 = "SELECT SUM(Stolle41) FROM MainStolleSpoilage WHERE Date LIKE '%" + date + "%';";
+        String sql9 = "SELECT SUM(Stolle42) FROM MainStolleSpoilage WHERE Date LIKE '%" + date + "%';";
+        String sql10 = "SELECT SUM(Stolle43) FROM MainStolleSpoilage WHERE Date LIKE '%" + date + "%';";
+        String sql11 = "SELECT SUM(Stolle44) FROM MainStolleSpoilage WHERE Date LIKE '%" + date + "%';";
+
+        s.setQueryTimeout(5);
+
+        // W11 /////////////////
+        s.execute(sql1);
+
+        ResultSet rs1 = s.getResultSet();
+        while ((rs1 != null) && (rs1.next())) {
+            total[0] = rs1.getDouble(1);
+        }
+
+        // ///////////////////////////
+        // W12 //////////////////
+        s.execute(sql2);
+
+        ResultSet rs2 = s.getResultSet();
+        while ((rs2 != null) && (rs2.next())) {
+            total[1] = rs2.getDouble(1);
+        }
+
+        // ///////////////////////////
+        // W21 /////////////////
+        s.execute(sql3);
+
+        ResultSet rs3 = s.getResultSet();
+        while ((rs3 != null) && (rs3.next())) {
+            total[2] = rs3.getDouble(1);
+        }
+
+        // ///////////////////////////
+        // W22 /////////////////
+        s.execute(sql4);
+
+        ResultSet rs4 = s.getResultSet();
+        while ((rs4 != null) && (rs4.next())) {
+            total[3] = rs4.getDouble(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql5);
+
+        ResultSet rs5 = s.getResultSet();
+        while ((rs5 != null) && (rs5.next())) {
+            total[4] = rs5.getDouble(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql6);
+
+        ResultSet rs6 = s.getResultSet();
+        while ((rs6 != null) && (rs6.next())) {
+            total[5] = rs6.getDouble(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql7);
+
+        ResultSet rs7 = s.getResultSet();
+        while ((rs7 != null) && (rs7.next())) {
+            total[6] = rs7.getDouble(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql8);
+
+        ResultSet rs8 = s.getResultSet();
+        while ((rs8 != null) && (rs8.next())) {
+            total[7] = rs8.getDouble(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql9);
+
+        ResultSet rs9 = s.getResultSet();
+        while ((rs9 != null) && (rs9.next())) {
+            total[8] = rs9.getDouble(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql10);
+
+        ResultSet rs10 = s.getResultSet();
+        while ((rs10 != null) && (rs10.next())) {
+            total[9] = rs10.getDouble(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql11);
+
+        ResultSet rs11 = s.getResultSet();
+        while ((rs11 != null) && (rs11.next())) {
+            total[10] = rs11.getDouble(1);
+        }
+
+        // ///////////////////////////
+        rs1.close();
+        rs2.close();
+        rs3.close();
+        rs4.close();
+        rs5.close();
+        rs6.close();
+        rs7.close();
+        rs8.close();
+        rs9.close();
+        rs10.close();
+        rs11.close();
+
+        s.close();
+        conn.close();
+
+        // ///////////////
+        return total;
+    }
+
+    public static JPanel MaintenanceStolleSpoilageSummaryTable(int in) throws SQLException {
+
+        JPanel outerPanel = new JPanel(new BorderLayout());
+
+        Connection conn = Connect();
+        Statement stmt = conn.createStatement();
+        stmt.setQueryTimeout(10);
+
+        PreparedStatement psmt = conn.prepareStatement("SELECT Date, Stolle11, Stolle12, Stolle21, Stolle22, Stolle31, Stolle32, Stolle41, Stolle42, Stolle43, Stolle44, ID FROM MainStolleSpoilage ORDER BY Date DESC");
+        psmt.setQueryTimeout(10);
+        ResultSet rs = psmt.executeQuery();
+        DefaultTableModel dm = new DefaultTableModel();
+
+        // get column names
+        int len = rs.getMetaData().getColumnCount();
+        System.out.println("LEN : " + len);
+        Vector cols = new Vector(len);
+        for (int i = 1; i <= len; i++) {// Note starting at 1
+
+            cols.add(rs.getMetaData().getColumnName(i));
+            System.out.println(rs.getMetaData().getColumnName(i));
+
+        }
+
+        // Add Data
+        Vector data = new Vector();
+
+        while (rs.next()) {
+
+            Vector row = new Vector(len);
+
+            row.add(rs.getString(1));
+            row.add(rs.getDouble(2));
+            row.add(rs.getDouble(3));
+            row.add(rs.getDouble(4));
+            row.add(rs.getDouble(5));
+            row.add(rs.getDouble(6));
+            row.add(rs.getDouble(7));
+            row.add(rs.getDouble(8));
+            row.add(rs.getDouble(9));
+            row.add(rs.getDouble(10));
+            row.add(rs.getDouble(11));
+            row.add(rs.getString(12));
+
+            data.add(row);
+        }
+
+        // Now create the table
+        DefaultTableModel model = new DefaultTableModel(data, cols);
+
+        JTable table = new JTable(model);
+
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+        table.getColumnModel().getColumn(0).setMinWidth(75);
+        //       table.getColumnModel().getColumn(17).setMaxWidth(40);
+        // Render Checkbox
+//        TableColumn tc = table.getColumnModel().getColumn(9);
+//        tc.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+                if (e.getClickCount() == 2) {
+                    JTable target = (JTable) e.getSource();
+
+                    int row = target.getSelectedRow() + 1;
+					// int column = target.getSelectedColumn();
+
+                    // System.out.println("Clicked : " + row );
+                    System.out.println(table.getValueAt(table.getSelectedRow(), 11).toString());
+
+                    String idString = table.getValueAt(table.getSelectedRow(), 11).toString();
+                    int id = Integer.valueOf(idString);
+                    try {
+                        StolleSpoilage stolleSpoilage = new StolleSpoilage(1, -2);
+                        stolleSpoilage.setStolleSpoilageToID(id);
+                    } catch (SQLException ex) {
+                        Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+
+                }
+            }
+        });
+
+        JTableHeader header = table.getTableHeader();
+
+        outerPanel.add(header, BorderLayout.NORTH);
+        outerPanel.add(table, BorderLayout.CENTER);
+
+        psmt.close();
+        stmt.close();
+        conn.close();
+
+        return outerPanel;
+
+    }
+
+    public static String[] MaintenanceStolleSPoilageSevenDaysAverages() throws SQLException {
+
+        String[] averages = new String[16];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        String sql1 = "SELECT AVG(Stolle11) FROM MainStolleSpoilage WHERE Date BETWEEN date('now', '-7 day') AND date('now');";
+        String sql2 = "SELECT AVG(Stolle12) FROM MainStolleSpoilage WHERE Date BETWEEN date('now', '-7 day') AND date('now');";
+
+        String sql3 = "SELECT AVG(Stolle21) FROM MainStolleSpoilage WHERE Date BETWEEN date('now', '-7 day') AND date('now');";
+        String sql4 = "SELECT AVG(Stolle22) FROM MainStolleSpoilage WHERE Date BETWEEN date('now', '-7 day') AND date('now');";
+
+        String sql5 = "SELECT AVG(Stolle31) FROM MainStolleSpoilage WHERE Date BETWEEN date('now', '-7 day') AND date('now');";
+        String sql6 = "SELECT AVG(Stolle32) FROM MainStolleSpoilage WHERE Date BETWEEN date('now', '-7 day') AND date('now');";
+        String sql7 = "SELECT AVG(Stolle33) FROM MainStolleSpoilage WHERE Date BETWEEN date('now', '-7 day') AND date('now');";
+
+        String sql8 = "SELECT AVG(Stolle41) FROM MainStolleSpoilage WHERE Date BETWEEN date('now', '-7 day') AND date('now');";
+        String sql9 = "SELECT AVG(Stolle42) FROM MainStolleSpoilage WHERE Date BETWEEN date('now', '-7 day') AND date('now');";
+        String sql10 = "SELECT AVG(Stolle43) FROM MainStolleSpoilage WHERE Date BETWEEN date('now', '-7 day') AND date('now');";
+
+        String sql11 = "SELECT AVG(Stolle44) FROM MainStolleSpoilage WHERE Date BETWEEN date('now', '-7 day') AND date('now');";
+
+        // W32 /////////////////
+        s.execute(sql1);
+
+        ResultSet rs1 = s.getResultSet();
+        while ((rs1 != null) && (rs1.next())) {
+            averages[0] = rs1.getString(1);
+        }
+
+        // ///////////////////////////
+        s.execute(sql2);
+
+        ResultSet rs2 = s.getResultSet();
+        while ((rs2 != null) && (rs2.next())) {
+            averages[1] = rs2.getString(1);
+        }
+
+        // ///////////////////////////
+        s.execute(sql3);
+
+        ResultSet rs3 = s.getResultSet();
+        while ((rs3 != null) && (rs3.next())) {
+            averages[2] = rs3.getString(1);
+        }
+
+        // ///////////////////////////
+        s.execute(sql4);
+
+        ResultSet rs4 = s.getResultSet();
+        while ((rs4 != null) && (rs4.next())) {
+            averages[3] = rs4.getString(1);
+        }
+
+        // ///////////////////////////
+        s.execute(sql5);
+
+        ResultSet rs5 = s.getResultSet();
+        while ((rs5 != null) && (rs5.next())) {
+            averages[4] = rs5.getString(1);
+        }
+
+        // ///////////////////////////
+        s.execute(sql6);
+
+        ResultSet rs6 = s.getResultSet();
+        while ((rs6 != null) && (rs6.next())) {
+            averages[5] = rs6.getString(1);
+        }
+
+        // ///////////////////////////
+        s.execute(sql7);
+
+        ResultSet rs7 = s.getResultSet();
+        while ((rs7 != null) && (rs7.next())) {
+            averages[6] = rs7.getString(1);
+        }
+
+        // ///////////////////////////
+        s.execute(sql8);
+
+        ResultSet rs8 = s.getResultSet();
+        while ((rs8 != null) && (rs8.next())) {
+            averages[7] = rs8.getString(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql9);
+
+        ResultSet rs9 = s.getResultSet();
+        while ((rs9 != null) && (rs9.next())) {
+            averages[8] = rs9.getString(1);
+        }
+
+        // ///////////////////////////
+        s.execute(sql10);
+
+        ResultSet rs10 = s.getResultSet();
+        while ((rs10 != null) && (rs10.next())) {
+            averages[9] = rs10.getString(1);
+        }
+
+        // ///////////////////////////
+        s.execute(sql11);
+
+        ResultSet rs11 = s.getResultSet();
+        while ((rs11 != null) && (rs11.next())) {
+            averages[10] = rs11.getString(1);
+        }
+
+        // ///////////////////////////
+        conn.close();
+
+        return averages;
+
+    }
+
+    //  Maintenance Transfer Belt
+    public static int MaintenanceTransferBeltGetHighestID() throws SQLException {
+
+        int highestID = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT MAX(MainTransferBelt.[ID]) FROM MainTransferBelt;";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            highestID = rs.getInt(1);
+            System.out.println("Highest ID :  " + highestID);
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        return highestID;
+    }
+
+    public static Object[] MaintenanceTransferBeltReturnEntryByDate(Date dateIn) throws Exception {
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        String df = (sdf.format(dateIn));
+
+        // Need to format dateIn to proper Syntax ----> #2/2/2012#
+        Object[] result = new Object[34];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainTransferBelt WHERE MainTransferBelt.Date = \"" + df + "\";";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            result[1] = rs.getString(2);
+            result[2] = rs.getString(3);
+
+            String df1 = (String) rs.getObject(4);
+            result[3] = df1;
+
+            result[4] = rs.getInt(5);
+            result[5] = rs.getInt(6);
+            result[6] = rs.getInt(7);
+
+            String df8 = (String) rs.getObject(8);
+            result[7] = df8;
+            String df9 = (String) rs.getObject(9);
+            result[8] = df9;
+            String df10 = (String) rs.getObject(10);
+            result[9] = df10;
+
+            String df11 = (String) rs.getObject(11);
+            result[10] = df11;
+            String df12 = (String) rs.getObject(12);
+            result[11] = df12;
+            String df13 = (String) rs.getObject(13);
+            result[12] = df13;
+
+            String df14 = (String) rs.getObject(14);
+            result[13] = df14;
+            String df15 = (String) rs.getObject(15);
+            result[14] = df15;
+            String df16 = (String) rs.getObject(16);
+            result[15] = df16;
+
+            String df17 = (String) rs.getObject(17);
+            result[16] = df17;
+            String df18 = (String) rs.getObject(18);
+            result[17] = df18;
+            String df19 = (String) rs.getObject(19);
+            result[18] = df19;
+
+            result[19] = rs.getString(20);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+
+    }
+
+    public static Object[] MaintenanceTransferBeltReturnEntryByID(int id) throws Exception {
+
+        Object[] result = new Object[19];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainTransferBelt WHERE MainTransferBelt.ID = \"" + id + "\";";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            result[1] = rs.getString(2);
+
+            String df1 = (String) rs.getObject(3);
+            result[2] = df1;
+
+            result[3] = rs.getInt(4);
+            result[4] = rs.getInt(5);
+            result[5] = rs.getInt(6);
+
+            String df8 = (String) rs.getObject(7);
+            result[6] = df8;
+            String df9 = (String) rs.getObject(8);
+            result[7] = df9;
+            String df10 = (String) rs.getObject(9);
+            result[8] = df10;
+
+            String df11 = (String) rs.getObject(10);
+            result[9] = df11;
+            String df12 = (String) rs.getObject(11);
+            result[10] = df12;
+            String df13 = (String) rs.getObject(12);
+            result[11] = df13;
+
+            String df14 = (String) rs.getObject(13);
+            result[12] = df14;
+            String df15 = (String) rs.getObject(14);
+            result[13] = df15;
+            String df16 = (String) rs.getObject(15);
+            result[14] = df16;
+
+            String df17 = (String) rs.getObject(16);
+            result[15] = df17;
+            String df18 = (String) rs.getObject(17);
+            result[16] = df18;
+            String df19 = (String) rs.getObject(18);
+            result[17] = df19;
+
+            String df20 = (String) rs.getObject(19);
+            result[18] = df20;
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+
+    }
+
+    public static void MaintenanceTransferBeltInsert(
+            int idIn,
+            String MachineCodeIn,
+            String DateFittedIn,
+            int EndsTargetIn,
+            int ActualEndsIn,
+            int PlusOrMinusIn,
+            String SetUpDateIn,
+            String BeltsRunningDate1In,
+            String BeltsRunningDate2In,
+            String BeltsRunningDate3In,
+            String BeltsRunningDate4In,
+            String BeltsRunningDate5In,
+            String BeltsRunningDate6In,
+            String BeltsRunningDate7In,
+            String BeltsRunningDate8In,
+            String BeltsRunningDate9In,
+            String BeltsRunningDate10In,
+            String BeltsRunningDate11In,
+            String BeltsRunningDate12In
+    )
+            throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // TimeStamp in String Format
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date date = new Date();
+        String dateF = format.format(date);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        PreparedStatement BalancerMaintenanceInsert = conn.prepareStatement("insert into MainTransferBelt values(?,?,?,?,?,?,?,?,?,?,  ?,?,?,?,?,?,?,?,?,?)");
+
+        BalancerMaintenanceInsert.setInt(1, idIn);
+        BalancerMaintenanceInsert.setString(2, MachineCodeIn);
+        BalancerMaintenanceInsert.setString(3, DateFittedIn);
+
+        BalancerMaintenanceInsert.setInt(4, EndsTargetIn);
+        BalancerMaintenanceInsert.setInt(5, ActualEndsIn);
+        BalancerMaintenanceInsert.setInt(6, PlusOrMinusIn);
+
+        BalancerMaintenanceInsert.setString(7, SetUpDateIn);
+
+        BalancerMaintenanceInsert.setString(8, BeltsRunningDate1In);
+        BalancerMaintenanceInsert.setString(9, BeltsRunningDate2In);
+        BalancerMaintenanceInsert.setString(10, BeltsRunningDate3In);
+        BalancerMaintenanceInsert.setString(11, BeltsRunningDate4In);
+        BalancerMaintenanceInsert.setString(12, BeltsRunningDate5In);
+        BalancerMaintenanceInsert.setString(13, BeltsRunningDate6In);
+        BalancerMaintenanceInsert.setString(14, BeltsRunningDate7In);
+        BalancerMaintenanceInsert.setString(15, BeltsRunningDate8In);
+        BalancerMaintenanceInsert.setString(16, BeltsRunningDate9In);
+        BalancerMaintenanceInsert.setString(17, BeltsRunningDate10In);
+        BalancerMaintenanceInsert.setString(18, BeltsRunningDate11In);
+        BalancerMaintenanceInsert.setString(19, BeltsRunningDate12In);
+
+        BalancerMaintenanceInsert.setString(20, dateF);
+
+        BalancerMaintenanceInsert.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static void MaintenanceTransferBeltUpdate(
+            String MachineCodeIn,
+            String DateFittedIn,
+            int EndsTargetIn,
+            int ActualEndsIn,
+            int PlusOrMinusIn,
+            String SetUpDateIn,
+            String BeltsRunningDate1In,
+            String BeltsRunningDate2In,
+            String BeltsRunningDate3In,
+            String BeltsRunningDate4In,
+            String BeltsRunningDate5In,
+            String BeltsRunningDate6In,
+            String BeltsRunningDate7In,
+            String BeltsRunningDate8In,
+            String BeltsRunningDate9In,
+            String BeltsRunningDate10In,
+            String BeltsRunningDate11In,
+            String BeltsRunningDate12In,
+            int idIn
+    ) throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String sql
+                = "  UPDATE "
+                + "MainTransferBelt set "
+                + "MachineCode=?, "
+                + "DateFitted=?, \n"
+                + "EndsTarget=?, \n"
+                + "ActualEnds=?, \n"
+                + "PlusOrMinus=?, \n"
+                + "SetUpCheckDate=?, \n"
+                + "BeltsRunningDate1=?, \n"
+                + "BeltsRunningDate2=?, \n"
+                + "BeltsRunningDate3=?, \n"
+                + "BeltsRunningDate4=?, \n"
+                + "BeltsRunningDate5=?, \n"
+                + "BeltsRunningDate6=?, \n"
+                + "BeltsRunningDate7=?, \n"
+                + "BeltsRunningDate8=?, \n"
+                + "BeltsRunningDate9=?, \n"
+                + "BeltsRunningDate10=?, \n"
+                + "BeltsRunningDate11=?, \n"
+                + "BeltsRunningDate12=? \n"
+                + " where ID=?";
+
+        System.out.print("SQL : " + sql);
+
+        PreparedStatement BalancerMaintenanceUpdate = conn.prepareStatement(sql);
+
+        BalancerMaintenanceUpdate.setString(1, MachineCodeIn);
+        BalancerMaintenanceUpdate.setString(2, DateFittedIn);
+
+        BalancerMaintenanceUpdate.setInt(3, EndsTargetIn);
+        BalancerMaintenanceUpdate.setInt(4, ActualEndsIn);
+        BalancerMaintenanceUpdate.setInt(5, PlusOrMinusIn);
+
+        BalancerMaintenanceUpdate.setString(6, SetUpDateIn);
+
+        BalancerMaintenanceUpdate.setString(7, BeltsRunningDate1In);
+        BalancerMaintenanceUpdate.setString(8, BeltsRunningDate2In);
+        BalancerMaintenanceUpdate.setString(9, BeltsRunningDate3In);
+        BalancerMaintenanceUpdate.setString(10, BeltsRunningDate4In);
+        BalancerMaintenanceUpdate.setString(11, BeltsRunningDate5In);
+        BalancerMaintenanceUpdate.setString(12, BeltsRunningDate6In);
+        BalancerMaintenanceUpdate.setString(13, BeltsRunningDate7In);
+        BalancerMaintenanceUpdate.setString(14, BeltsRunningDate8In);
+        BalancerMaintenanceUpdate.setString(15, BeltsRunningDate9In);
+        BalancerMaintenanceUpdate.setString(16, BeltsRunningDate10In);
+        BalancerMaintenanceUpdate.setString(17, BeltsRunningDate11In);
+        BalancerMaintenanceUpdate.setString(18, BeltsRunningDate12In);
+
+        BalancerMaintenanceUpdate.setInt(19, idIn);
+
+        BalancerMaintenanceUpdate.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static Object[] MaintenanceTransferBeltGetNextEntryById(int idIn) throws SQLException {
+
+        Object[] result = new Object[46];
+        int nextId = idIn + 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainTransferBelt WHERE MainTransferBelt.ID = \"" + nextId + "\";";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            result[1] = rs.getString(2);
+            result[2] = rs.getString(3);
+
+            String df1 = (String) rs.getObject(4);
+            result[3] = df1;
+
+            result[4] = rs.getInt(5);
+            result[5] = rs.getInt(6);
+            result[6] = rs.getInt(7);
+
+            String df8 = (String) rs.getObject(8);
+            result[7] = df8;
+            String df9 = (String) rs.getObject(9);
+            result[8] = df9;
+            String df10 = (String) rs.getObject(10);
+            result[9] = df10;
+
+            String df11 = (String) rs.getObject(11);
+            result[10] = df11;
+            String df12 = (String) rs.getObject(12);
+            result[11] = df12;
+            String df13 = (String) rs.getObject(13);
+            result[12] = df13;
+
+            String df14 = (String) rs.getObject(14);
+            result[13] = df14;
+            String df15 = (String) rs.getObject(15);
+            result[14] = df15;
+            String df16 = (String) rs.getObject(16);
+            result[15] = df16;
+
+            String df17 = (String) rs.getObject(17);
+            result[16] = df17;
+            String df18 = (String) rs.getObject(18);
+            result[17] = df18;
+            String df19 = (String) rs.getObject(19);
+            result[18] = df19;
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    public static Object[] MaintenanceTransferBeltGetPreviousEntryById(int idIn) throws SQLException {
+
+        Object[] result = new Object[34];
+        int nextId = idIn - 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainTransferBelt WHERE MainTransferBelt.ID = \"" + nextId + "\";";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            result[1] = rs.getString(2);
+            result[2] = rs.getString(3);
+
+            String df1 = (String) rs.getObject(4);
+            result[3] = df1;
+
+            result[4] = rs.getInt(5);
+            result[5] = rs.getInt(6);
+            result[6] = rs.getInt(7);
+
+            String df8 = (String) rs.getObject(8);
+            result[7] = df8;
+            String df9 = (String) rs.getObject(9);
+            result[8] = df9;
+            String df10 = (String) rs.getObject(10);
+            result[9] = df10;
+
+            String df11 = (String) rs.getObject(11);
+            result[10] = df11;
+            String df12 = (String) rs.getObject(12);
+            result[11] = df12;
+            String df13 = (String) rs.getObject(13);
+            result[12] = df13;
+
+            String df14 = (String) rs.getObject(14);
+            result[13] = df14;
+            String df15 = (String) rs.getObject(15);
+            result[14] = df15;
+            String df16 = (String) rs.getObject(16);
+            result[15] = df16;
+
+            String df17 = (String) rs.getObject(17);
+            result[16] = df17;
+            String df18 = (String) rs.getObject(18);
+            result[17] = df18;
+            String df19 = (String) rs.getObject(19);
+            result[18] = df19;
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    //  Maintenance Score Insert
+    public static int MaintenanceScoreInsertGetHighestID() throws SQLException {
+
+        int highestID = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT MAX(MainScoreInsert.[ID]) FROM MainScoreInsert;";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            highestID = rs.getInt(1);
+            System.out.println("Highest ID :  " + highestID);
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        return highestID;
+    }
+
+    public static Object[] MaintenanceScoreInsertReturnEntryByDate(Date dateIn) throws Exception {
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        String df = (sdf.format(dateIn));
+
+        // Need to format dateIn to proper Syntax ----> #2/2/2012#
+        Object[] result = new Object[34];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainScoreInsert WHERE MainScoreInsert.Date = \"" + df + "\";";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            result[1] = rs.getString(2);
+            result[2] = rs.getString(3);
+            result[3] = rs.getString(4);
+
+            String df1 = (String) rs.getObject(5);
+            result[4] = df1;
+            String df2 = (String) rs.getObject(6);
+            result[5] = df2;
+            String df3 = (String) rs.getObject(7);
+            result[6] = df3;
+
+            result[7] = rs.getInt(8);
+            result[8] = rs.getInt(9);
+            result[9] = rs.getInt(10);
+
+            result[10] = rs.getInt(11);
+            result[11] = rs.getInt(12);
+            result[12] = rs.getInt(13);
+
+            result[13] = rs.getInt(14);
+            result[14] = rs.getInt(15);
+            result[15] = rs.getInt(16);
+
+            String df4 = (String) rs.getObject(17);
+            result[16] = df4;
+            String df5 = (String) rs.getObject(18);
+            result[17] = df5;
+            String df6 = (String) rs.getObject(19);
+            result[18] = df6;
+
+            result[19] = rs.getString(20);
+            result[20] = rs.getString(21);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+
+    }
+
+    public static Object[] MaintenanceScoreInsertReturnEntryByID(int id) throws Exception {
+
+        Object[] result = new Object[21];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainScoreInsert WHERE MainScoreInsert.ID = \"" + id + "\";";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            result[1] = rs.getString(2);
+            result[2] = rs.getString(3);
+            result[3] = rs.getString(4);
+
+            String df1 = (String) rs.getObject(5);
+            result[4] = df1;
+            String df2 = (String) rs.getObject(6);
+            result[5] = df2;
+            String df3 = (String) rs.getObject(7);
+            result[6] = df3;
+
+            result[7] = rs.getInt(8);
+            result[8] = rs.getInt(9);
+            result[9] = rs.getInt(10);
+
+            result[10] = rs.getInt(11);
+            result[11] = rs.getInt(12);
+            result[12] = rs.getInt(13);
+
+            result[13] = rs.getInt(14);
+            result[14] = rs.getInt(15);
+            result[15] = rs.getInt(16);
+
+            String df4 = (String) rs.getObject(17);
+            result[16] = df4;
+            String df5 = (String) rs.getObject(18);
+            result[17] = df5;
+            String df6 = (String) rs.getObject(19);
+            result[18] = df6;
+
+            result[19] = rs.getString(20);
+            result[20] = rs.getString(21);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+
+    }
+
+    public static void MaintenanceScoreInsertInsert(
+            int idIn,
+            String TypeIn,
+            String MachineCodeIn1,
+            String MachineCodeIn2,
+            String MachineCodeIn3,
+            String DateInsertedIn1,
+            String DateInsertedIn2,
+            String DateInsertedIn3,
+            int EndsTargetIn1,
+            int EndsTargetIn2,
+            int EndsTargetIn3,
+            int ActualEndsIn1,
+            int ActualEndsIn2,
+            int ActualEndsIn3,
+            int PlusOrMinusIn1,
+            int PlusOrMinusIn2,
+            int PlusOrMinusIn3,
+            String ChangeDateIn1,
+            String ChangeDateIn2,
+            String ChangeDateIn3
+    )
+            throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // TimeStamp in String Format
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date date = new Date();
+        String dateF = format.format(date);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        PreparedStatement BalancerMaintenanceInsert = conn.prepareStatement("insert into MainScoreInsert values(?,?,?,?,?,?,?,?,?,?,  ?,?,?,?,?,?,?,?,?,?, ?)");
+
+        BalancerMaintenanceInsert.setInt(1, idIn);
+        BalancerMaintenanceInsert.setString(2, TypeIn);
+
+        BalancerMaintenanceInsert.setString(3, MachineCodeIn1);
+        BalancerMaintenanceInsert.setString(4, MachineCodeIn2);
+        BalancerMaintenanceInsert.setString(5, MachineCodeIn3);
+
+        BalancerMaintenanceInsert.setString(6, DateInsertedIn1);
+        BalancerMaintenanceInsert.setString(7, DateInsertedIn2);
+        BalancerMaintenanceInsert.setString(8, DateInsertedIn3);
+
+        BalancerMaintenanceInsert.setInt(9, EndsTargetIn1);
+        BalancerMaintenanceInsert.setInt(10, EndsTargetIn2);
+        BalancerMaintenanceInsert.setInt(11, EndsTargetIn3);
+
+        BalancerMaintenanceInsert.setInt(12, ActualEndsIn1);
+        BalancerMaintenanceInsert.setInt(13, ActualEndsIn2);
+        BalancerMaintenanceInsert.setInt(14, ActualEndsIn3);
+
+        BalancerMaintenanceInsert.setInt(15, PlusOrMinusIn1);
+        BalancerMaintenanceInsert.setInt(16, PlusOrMinusIn2);
+        BalancerMaintenanceInsert.setInt(17, PlusOrMinusIn3);
+
+        BalancerMaintenanceInsert.setString(18, ChangeDateIn1);
+        BalancerMaintenanceInsert.setString(19, ChangeDateIn2);
+        BalancerMaintenanceInsert.setString(20, ChangeDateIn3);
+
+        BalancerMaintenanceInsert.setString(21, dateF);
+
+        BalancerMaintenanceInsert.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static void MaintenanceScoreInsertUpdate(
+            String TypeIn,
+            String MachineCodeIn1,
+            String MachineCodeIn2,
+            String MachineCodeIn3,
+            String DateInsertedIn1,
+            String DateInsertedIn2,
+            String DateInsertedIn3,
+            int EndsTargetIn1,
+            int EndsTargetIn2,
+            int EndsTargetIn3,
+            int ActualEndsIn1,
+            int ActualEndsIn2,
+            int ActualEndsIn3,
+            int PlusOrMinusIn1,
+            int PlusOrMinusIn2,
+            int PlusOrMinusIn3,
+            String ChangeDateIn1,
+            String ChangeDateIn2,
+            String ChangeDateIn3,
+            int idIn
+    ) throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String sql
+                = "  UPDATE "
+                + "MainScoreInsert set "
+                + "Type=?, \n"
+                + "MachineCode1=?, "
+                + "MachineCode2=?, "
+                + "MachineCode3=?, "
+                + "DateInserted1=?, "
+                + "DateInserted2=?, "
+                + "DateInserted3=?, "
+                + "EndsTarget1=?, \n"
+                + "EndsTarget2=?, \n"
+                + "EndsTarget3=?, \n"
+                + "ActualEnds1=?, \n"
+                + "ActualEnds2=?, \n"
+                + "ActualEnds3=?, \n"
+                + "PlusOrMinus1=?, \n"
+                + "PlusOrMinus2=?, \n"
+                + "PlusOrMinus3=?, \n"
+                + "ChangeDate1=?, \n"
+                + "ChangeDate2=?, \n"
+                + "ChangeDate3=? \n"
+                + " where ID=?";
+
+        System.out.print("SQL : " + sql);
+
+        PreparedStatement BalancerMaintenanceUpdate = conn.prepareStatement(sql);
+
+        BalancerMaintenanceUpdate.setString(1, TypeIn);
+
+        BalancerMaintenanceUpdate.setString(2, MachineCodeIn1);
+        BalancerMaintenanceUpdate.setString(3, MachineCodeIn2);
+        BalancerMaintenanceUpdate.setString(4, MachineCodeIn3);
+
+        BalancerMaintenanceUpdate.setString(5, DateInsertedIn1);
+        BalancerMaintenanceUpdate.setString(6, DateInsertedIn2);
+        BalancerMaintenanceUpdate.setString(7, DateInsertedIn3);
+
+        BalancerMaintenanceUpdate.setInt(8, EndsTargetIn1);
+        BalancerMaintenanceUpdate.setInt(9, EndsTargetIn2);
+        BalancerMaintenanceUpdate.setInt(10, EndsTargetIn3);
+
+        BalancerMaintenanceUpdate.setInt(11, ActualEndsIn1);
+        BalancerMaintenanceUpdate.setInt(12, ActualEndsIn2);
+        BalancerMaintenanceUpdate.setInt(13, ActualEndsIn3);
+
+        BalancerMaintenanceUpdate.setInt(14, PlusOrMinusIn1);
+        BalancerMaintenanceUpdate.setInt(15, PlusOrMinusIn2);
+        BalancerMaintenanceUpdate.setInt(16, PlusOrMinusIn3);
+
+        BalancerMaintenanceUpdate.setString(17, ChangeDateIn1);
+        BalancerMaintenanceUpdate.setString(18, ChangeDateIn1);
+        BalancerMaintenanceUpdate.setString(19, ChangeDateIn1);
+
+        BalancerMaintenanceUpdate.setInt(20, idIn);
+
+        BalancerMaintenanceUpdate.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static Object[] MaintenanceScoreInsertGetNextEntryById(int idIn) throws SQLException {
+
+        Object[] result = new Object[46];
+        int nextId = idIn + 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainScoreInsert WHERE MainScoreInsert.ID = \"" + nextId + "\";";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            result[1] = rs.getString(2);
+            result[2] = rs.getString(3);
+            result[3] = rs.getString(4);
+
+            String df1 = (String) rs.getObject(5);
+            result[4] = df1;
+            String df2 = (String) rs.getObject(6);
+            result[5] = df2;
+            String df3 = (String) rs.getObject(7);
+            result[6] = df3;
+
+            result[7] = rs.getInt(8);
+            result[8] = rs.getInt(9);
+            result[9] = rs.getInt(10);
+
+            result[10] = rs.getInt(11);
+            result[11] = rs.getInt(12);
+            result[12] = rs.getInt(13);
+
+            result[13] = rs.getInt(14);
+            result[14] = rs.getInt(15);
+            result[15] = rs.getInt(16);
+
+            String df4 = (String) rs.getObject(17);
+            result[16] = df4;
+            String df5 = (String) rs.getObject(18);
+            result[17] = df5;
+            String df6 = (String) rs.getObject(19);
+            result[18] = df6;
+
+            result[19] = rs.getString(20);
+            result[20] = rs.getString(21);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    public static Object[] MaintenanceScoreInsertGetPreviousEntryById(int idIn) throws SQLException {
+
+        Object[] result = new Object[34];
+        int nextId = idIn - 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainScoreInsert WHERE MainScoreInsert.ID = \"" + nextId + "\";";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            result[1] = rs.getString(2);
+            result[2] = rs.getString(3);
+            result[3] = rs.getString(4);
+
+            String df1 = (String) rs.getObject(5);
+            result[4] = df1;
+            String df2 = (String) rs.getObject(6);
+            result[5] = df2;
+            String df3 = (String) rs.getObject(7);
+            result[6] = df3;
+
+            result[7] = rs.getInt(8);
+            result[8] = rs.getInt(9);
+            result[9] = rs.getInt(10);
+
+            result[10] = rs.getInt(11);
+            result[11] = rs.getInt(12);
+            result[12] = rs.getInt(13);
+
+            result[13] = rs.getInt(14);
+            result[14] = rs.getInt(15);
+            result[15] = rs.getInt(16);
+
+            String df4 = (String) rs.getObject(17);
+            result[16] = df4;
+            String df5 = (String) rs.getObject(18);
+            result[17] = df5;
+            String df6 = (String) rs.getObject(19);
+            result[18] = df6;
+
+            result[19] = rs.getString(20);
+            result[20] = rs.getString(21);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    //  Maintenance Timing Belt
+    public static int MaintenanceTimingBeltGetHighestID() throws SQLException {
+
+        int highestID = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT MAX(MainTimingBelt.[ID]) FROM MainTimingBelt;";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            highestID = rs.getInt(1);
+            System.out.println("Highest ID :  " + highestID);
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        return highestID;
+    }
+
+    public static Object[] MaintenanceTimingBeltReturnEntryByDate(Date dateIn) throws Exception {
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        String df = (sdf.format(dateIn));
+
+        // Need to format dateIn to proper Syntax ----> #2/2/2012#
+        Object[] result = new Object[34];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainTimingBelt WHERE MainTimingBelt.Date = \"" + df + "\";";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            result[1] = rs.getString(2);
+            result[2] = rs.getString(3);
+
+            String df1 = (String) rs.getObject(4);
+            result[3] = df1;
+
+            result[4] = rs.getInt(5);
+            result[5] = rs.getInt(6);
+            result[6] = rs.getInt(7);
+
+            String df8 = (String) rs.getObject(8);
+            result[7] = df8;
+            String df9 = (String) rs.getObject(9);
+            result[8] = df9;
+            String df10 = (String) rs.getObject(10);
+            result[9] = df10;
+
+            String df11 = (String) rs.getObject(11);
+            result[10] = df11;
+            String df12 = (String) rs.getObject(12);
+            result[11] = df12;
+            String df13 = (String) rs.getObject(13);
+            result[12] = df13;
+
+            String df14 = (String) rs.getObject(14);
+            result[13] = df14;
+            String df15 = (String) rs.getObject(15);
+            result[14] = df15;
+            String df16 = (String) rs.getObject(16);
+            result[15] = df16;
+
+            String df17 = (String) rs.getObject(17);
+            result[16] = df17;
+            String df18 = (String) rs.getObject(18);
+            result[17] = df18;
+            String df19 = (String) rs.getObject(19);
+            result[18] = df19;
+
+            result[19] = rs.getString(20);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+
+    }
+
+    public static Object[] MaintenanceTimingBeltReturnEntryByID(int id) throws Exception {
+
+        Object[] result = new Object[19];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainTimingBelt WHERE MainTimingBelt.ID = \"" + id + "\";";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            result[1] = rs.getString(2);
+
+            String df1 = (String) rs.getObject(3);
+            result[2] = df1;
+
+            result[3] = rs.getInt(4);
+            result[4] = rs.getInt(5);
+            result[5] = rs.getInt(6);
+
+            String df8 = (String) rs.getObject(7);
+            result[6] = df8;
+            String df9 = (String) rs.getObject(8);
+            result[7] = df9;
+            String df10 = (String) rs.getObject(9);
+            result[8] = df10;
+
+            String df11 = (String) rs.getObject(10);
+            result[9] = df11;
+            String df12 = (String) rs.getObject(11);
+            result[10] = df12;
+            String df13 = (String) rs.getObject(12);
+            result[11] = df13;
+
+            String df14 = (String) rs.getObject(13);
+            result[12] = df14;
+            String df15 = (String) rs.getObject(14);
+            result[13] = df15;
+            String df16 = (String) rs.getObject(15);
+            result[14] = df16;
+
+            String df17 = (String) rs.getObject(16);
+            result[15] = df17;
+            String df18 = (String) rs.getObject(17);
+            result[16] = df18;
+            String df19 = (String) rs.getObject(18);
+            result[17] = df19;
+
+            String df20 = (String) rs.getObject(19);
+            result[18] = df20;
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+
+    }
+
+    public static void MaintenanceTimingBeltInsert(
+            int idIn,
+            String MachineCodeIn,
+            String DateFittedIn,
+            int EndsTargetIn,
+            int ActualEndsIn,
+            int PlusOrMinusIn,
+            String SetUpDateIn,
+            String BeltsRunningDate1In,
+            String BeltsRunningDate2In,
+            String BeltsRunningDate3In,
+            String BeltsRunningDate4In,
+            String BeltsRunningDate5In,
+            String BeltsRunningDate6In,
+            String BeltsRunningDate7In,
+            String BeltsRunningDate8In,
+            String BeltsRunningDate9In,
+            String BeltsRunningDate10In,
+            String BeltsRunningDate11In,
+            String BeltsRunningDate12In
+    )
+            throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // TimeStamp in String Format
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date date = new Date();
+        String dateF = format.format(date);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        PreparedStatement BalancerMaintenanceInsert = conn.prepareStatement("insert into MainTimingBelt values(?,?,?,?,?,?,?,?,?,?,  ?,?,?,?,?,?,?,?,?,?)");
+
+        BalancerMaintenanceInsert.setInt(1, idIn);
+        BalancerMaintenanceInsert.setString(2, MachineCodeIn);
+        BalancerMaintenanceInsert.setString(3, DateFittedIn);
+
+        BalancerMaintenanceInsert.setInt(4, EndsTargetIn);
+        BalancerMaintenanceInsert.setInt(5, ActualEndsIn);
+        BalancerMaintenanceInsert.setInt(6, PlusOrMinusIn);
+
+        BalancerMaintenanceInsert.setString(7, SetUpDateIn);
+
+        BalancerMaintenanceInsert.setString(8, BeltsRunningDate1In);
+        BalancerMaintenanceInsert.setString(9, BeltsRunningDate2In);
+        BalancerMaintenanceInsert.setString(10, BeltsRunningDate3In);
+        BalancerMaintenanceInsert.setString(11, BeltsRunningDate4In);
+        BalancerMaintenanceInsert.setString(12, BeltsRunningDate5In);
+        BalancerMaintenanceInsert.setString(13, BeltsRunningDate6In);
+        BalancerMaintenanceInsert.setString(14, BeltsRunningDate7In);
+        BalancerMaintenanceInsert.setString(15, BeltsRunningDate8In);
+        BalancerMaintenanceInsert.setString(16, BeltsRunningDate9In);
+        BalancerMaintenanceInsert.setString(17, BeltsRunningDate10In);
+        BalancerMaintenanceInsert.setString(18, BeltsRunningDate11In);
+        BalancerMaintenanceInsert.setString(19, BeltsRunningDate12In);
+
+        BalancerMaintenanceInsert.setString(20, dateF);
+
+        BalancerMaintenanceInsert.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static void MaintenanceTimingBeltUpdate(
+            String MachineCodeIn,
+            String DateFittedIn,
+            int EndsTargetIn,
+            int ActualEndsIn,
+            int PlusOrMinusIn,
+            String SetUpDateIn,
+            String BeltsRunningDate1In,
+            String BeltsRunningDate2In,
+            String BeltsRunningDate3In,
+            String BeltsRunningDate4In,
+            String BeltsRunningDate5In,
+            String BeltsRunningDate6In,
+            String BeltsRunningDate7In,
+            String BeltsRunningDate8In,
+            String BeltsRunningDate9In,
+            String BeltsRunningDate10In,
+            String BeltsRunningDate11In,
+            String BeltsRunningDate12In,
+            int idIn
+    ) throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String sql
+                = "  UPDATE "
+                + "MainTimingBelt set "
+                + "MachineCode=?, "
+                + "DateFitted=?, \n"
+                + "EndsTarget=?, \n"
+                + "ActualEnds=?, \n"
+                + "PlusOrMinus=?, \n"
+                + "SetUpCheckDate=?, \n"
+                + "BeltsRunningDate1=?, \n"
+                + "BeltsRunningDate2=?, \n"
+                + "BeltsRunningDate3=?, \n"
+                + "BeltsRunningDate4=?, \n"
+                + "BeltsRunningDate5=?, \n"
+                + "BeltsRunningDate6=?, \n"
+                + "BeltsRunningDate7=?, \n"
+                + "BeltsRunningDate8=?, \n"
+                + "BeltsRunningDate9=?, \n"
+                + "BeltsRunningDate10=?, \n"
+                + "BeltsRunningDate11=?, \n"
+                + "BeltsRunningDate12=? \n"
+                + " where ID=?";
+
+        System.out.print("SQL : " + sql);
+
+        PreparedStatement BalancerMaintenanceUpdate = conn.prepareStatement(sql);
+
+        BalancerMaintenanceUpdate.setString(1, MachineCodeIn);
+        BalancerMaintenanceUpdate.setString(2, DateFittedIn);
+
+        BalancerMaintenanceUpdate.setInt(3, EndsTargetIn);
+        BalancerMaintenanceUpdate.setInt(4, ActualEndsIn);
+        BalancerMaintenanceUpdate.setInt(5, PlusOrMinusIn);
+
+        BalancerMaintenanceUpdate.setString(6, SetUpDateIn);
+
+        BalancerMaintenanceUpdate.setString(7, BeltsRunningDate1In);
+        BalancerMaintenanceUpdate.setString(8, BeltsRunningDate2In);
+        BalancerMaintenanceUpdate.setString(9, BeltsRunningDate3In);
+        BalancerMaintenanceUpdate.setString(10, BeltsRunningDate4In);
+        BalancerMaintenanceUpdate.setString(11, BeltsRunningDate5In);
+        BalancerMaintenanceUpdate.setString(12, BeltsRunningDate6In);
+        BalancerMaintenanceUpdate.setString(13, BeltsRunningDate7In);
+        BalancerMaintenanceUpdate.setString(14, BeltsRunningDate8In);
+        BalancerMaintenanceUpdate.setString(15, BeltsRunningDate9In);
+        BalancerMaintenanceUpdate.setString(16, BeltsRunningDate10In);
+        BalancerMaintenanceUpdate.setString(17, BeltsRunningDate11In);
+        BalancerMaintenanceUpdate.setString(18, BeltsRunningDate12In);
+
+        BalancerMaintenanceUpdate.setInt(19, idIn);
+
+        BalancerMaintenanceUpdate.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static Object[] MaintenanceTimingBeltGetNextEntryById(int idIn) throws SQLException {
+
+        Object[] result = new Object[46];
+        int nextId = idIn + 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainTimingBelt WHERE MainTimingBelt.ID = \"" + nextId + "\";";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            result[1] = rs.getString(2);
+            result[2] = rs.getString(3);
+
+            String df1 = (String) rs.getObject(4);
+            result[3] = df1;
+
+            result[4] = rs.getInt(5);
+            result[5] = rs.getInt(6);
+            result[6] = rs.getInt(7);
+
+            String df8 = (String) rs.getObject(8);
+            result[7] = df8;
+            String df9 = (String) rs.getObject(9);
+            result[8] = df9;
+            String df10 = (String) rs.getObject(10);
+            result[9] = df10;
+
+            String df11 = (String) rs.getObject(11);
+            result[10] = df11;
+            String df12 = (String) rs.getObject(12);
+            result[11] = df12;
+            String df13 = (String) rs.getObject(13);
+            result[12] = df13;
+
+            String df14 = (String) rs.getObject(14);
+            result[13] = df14;
+            String df15 = (String) rs.getObject(15);
+            result[14] = df15;
+            String df16 = (String) rs.getObject(16);
+            result[15] = df16;
+
+            String df17 = (String) rs.getObject(17);
+            result[16] = df17;
+            String df18 = (String) rs.getObject(18);
+            result[17] = df18;
+            String df19 = (String) rs.getObject(19);
+            result[18] = df19;
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    public static Object[] MaintenanceTimingBeltGetPreviousEntryById(int idIn) throws SQLException {
+
+        Object[] result = new Object[34];
+        int nextId = idIn - 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainTimingBelt WHERE MainTimingBelt.ID = \"" + nextId + "\";";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            result[1] = rs.getString(2);
+            result[2] = rs.getString(3);
+
+            String df1 = (String) rs.getObject(4);
+            result[3] = df1;
+
+            result[4] = rs.getInt(5);
+            result[5] = rs.getInt(6);
+            result[6] = rs.getInt(7);
+
+            String df8 = (String) rs.getObject(8);
+            result[7] = df8;
+            String df9 = (String) rs.getObject(9);
+            result[8] = df9;
+            String df10 = (String) rs.getObject(10);
+            result[9] = df10;
+
+            String df11 = (String) rs.getObject(11);
+            result[10] = df11;
+            String df12 = (String) rs.getObject(12);
+            result[11] = df12;
+            String df13 = (String) rs.getObject(13);
+            result[12] = df13;
+
+            String df14 = (String) rs.getObject(14);
+            result[13] = df14;
+            String df15 = (String) rs.getObject(15);
+            result[14] = df15;
+            String df16 = (String) rs.getObject(16);
+            result[15] = df16;
+
+            String df17 = (String) rs.getObject(17);
+            result[16] = df17;
+            String df18 = (String) rs.getObject(18);
+            result[17] = df18;
+            String df19 = (String) rs.getObject(19);
+            result[18] = df19;
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    // Maintenance Machine OEE Production
+    public static int MaintenanceMachineOEEGetHighestID() throws SQLException {
+
+        int highestID = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT MAX(MainMachineOEE.[ID]) FROM MainMachineOEE;";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            highestID = rs.getInt(1);
+            System.out.println("Highest ID :  " + highestID);
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        return highestID;
+    }
+
+    public static Object[] MaintenanceMachineOEEReturnEntryByDate(Date dateIn) throws Exception {
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        String df = (sdf.format(dateIn));
+
+        // Need to format dateIn to proper Syntax ----> #2/2/2012#
+        Object[] result = new Object[25];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainMachineOEE WHERE MainMachineOEE.Date = \"" + df + "\";";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2);
+            result[1] = df1;
+            result[2] = rs.getInt(3);
+            result[3] = rs.getInt(4);
+            result[4] = rs.getInt(5);
+            result[5] = rs.getInt(6);
+            result[6] = rs.getInt(7);
+            result[7] = rs.getInt(8);
+            result[8] = rs.getInt(9);
+            result[9] = rs.getInt(10);
+            result[10] = rs.getInt(11);
+            result[11] = rs.getInt(12);
+            result[12] = rs.getInt(13);
+            result[13] = rs.getInt(14);
+            result[14] = rs.getInt(15);
+            result[15] = rs.getInt(16);
+            result[16] = rs.getInt(17);
+            result[17] = rs.getInt(18);
+            result[18] = rs.getInt(19);
+            result[19] = rs.getInt(20);
+            result[20] = rs.getInt(21);
+            result[21] = rs.getInt(22);
+            result[22] = rs.getString(22);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+
+    }
+
+    public static Object[] MaintenanceMachineOEEReturnEntryByID(int id) throws Exception {
+
+        Object[] result = new Object[26];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainMachineOEE WHERE MainMachineOEE.ID = \"" + id + "\";";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2);
+            result[1] = df1;
+            result[2] = rs.getInt(3);
+            result[3] = rs.getInt(4);
+            result[4] = rs.getInt(5);
+            result[5] = rs.getInt(6);
+            result[6] = rs.getInt(7);
+            result[7] = rs.getInt(8);
+            result[8] = rs.getInt(9);
+            result[9] = rs.getInt(10);
+            result[10] = rs.getInt(11);
+            result[11] = rs.getInt(12);
+            result[12] = rs.getInt(13);
+            result[13] = rs.getInt(14);
+            result[14] = rs.getInt(15);
+            result[15] = rs.getInt(16);
+            result[16] = rs.getInt(17);
+            result[17] = rs.getInt(18);
+            result[18] = rs.getInt(19);
+            result[19] = rs.getInt(20);
+            result[20] = rs.getInt(21);
+            result[21] = rs.getInt(22);
+            result[22] = rs.getString(22);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+
+    }
+
+    public static void MaintenanceMachineOEEInsert(
+            int idIn,
+            String DateIn,
+            int SP1_2In,
+            int SP3In,
+            int SP41In,
+            int SP42In,
+            int SP4In,
+            int LinerM1In,
+            int LinerM2In,
+            int LinerM3In,
+            int LinerM4In,
+            int CP11In,
+            int CP12In,
+            int Cp21In,
+            int CP22In,
+            int CP31In,
+            int CP32In,
+            int CP33In,
+            int CP41In,
+            int CP42In,
+            int CP43In,
+            int CP44In
+    )
+            throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // TimeStamp in String Format
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date date = new Date();
+        String dateF = format.format(date);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        PreparedStatement MachineOEEInsert = conn.prepareStatement("insert into MainMachineOEE values(?,?,?,?,?,?,?,?,?,?, ?,?,?,?,?,?,?,?,?,?, ?,?,?)");
+
+        MachineOEEInsert.setInt(1, idIn);
+        MachineOEEInsert.setString(2, DateIn);
+        MachineOEEInsert.setInt(3, SP1_2In);
+        MachineOEEInsert.setInt(4, SP3In);
+        MachineOEEInsert.setInt(5, SP41In);
+        MachineOEEInsert.setInt(6, SP42In);
+        MachineOEEInsert.setInt(7, SP4In);
+        MachineOEEInsert.setInt(8, LinerM1In);
+        MachineOEEInsert.setInt(9, LinerM2In);
+        MachineOEEInsert.setInt(10, LinerM3In);
+        MachineOEEInsert.setInt(11, LinerM4In);
+        MachineOEEInsert.setInt(12, CP11In);
+        MachineOEEInsert.setInt(13, CP12In);
+        MachineOEEInsert.setInt(14, Cp21In);
+        MachineOEEInsert.setInt(15, CP22In);
+        MachineOEEInsert.setInt(16, CP31In);
+        MachineOEEInsert.setInt(17, CP32In);
+        MachineOEEInsert.setInt(18, CP33In);
+        MachineOEEInsert.setInt(19, CP41In);
+        MachineOEEInsert.setInt(20, CP42In);
+        MachineOEEInsert.setInt(21, CP43In);
+        MachineOEEInsert.setInt(22, CP44In);
+        MachineOEEInsert.setString(23, dateF);
+
+        MachineOEEInsert.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static void MaintenanceMachineOEEUpdate(
+            String DateIn,
+            int SP1_2In,
+            int SP3In,
+            int SP41In,
+            int SP42In,
+            int SP4In,
+            int LinerM1In,
+            int LinerM2In,
+            int LinerM3In,
+            int LinerM4In,
+            int CP11In,
+            int CP12In,
+            int Cp21In,
+            int CP22In,
+            int CP31In,
+            int CP32In,
+            int CP33In,
+            int CP41In,
+            int CP42In,
+            int CP43In,
+            int CP44In,
+            int idIn
+    ) throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String sql = "update MainMachineOEE set Date=?, SP1_2=? , SP3=? , SP41=? , SP42=?, SP4=? , "
+                + "LinerM1=?,  LinerM2=?, LinerM3=?, LinerM4=?, CP11=?, CP12=?, Cp21=?, CP22=?, CP31=?, CP32=?, CP33=?, CP41=?, CP42=?, CP43=?, CP44=? where ID=?";
+
+        PreparedStatement MachineOEEInsert = conn.prepareStatement(sql);
+
+        MachineOEEInsert.setString(1, DateIn);
+        MachineOEEInsert.setInt(2, SP1_2In);
+        MachineOEEInsert.setInt(3, SP3In);
+        MachineOEEInsert.setInt(4, SP41In);
+        MachineOEEInsert.setInt(5, SP42In);
+        MachineOEEInsert.setInt(6, SP4In);
+        MachineOEEInsert.setInt(7, LinerM1In);
+        MachineOEEInsert.setInt(8, LinerM2In);
+        MachineOEEInsert.setInt(9, LinerM3In);
+        MachineOEEInsert.setInt(10, LinerM4In);
+        MachineOEEInsert.setInt(11, CP11In);
+        MachineOEEInsert.setInt(12, CP12In);
+        MachineOEEInsert.setInt(13, Cp21In);
+        MachineOEEInsert.setInt(14, CP22In);
+        MachineOEEInsert.setInt(15, CP31In);
+        MachineOEEInsert.setInt(16, CP32In);
+        MachineOEEInsert.setInt(17, CP33In);
+        MachineOEEInsert.setInt(18, CP41In);
+        MachineOEEInsert.setInt(19, CP42In);
+        MachineOEEInsert.setInt(20, CP43In);
+        MachineOEEInsert.setInt(21, CP44In);
+        MachineOEEInsert.setInt(22, idIn);
+
+        MachineOEEInsert.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static Object[] MaintenanceMachineOEEGetNextEntryById(int idIn) throws SQLException {
+
+        Object[] result = new Object[25];
+        int nextId = idIn + 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainMachineOEE WHERE MainMachineOEE.ID = \"" + nextId + "\";";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2);
+            result[1] = df1;
+            result[2] = rs.getInt(3);
+            result[3] = rs.getInt(4);
+            result[4] = rs.getInt(5);
+            result[5] = rs.getInt(6);
+            result[6] = rs.getInt(7);
+            result[7] = rs.getInt(8);
+            result[8] = rs.getInt(9);
+            result[9] = rs.getInt(10);
+            result[10] = rs.getInt(11);
+            result[11] = rs.getInt(12);
+            result[12] = rs.getInt(13);
+            result[13] = rs.getInt(14);
+            result[14] = rs.getInt(15);
+            result[15] = rs.getInt(16);
+            result[16] = rs.getInt(17);
+            result[17] = rs.getInt(18);
+            result[18] = rs.getInt(19);
+            result[19] = rs.getInt(20);
+            result[20] = rs.getInt(21);
+            result[21] = rs.getInt(22);
+            result[22] = rs.getString(22);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    public static Object[] MaintenanceMachineOEEGetPreviousEntryById(int idIn) throws SQLException {
+
+        Object[] result = new Object[25];
+        int nextId = idIn - 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainMachineOEE WHERE MainMachineOEE.ID = \"" + nextId + "\";";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2);
+            result[1] = df1;
+            result[2] = rs.getInt(3);
+            result[3] = rs.getInt(4);
+            result[4] = rs.getInt(5);
+            result[5] = rs.getInt(6);
+            result[6] = rs.getInt(7);
+            result[7] = rs.getInt(8);
+            result[8] = rs.getInt(9);
+            result[9] = rs.getInt(10);
+            result[10] = rs.getInt(11);
+            result[11] = rs.getInt(12);
+            result[12] = rs.getInt(13);
+            result[13] = rs.getInt(14);
+            result[14] = rs.getInt(15);
+            result[15] = rs.getInt(16);
+            result[16] = rs.getInt(17);
+            result[17] = rs.getInt(18);
+            result[18] = rs.getInt(19);
+            result[19] = rs.getInt(20);
+            result[20] = rs.getInt(21);
+            result[21] = rs.getInt(22);
+            result[22] = rs.getString(22);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    public static Object[] MaintenanceMachineOEECalculateTotalsByMonth(String monthIn, String yearIn) throws SQLException {
+
+        // Convert Input into Date Range
+        String month = "";
+        String year = yearIn;
+
+        if (monthIn.equals("January")) {
+            month = "01";
+        } else if (monthIn.equals("February")) {
+            month = "02";
+        } else if (monthIn.equals("March")) {
+            month = "03";
+        } else if (monthIn.equals("April")) {
+            month = "04";
+        } else if (monthIn.equals("May")) {
+            month = "05";
+        } else if (monthIn.equals("June")) {
+            month = "06";
+        } else if (monthIn.equals("July")) {
+            month = "07";
+        } else if (monthIn.equals("August")) {
+            month = "08";
+        } else if (monthIn.equals("September")) {
+            month = "09";
+        } else if (monthIn.equals("October")) {
+            month = "10";
+        } else if (monthIn.equals("November")) {
+            month = "11";
+        } else if (monthIn.equals("December")) {
+            month = "12";
+        }
+
+        String date = (year + "-" + month);
+
+        System.out.println("Date : " + date);
+
+        Object[] total = new Object[22];
+
+        // Return the sum of the selected month and Line - SQL Query SUM WHERE
+        // Month Contains /06/
+        // Query ////////
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        String sql1 = "SELECT SUM(SP1_2) FROM MainMachineOEE WHERE Date LIKE '%" + date + "%';";
+        String sql2 = "SELECT SUM(SP3) FROM MainMachineOEE WHERE Date LIKE '%" + date + "%';";
+        String sql3 = "SELECT SUM(SP41) FROM MainMachineOEE WHERE Date LIKE '%" + date + "%';";
+        String sql4 = "SELECT SUM(SP42) FROM MainMachineOEE WHERE Date LIKE '%" + date + "%';";
+        String sql5 = "SELECT SUM(SP4) FROM MainMachineOEE WHERE Date LIKE '%" + date + "%';";
+        String sql6 = "SELECT SUM(LinerM1) FROM MainMachineOEE WHERE Date LIKE '%" + date + "%';";
+        String sql7 = "SELECT SUM(LinerM2) FROM MainMachineOEE WHERE Date LIKE '%" + date + "%';";
+        String sql8 = "SELECT SUM(LinerM3) FROM MainMachineOEE WHERE Date LIKE '%" + date + "%';";
+        String sql9 = "SELECT SUM(LinerM4) FROM MainMachineOEE WHERE Date LIKE '%" + date + "%';";
+        String sql10 = "SELECT SUM(CP11) FROM MainMachineOEE WHERE Date LIKE '%" + date + "%';";
+        String sql11 = "SELECT SUM(CP12) FROM MainMachineOEE WHERE Date LIKE '%" + date + "%';";
+        String sql12 = "SELECT SUM(CP21) FROM MainMachineOEE WHERE Date LIKE '%" + date + "%';";
+        String sql13 = "SELECT SUM(CP22) FROM MainMachineOEE WHERE Date LIKE '%" + date + "%';";
+        String sql14 = "SELECT SUM(CP31) FROM MainMachineOEE WHERE Date LIKE '%" + date + "%';";
+        String sql15 = "SELECT SUM(CP32) FROM MainMachineOEE WHERE Date LIKE '%" + date + "%';";
+        String sql16 = "SELECT SUM(CP33) FROM MainMachineOEE WHERE Date LIKE '%" + date + "%';";
+        String sql17 = "SELECT SUM(CP41) FROM MainMachineOEE WHERE Date LIKE '%" + date + "%';";
+        String sql18 = "SELECT SUM(CP42) FROM MainMachineOEE WHERE Date LIKE '%" + date + "%';";
+        String sql19 = "SELECT SUM(CP43) FROM MainMachineOEE WHERE Date LIKE '%" + date + "%';";
+        String sql20 = "SELECT SUM(CP44) FROM MainMachineOEE WHERE Date LIKE '%" + date + "%';";
+        // String sql21 = "SELECT AVG(CP44) FROM MainMachineOEE WHERE Date LIKE '%" + date + "%';";
+
+        s.setQueryTimeout(5);
+
+        // W11 /////////////////
+        s.execute(sql1);
+
+        ResultSet rs1 = s.getResultSet();
+        while ((rs1 != null) && (rs1.next())) {
+            total[0] = rs1.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W12 //////////////////
+        s.execute(sql2);
+
+        ResultSet rs2 = s.getResultSet();
+        while ((rs2 != null) && (rs2.next())) {
+            total[1] = rs2.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W21 /////////////////
+        s.execute(sql3);
+
+        ResultSet rs3 = s.getResultSet();
+        while ((rs3 != null) && (rs3.next())) {
+            total[2] = rs3.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W22 /////////////////
+        s.execute(sql4);
+
+        ResultSet rs4 = s.getResultSet();
+        while ((rs4 != null) && (rs4.next())) {
+            total[3] = rs4.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql5);
+
+        ResultSet rs5 = s.getResultSet();
+        while ((rs5 != null) && (rs5.next())) {
+            total[4] = rs5.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql6);
+
+        ResultSet rs6 = s.getResultSet();
+        while ((rs6 != null) && (rs6.next())) {
+            total[5] = rs6.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql7);
+
+        ResultSet rs7 = s.getResultSet();
+        while ((rs7 != null) && (rs7.next())) {
+            total[6] = rs7.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql8);
+
+        ResultSet rs8 = s.getResultSet();
+        while ((rs8 != null) && (rs8.next())) {
+            total[7] = rs8.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql9);
+
+        ResultSet rs9 = s.getResultSet();
+        while ((rs9 != null) && (rs9.next())) {
+            total[8] = rs9.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql10);
+
+        ResultSet rs10 = s.getResultSet();
+        while ((rs10 != null) && (rs10.next())) {
+            total[9] = rs10.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql11);
+
+        ResultSet rs11 = s.getResultSet();
+        while ((rs11 != null) && (rs11.next())) {
+            total[10] = rs11.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql12);
+
+        ResultSet rs12 = s.getResultSet();
+        while ((rs12 != null) && (rs12.next())) {
+            total[11] = rs12.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql13);
+
+        ResultSet rs13 = s.getResultSet();
+        while ((rs13 != null) && (rs13.next())) {
+            total[12] = rs13.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql14);
+
+        ResultSet rs14 = s.getResultSet();
+        while ((rs14 != null) && (rs14.next())) {
+            total[13] = rs14.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql15);
+
+        ResultSet rs15 = s.getResultSet();
+        while ((rs15 != null) && (rs15.next())) {
+            total[14] = rs15.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql16);
+
+        ResultSet rs16 = s.getResultSet();
+        while ((rs16 != null) && (rs16.next())) {
+            total[15] = rs16.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql17);
+
+        ResultSet rs17 = s.getResultSet();
+        while ((rs17 != null) && (rs17.next())) {
+            total[16] = rs17.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql18);
+
+        ResultSet rs18 = s.getResultSet();
+        while ((rs18 != null) && (rs18.next())) {
+            total[17] = rs18.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql19);
+
+        ResultSet rs19 = s.getResultSet();
+        while ((rs19 != null) && (rs19.next())) {
+            total[18] = rs19.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql20);
+
+        ResultSet rs20 = s.getResultSet();
+        while ((rs20 != null) && (rs20.next())) {
+            total[19] = rs20.getInt(1);
+        }
+
+        // ///////////////////////////
+        // ///////////////////////////
+        rs1.close();
+        rs2.close();
+        rs3.close();
+        rs4.close();
+        rs5.close();
+        rs6.close();
+        rs7.close();
+        rs8.close();
+        rs9.close();
+        rs10.close();
+        rs11.close();
+        rs12.close();
+        rs13.close();
+        rs14.close();
+        rs15.close();
+        rs16.close();
+        rs17.close();
+        rs18.close();
+        rs19.close();
+        rs20.close();
+
+        s.close();
+        conn.close();
+
+        // ///////////////
+        return total;
+    }
+
+    public static JPanel MaintenanceMachineOEESummaryTable(int in) throws SQLException {
+
+        JPanel outerPanel = new JPanel(new BorderLayout());
+
+        Connection conn = Connect();
+        Statement stmt = conn.createStatement();
+        stmt.setQueryTimeout(10);
+
+        PreparedStatement psmt = conn.prepareStatement("SELECT * FROM MainMachineOEE ORDER BY Date DESC");
+        psmt.setQueryTimeout(10);
+        ResultSet rs = psmt.executeQuery();
+        DefaultTableModel dm = new DefaultTableModel();
+
+        // get column names
+        int len = rs.getMetaData().getColumnCount();
+        System.out.println("LEN : " + len);
+        Vector cols = new Vector(len);
+        for (int i = 1; i <= len; i++) {// Note starting at 1
+
+            cols.add(rs.getMetaData().getColumnName(i));
+            System.out.println(rs.getMetaData().getColumnName(i));
+
+        }
+
+        // Add Data
+        Vector data = new Vector();
+
+        while (rs.next()) {
+
+            Vector row = new Vector(len);
+
+            row.add(rs.getInt(1));
+            row.add(rs.getString(2));
+            row.add(rs.getInt(3));
+            row.add(rs.getInt(4));
+            row.add(rs.getInt(5));
+            row.add(rs.getInt(6));
+            row.add(rs.getInt(7));
+            row.add(rs.getInt(8));
+            row.add(rs.getInt(9));
+            row.add(rs.getInt(10));
+            row.add(rs.getInt(11));
+            row.add(rs.getInt(12));
+            row.add(rs.getInt(13));
+            row.add(rs.getInt(14));
+            row.add(rs.getInt(15));
+            row.add(rs.getInt(16));
+            row.add(rs.getInt(17));
+            row.add(rs.getInt(18));
+            row.add(rs.getInt(19));
+            row.add(rs.getInt(20));
+            row.add(rs.getInt(21));
+            row.add(rs.getInt(22));
+            row.add(rs.getString(23));
+
+            data.add(row);
+        }
+
+        // Now create the table
+        DefaultTableModel model = new DefaultTableModel(data, cols);
+
+        JTable table = new JTable(model);
+
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+        table.getColumnModel().getColumn(0).setMaxWidth(30);
+        table.getColumnModel().getColumn(1).setMinWidth(80);
+        table.getColumnModel().getColumn(22).setMaxWidth(5);
+        // Render Checkbox
+//        TableColumn tc = table.getColumnModel().getColumn(9);
+//        tc.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+                if (e.getClickCount() == 2) {
+                    JTable target = (JTable) e.getSource();
+
+                    int row = target.getSelectedRow() + 1;
+					// int column = target.getSelectedColumn();
+
+                    // System.out.println("Clicked : " + row );
+                    System.out.println(table.getValueAt(table.getSelectedRow(), 0).toString());
+
+                    String idString = table.getValueAt(table.getSelectedRow(), 0).toString();
+                    int id = Integer.valueOf(idString);
+                    try {
+                        MachineOEE machineOEE = new MachineOEE(1, -2);
+                        machineOEE.setMachineOEEToID(id);
+                    } catch (SQLException ex) {
+                        Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+
+                }
+            }
+        });
+
+        JTableHeader header = table.getTableHeader();
+
+        outerPanel.add(header, BorderLayout.NORTH);
+        outerPanel.add(table, BorderLayout.CENTER);
+
+        psmt.close();
+        stmt.close();
+        conn.close();
+
+        return outerPanel;
+
+    }
+
+    public static int[] MaintenanceMachineOEEgetAverages(int idIn) throws SQLException {
+
+        String sql1 = null;      
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+        
+        Calendar cal = Calendar.getInstance();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        
+        // Get Todays Date as String
+        String todaysDate = sdf.format(cal.getTime());
+        // Get 7 Days Ago as String
+        Calendar cal1 = Calendar.getInstance();
+        cal1.add(Calendar.DAY_OF_MONTH, -7);
+        String lastWeek = sdf.format(cal1.getTime());
+        // Get 7 Days Ago as String
+        Calendar cal2 = Calendar.getInstance();
+        cal2.add(Calendar.DAY_OF_MONTH, -30);
+        String lastMonth = sdf.format(cal2.getTime());
+        
+        System.out.println("Today : "+todaysDate);
+        System.out.println("Last Week : "+lastWeek);
+        System.out.println("Last Month : "+lastMonth);
+        
+
+        // Get avarage of last 7 days for 
+        int[] averages = new int[20];
+
+        if (idIn == 7) {
+
+            sql1 = "SELECT SUM(SP1_2)/7, SUM(SP3)/7, SUM(SP41)/7, SUM(SP42)/7, SUM(SP4)/7, SUM(LinerM1)/7, SUM(LinerM2)/7, SUM(LinerM3)/7, SUM(LinerM4)/7, SUM(CP11)/7, SUM(CP12)/7, SUM(CP21)/7, SUM(CP22)/7, SUM(CP31)/7, SUM(CP32)/7, SUM(CP33)/7, SUM(CP41)/7, SUM(CP42)/7, SUM(CP43)/7, SUM(CP44)/7 FROM MainMachineOEE WHERE Date BETWEEN \'" + lastWeek + "\' AND \'" + todaysDate + "\';";
+
+     //       System.out.println(sql1);
+
+        } else if (idIn == 30) {
+            
+            sql1 = "SELECT SUM(SP1_2)/30, SUM(SP3)/30, SUM(SP41)/30, SUM(SP42)/30, SUM(SP4)/30, SUM(LinerM1)/30, SUM(LinerM2)/30, SUM(LinerM3)/30, SUM(LinerM4)/30, SUM(CP11)/30, SUM(CP12)/30, SUM(CP21)/30, SUM(CP22)/30, SUM(CP31)/30, SUM(CP32)/30, SUM(CP33)/30, SUM(CP41)/30, SUM(CP42)/30, SUM(CP43)/30, SUM(CP44)/30 FROM MainMachineOEE WHERE Date BETWEEN \'" + lastMonth + "\' AND \'" + todaysDate + "\';";
+            System.out.println(sql1);
+
+        }
+
+        // Optime 2 /////////////////
+        s.execute(sql1);
+
+        ResultSet rs1 = s.getResultSet();
+
+        while ((rs1 != null) && (rs1.next())) {
+
+            averages[0] = rs1.getInt(1);
+            averages[1] = rs1.getInt(2);
+            averages[2] = rs1.getInt(3);
+            averages[3] = rs1.getInt(4);
+            averages[4] = rs1.getInt(5);
+            averages[5] = rs1.getInt(6);
+            averages[6] = rs1.getInt(7);
+            averages[7] = rs1.getInt(8);
+            averages[8] = rs1.getInt(9);
+            averages[9] = rs1.getInt(10);
+            averages[10] = rs1.getInt(11);
+            averages[11] = rs1.getInt(12);
+            averages[12] = rs1.getInt(13);
+            averages[13] = rs1.getInt(14);
+            averages[14] = rs1.getInt(15);
+            averages[15] = rs1.getInt(16);
+            averages[16] = rs1.getInt(17);
+            averages[17] = rs1.getInt(18);
+            averages[18] = rs1.getInt(19);
+            averages[19] = rs1.getInt(20);
+
+        }
+
+        for (int i = 0; i < averages.length; i++) {
+
+            System.out.println("Average : " + averages[i]);
+
+        }
+
+        // ///////////////////////////
+        s.close();
+        conn.close();
+
+        return averages;
+    }
+
+    // Maintenance Stolle Downtime
+    public static int MaintenanceStolleDowntimeGetHighestID() throws SQLException {
+
+        int highestID = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT MAX(MainStolleDowntime.[ID]) FROM MainStolleDowntime;";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            highestID = rs.getInt(1);
+            System.out.println("Highest ID :  " + highestID);
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        return highestID;
+    }
+
+    public static Object[] MaintenanceStolleDowntimeReturnEntryByDate(Date dateIn) throws Exception {
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        String df = (sdf.format(dateIn));
+
+        // Need to format dateIn to proper Syntax ----> #2/2/2012#
+        Object[] result = new Object[26];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainStolleDowntime WHERE MainStolleDowntime.Date = \"" + df + "\";";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2);
+            result[1] = df1;
+            result[2] = rs.getDouble(3);
+            result[3] = rs.getDouble(4);
+            result[4] = rs.getDouble(5);
+            result[5] = rs.getDouble(6);
+            result[6] = rs.getDouble(7);
+            result[7] = rs.getDouble(8);
+            result[8] = rs.getDouble(9);
+            result[9] = rs.getDouble(10);
+            result[10] = rs.getDouble(11);
+            result[11] = rs.getDouble(12);
+            result[12] = rs.getDouble(13);
+            result[13] = rs.getDouble(14);
+            result[14] = rs.getDouble(15);
+            result[15] = rs.getDouble(16);
+            result[16] = rs.getDouble(17);
+            result[17] = rs.getDouble(18);
+            result[18] = rs.getDouble(19);
+            result[19] = rs.getDouble(20);
+            result[20] = rs.getDouble(21);
+            result[21] = rs.getDouble(22);
+            result[22] = rs.getDouble(23);
+            result[23] = rs.getDouble(24);
+            result[24] = rs.getString(25);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+
+    }
+
+    public static Object[] MaintenanceStolleDowntimeReturnEntryByID(int id) throws Exception {
+
+        Object[] result = new Object[30];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainStolleDowntime WHERE MainStolleDowntime.ID = \"" + id + "\";";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2);
+            result[1] = df1;
+            result[2] = rs.getDouble(3);
+            result[3] = rs.getDouble(4);
+            result[4] = rs.getDouble(5);
+            result[5] = rs.getDouble(6);
+            result[6] = rs.getDouble(7);
+            result[7] = rs.getDouble(8);
+            result[8] = rs.getDouble(9);
+            result[9] = rs.getDouble(10);
+            result[10] = rs.getDouble(11);
+            result[11] = rs.getDouble(12);
+            result[12] = rs.getDouble(13);
+            result[13] = rs.getDouble(14);
+            result[14] = rs.getDouble(15);
+            result[15] = rs.getDouble(16);
+            result[16] = rs.getDouble(17);
+            result[17] = rs.getDouble(18);
+            result[18] = rs.getDouble(19);
+            result[19] = rs.getDouble(20);
+            result[20] = rs.getDouble(21);
+            result[21] = rs.getDouble(22);
+            result[22] = rs.getDouble(23);
+            result[23] = rs.getDouble(24);
+            result[24] = rs.getString(25);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+
+    }
+
+    public static void MaintenanceStolleDowntimeInsert(
+            int idIn,
+            String DateIn,
+            double stolle11In1,
+            double stolle12In1,
+            double stolle21In1,
+            double stolle22In1,
+            double stolle31In1,
+            double stolle32In1,
+            double stolle33In1,
+            double stolle41In1,
+            double stolle42In1,
+            double stolle43In1,
+            double stolle44In1,
+            double stolle11In2,
+            double stolle12In2,
+            double stolle21In2,
+            double stolle22In2,
+            double stolle31In2,
+            double stolle32In2,
+            double stolle33In2,
+            double stolle41In2,
+            double stolle42In2,
+            double stolle43In2,
+            double stolle44In2,
+            String commentIn
+    )
+            throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // TimeStamp in String Format
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date date = new Date();
+        String dateF = format.format(date);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        PreparedStatement BalancerProductionInsert = conn.prepareStatement("insert into MainStolleDowntime values(?,?,?,?,?,?,?,?,?,?, ?,?,?,?,?,?,?,?,?,?, ?,?,?,?,?,? )");
+
+        BalancerProductionInsert.setInt(1, idIn);
+        BalancerProductionInsert.setString(2, DateIn);
+
+        BalancerProductionInsert.setDouble(3, stolle11In1);
+        BalancerProductionInsert.setDouble(4, stolle12In1);
+
+        BalancerProductionInsert.setDouble(5, stolle21In1);
+        BalancerProductionInsert.setDouble(6, stolle22In1);
+
+        BalancerProductionInsert.setDouble(7, stolle31In1);
+        BalancerProductionInsert.setDouble(8, stolle32In1);
+        BalancerProductionInsert.setDouble(9, stolle33In1);
+
+        BalancerProductionInsert.setDouble(10, stolle41In1);
+        BalancerProductionInsert.setDouble(11, stolle42In1);
+        BalancerProductionInsert.setDouble(12, stolle43In1);
+        BalancerProductionInsert.setDouble(13, stolle44In1);
+
+        BalancerProductionInsert.setDouble(14, stolle11In2);
+        BalancerProductionInsert.setDouble(15, stolle12In2);
+
+        BalancerProductionInsert.setDouble(16, stolle21In2);
+        BalancerProductionInsert.setDouble(17, stolle22In2);
+
+        BalancerProductionInsert.setDouble(18, stolle31In2);
+        BalancerProductionInsert.setDouble(19, stolle32In2);
+        BalancerProductionInsert.setDouble(20, stolle33In2);
+
+        BalancerProductionInsert.setDouble(21, stolle41In2);
+        BalancerProductionInsert.setDouble(22, stolle42In2);
+        BalancerProductionInsert.setDouble(23, stolle43In2);
+        BalancerProductionInsert.setDouble(24, stolle44In2);
+
+        BalancerProductionInsert.setString(25, commentIn);
+        BalancerProductionInsert.setString(26, dateF);
+
+        BalancerProductionInsert.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static void MaintenanceStolleDowntimeUpdate(
+            String DateIn,
+            double stolle11In1,
+            double stolle12In1,
+            double stolle21In1,
+            double stolle22In1,
+            double stolle31In1,
+            double stolle32In1,
+            double stolle33In1,
+            double stolle41In1,
+            double stolle42In1,
+            double stolle43In1,
+            double stolle44In1,
+            double stolle11In2,
+            double stolle12In2,
+            double stolle21In2,
+            double stolle22In2,
+            double stolle31In2,
+            double stolle32In2,
+            double stolle33In2,
+            double stolle41In2,
+            double stolle42In2,
+            double stolle43In2,
+            double stolle44In2,
+            String commentIn,
+            int idIn
+    ) throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String sql = "update "
+                + "MainStolleDowntime set "
+                + "Date=?, "
+                + "Stolle11=? , "
+                + "Stolle12=? , "
+                + "Stolle21=? , "
+                + "Stolle22=?, "
+                + "Stolle31=? , "
+                + "Stolle32=?,  "
+                + "Stolle33=?, "
+                + "Stolle41=?, "
+                + "Stolle42=?, "
+                + "Stolle43=?, "
+                + "Stolle44=?, "
+                + "Stolle11_1=? , "
+                + "Stolle12_1=? , "
+                + "Stolle21_1=? , "
+                + "Stolle22_1=?, "
+                + "Stolle31_1=? , "
+                + "Stolle32_1=?,  "
+                + "Stolle33_1=?, "
+                + "Stolle41_1=?, "
+                + "Stolle42_1=?, "
+                + "Stolle43_1=?, "
+                + "Stolle44_1=?, "
+                + "Comment=? "
+                + "where ID=?";
+
+        PreparedStatement BalancerProductionUpdate = conn.prepareStatement(sql);
+
+        BalancerProductionUpdate.setString(1, DateIn);
+        BalancerProductionUpdate.setDouble(2, stolle11In1);
+        BalancerProductionUpdate.setDouble(3, stolle12In1);
+        BalancerProductionUpdate.setDouble(4, stolle21In1);
+        BalancerProductionUpdate.setDouble(5, stolle22In1);
+        BalancerProductionUpdate.setDouble(6, stolle31In1);
+        BalancerProductionUpdate.setDouble(7, stolle32In1);
+        BalancerProductionUpdate.setDouble(8, stolle33In1);
+        BalancerProductionUpdate.setDouble(9, stolle41In1);
+        BalancerProductionUpdate.setDouble(10, stolle42In1);
+        BalancerProductionUpdate.setDouble(11, stolle43In1);
+        BalancerProductionUpdate.setDouble(12, stolle44In1);
+        BalancerProductionUpdate.setDouble(13, stolle11In2);
+        BalancerProductionUpdate.setDouble(14, stolle12In2);
+        BalancerProductionUpdate.setDouble(15, stolle21In2);
+        BalancerProductionUpdate.setDouble(16, stolle22In2);
+        BalancerProductionUpdate.setDouble(17, stolle31In2);
+        BalancerProductionUpdate.setDouble(18, stolle32In2);
+        BalancerProductionUpdate.setDouble(19, stolle33In2);
+        BalancerProductionUpdate.setDouble(20, stolle41In2);
+        BalancerProductionUpdate.setDouble(21, stolle42In2);
+        BalancerProductionUpdate.setDouble(22, stolle43In2);
+        BalancerProductionUpdate.setDouble(23, stolle44In2);
+        BalancerProductionUpdate.setString(24, commentIn);
+        BalancerProductionUpdate.setInt(25, idIn);
+
+        BalancerProductionUpdate.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static Object[] MaintenanceStolleDowntimeGetNextEntryById(int idIn) throws SQLException {
+
+        Object[] result = new Object[26];
+        int nextId = idIn + 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainStolleDowntime WHERE MainStolleDowntime.ID = \"" + nextId + "\";";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2);
+            result[1] = df1;
+            result[2] = rs.getDouble(3);
+            result[3] = rs.getDouble(4);
+            result[4] = rs.getDouble(5);
+            result[5] = rs.getDouble(6);
+            result[6] = rs.getDouble(7);
+            result[7] = rs.getDouble(8);
+            result[8] = rs.getDouble(9);
+            result[9] = rs.getDouble(10);
+            result[10] = rs.getDouble(11);
+            result[11] = rs.getDouble(12);
+            result[12] = rs.getDouble(13);
+            result[13] = rs.getDouble(14);
+            result[14] = rs.getDouble(15);
+            result[15] = rs.getDouble(16);
+            result[16] = rs.getDouble(17);
+            result[17] = rs.getDouble(18);
+            result[18] = rs.getDouble(19);
+            result[19] = rs.getDouble(20);
+            result[20] = rs.getDouble(21);
+            result[21] = rs.getDouble(22);
+            result[22] = rs.getDouble(23);
+            result[23] = rs.getDouble(24);
+            result[24] = rs.getString(25);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    public static Object[] MaintenanceStolleDowntimeGetPreviousEntryById(int idIn) throws SQLException {
+
+        Object[] result = new Object[25];
+        int nextId = idIn - 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainStolleDowntime WHERE MainStolleDowntime.ID = \"" + nextId + "\";";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2);
+            result[1] = df1;
+            result[2] = rs.getDouble(3);
+            result[3] = rs.getDouble(4);
+            result[4] = rs.getDouble(5);
+            result[5] = rs.getDouble(6);
+            result[6] = rs.getDouble(7);
+            result[7] = rs.getDouble(8);
+            result[8] = rs.getDouble(9);
+            result[9] = rs.getDouble(10);
+            result[10] = rs.getDouble(11);
+            result[11] = rs.getDouble(12);
+            result[12] = rs.getDouble(13);
+            result[13] = rs.getDouble(14);
+            result[14] = rs.getDouble(15);
+            result[15] = rs.getDouble(16);
+            result[16] = rs.getDouble(17);
+            result[17] = rs.getDouble(18);
+            result[18] = rs.getDouble(19);
+            result[19] = rs.getDouble(20);
+            result[20] = rs.getDouble(21);
+            result[21] = rs.getDouble(22);
+            result[22] = rs.getDouble(23);
+            result[23] = rs.getDouble(24);
+            result[24] = rs.getString(25);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    public static Object[] MaintenanceStolleDowntimeCalculateTotalsByMonth(String monthIn, String yearIn) throws SQLException {
+
+        // Convert Input into Date Range
+        String month = "";
+        String year = yearIn;
+
+        if (monthIn.equals("January")) {
+            month = "01";
+        } else if (monthIn.equals("February")) {
+            month = "02";
+        } else if (monthIn.equals("March")) {
+            month = "03";
+        } else if (monthIn.equals("April")) {
+            month = "04";
+        } else if (monthIn.equals("May")) {
+            month = "05";
+        } else if (monthIn.equals("June")) {
+            month = "06";
+        } else if (monthIn.equals("July")) {
+            month = "07";
+        } else if (monthIn.equals("August")) {
+            month = "08";
+        } else if (monthIn.equals("September")) {
+            month = "09";
+        } else if (monthIn.equals("October")) {
+            month = "10";
+        } else if (monthIn.equals("November")) {
+            month = "11";
+        } else if (monthIn.equals("December")) {
+            month = "12";
+        }
+
+        String date = (year + "-" + month);
+
+        System.out.println("Date : " + date);
+
+        Object[] total = new Object[15];
+
+        // Return the sum of the selected month and Line - SQL Query SUM WHERE
+        // Month Contains /06/
+        // Query ////////
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        String sql1 = "SELECT SUM(Stolle11) FROM MainStolleDowntime WHERE Date LIKE '%" + date + "%';";
+        String sql2 = "SELECT SUM(Stolle12) FROM MainStolleDowntime WHERE Date LIKE '%" + date + "%';";
+        String sql3 = "SELECT SUM(Stolle21) FROM MainStolleDowntime WHERE Date LIKE '%" + date + "%';";
+        String sql4 = "SELECT SUM(Stolle22) FROM MainStolleDowntime WHERE Date LIKE '%" + date + "%';";
+        String sql5 = "SELECT SUM(Stolle31) FROM MainStolleDowntime WHERE Date LIKE '%" + date + "%';";
+        String sql6 = "SELECT SUM(Stolle32) FROM MainStolleDowntime WHERE Date LIKE '%" + date + "%';";
+        String sql7 = "SELECT SUM(Stolle33) FROM MainStolleDowntime WHERE Date LIKE '%" + date + "%';";
+        String sql8 = "SELECT SUM(Stolle41) FROM MainStolleDowntime WHERE Date LIKE '%" + date + "%';";
+        String sql9 = "SELECT SUM(Stolle42) FROM MainStolleDowntime WHERE Date LIKE '%" + date + "%';";
+        String sql10 = "SELECT SUM(Stolle43) FROM MainStolleDowntime WHERE Date LIKE '%" + date + "%';";
+
+        String sql11 = "SELECT AVG(Stolle11 + Stolle12 + Stolle21 + Stolle22 + Stolle31 + Stolle32 + Stolle33 + Stolle41 + Stolle42 + Stolle43) FROM MainStolleDowntime WHERE Date BETWEEN date('now', '-1 month') AND date('now');";
+
+        s.setQueryTimeout(5);
+
+        // W11 /////////////////
+        s.execute(sql1);
+
+        ResultSet rs1 = s.getResultSet();
+        while ((rs1 != null) && (rs1.next())) {
+            total[0] = rs1.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W12 //////////////////
+        s.execute(sql2);
+
+        ResultSet rs2 = s.getResultSet();
+        while ((rs2 != null) && (rs2.next())) {
+            total[1] = rs2.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W21 /////////////////
+        s.execute(sql3);
+
+        ResultSet rs3 = s.getResultSet();
+        while ((rs3 != null) && (rs3.next())) {
+            total[2] = rs3.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W22 /////////////////
+        s.execute(sql4);
+
+        ResultSet rs4 = s.getResultSet();
+        while ((rs4 != null) && (rs4.next())) {
+            total[3] = rs4.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql5);
+
+        ResultSet rs5 = s.getResultSet();
+        while ((rs5 != null) && (rs5.next())) {
+            total[4] = rs5.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql6);
+
+        ResultSet rs6 = s.getResultSet();
+        while ((rs6 != null) && (rs6.next())) {
+            total[5] = rs6.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql7);
+
+        ResultSet rs7 = s.getResultSet();
+        while ((rs7 != null) && (rs7.next())) {
+            total[6] = rs7.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql8);
+
+        ResultSet rs8 = s.getResultSet();
+        while ((rs8 != null) && (rs8.next())) {
+            total[7] = rs8.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql9);
+
+        ResultSet rs9 = s.getResultSet();
+        while ((rs9 != null) && (rs9.next())) {
+            total[8] = rs9.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql10);
+
+        ResultSet rs10 = s.getResultSet();
+        while ((rs10 != null) && (rs10.next())) {
+            total[9] = rs10.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql11);
+
+        ResultSet rs11 = s.getResultSet();
+        while ((rs11 != null) && (rs11.next())) {
+            total[10] = rs11.getInt(1);
+        }
+
+        // ///////////////////////////
+        // ///////////////////////////
+        rs1.close();
+        rs2.close();
+        rs3.close();
+        rs4.close();
+        rs5.close();
+        rs6.close();
+        rs7.close();
+        rs8.close();
+        rs9.close();
+        rs10.close();
+
+        s.close();
+        conn.close();
+
+        // ///////////////
+        return total;
+    }
+
+    public static JPanel MaintenanceStolleDowntimeSummaryTable(int in) throws SQLException {
+
+        JPanel outerPanel = new JPanel(new BorderLayout());
+
+        Connection conn = Connect();
+        Statement stmt = conn.createStatement();
+        stmt.setQueryTimeout(10);
+
+        PreparedStatement psmt = conn.prepareStatement("SELECT Date, Stolle11, Stolle12, Stolle21, Stolle22, Stolle31, Stolle32, Stolle33, Stolle41, Stolle42, Stolle43, Stolle44, Comment, ID FROM MainStolleDowntime ORDER BY Date DESC");
+        psmt.setQueryTimeout(10);
+        ResultSet rs = psmt.executeQuery();
+        DefaultTableModel dm = new DefaultTableModel();
+
+        // get column names
+        int len = rs.getMetaData().getColumnCount();
+        System.out.println("LEN : " + len);
+        Vector cols = new Vector(len);
+        for (int i = 1; i <= len; i++) {// Note starting at 1
+
+            cols.add(rs.getMetaData().getColumnName(i));
+            System.out.println(rs.getMetaData().getColumnName(i));
+
+        }
+
+        // Add Data
+        Vector data = new Vector();
+
+        while (rs.next()) {
+
+            Vector row = new Vector(len);
+
+            row.add(rs.getString(1));
+            row.add(rs.getDouble(2));
+            row.add(rs.getDouble(3));
+            row.add(rs.getDouble(4));
+            row.add(rs.getDouble(5));
+            row.add(rs.getDouble(6));
+            row.add(rs.getDouble(7));
+            row.add(rs.getDouble(8));
+            row.add(rs.getDouble(9));
+            row.add(rs.getDouble(10));
+            row.add(rs.getDouble(11));
+            row.add(rs.getDouble(12));
+            row.add(rs.getString(13));
+            row.add(rs.getInt(14));
+
+            data.add(row);
+        }
+
+        // Now create the table
+        DefaultTableModel model = new DefaultTableModel(data, cols);
+
+        JTable table = new JTable(model);
+
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+        table.getColumnModel().getColumn(13).setMaxWidth(40);
+
+        // Render Checkbox
+//        TableColumn tc = table.getColumnModel().getColumn(9);
+//        tc.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+                if (e.getClickCount() == 2) {
+                    JTable target = (JTable) e.getSource();
+
+                    int row = target.getSelectedRow() + 1;
+					// int column = target.getSelectedColumn();
+
+                    // System.out.println("Clicked : " + row );
+                    System.out.println(table.getValueAt(table.getSelectedRow(), 13).toString());
+
+                    String idString = table.getValueAt(table.getSelectedRow(), 13).toString();
+                    int id = Integer.valueOf(idString);
+                    try {
+                        StolleDowntime StolleDowntime = new StolleDowntime(1, -2);
+                        StolleDowntime.setStolleDowntimeToID(id);
+                    } catch (SQLException ex) {
+                        Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+
+                }
+            }
+        });
+
+        JTableHeader header = table.getTableHeader();
+
+        outerPanel.add(header, BorderLayout.NORTH);
+        outerPanel.add(table, BorderLayout.CENTER);
+
+        psmt.close();
+        stmt.close();
+        conn.close();
+
+        return outerPanel;
+
+    }
+
+    // Maintenance EHS Statutory Checks
+    public static int MaintenanceEHSStatutoryChecksGetHighestID() throws SQLException {
+
+        int highestID = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT MAX(MainEHSStatutoryChecks.[ID]) FROM MainEHSStatutoryChecks;";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            highestID = rs.getInt(1);
+            System.out.println("Highest ID :  " + highestID);
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        return highestID;
+    }
+
+    public static Object[] MaintenanceEHSStatutoryChecksReturnEntryByDate(Date dateIn) throws Exception {
+
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        String df = (sdf.format(dateIn));
+
+        // Need to format dateIn to proper Syntax ----> #2/2/2012#
+        Object[] result = new Object[19];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainEHSStatutoryChecks WHERE MainEHSStatutoryChecks.Date = \"" + df + "\";";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            result[1] = rs.getString(2);
+            result[2] = rs.getString(3);
+            result[3] = rs.getString(4);
+            String df1 = (String) rs.getObject(5);
+            result[4] = df1;
+            result[5] = rs.getString(6);
+            result[6] = rs.getString(7);
+            result[7] = rs.getString(8);
+            result[8] = rs.getString(9);
+            result[9] = rs.getString(10);
+            result[10] = rs.getDouble(11);
+            String df2 = (String) rs.getObject(12);
+            result[11] = df2;
+            result[12] = rs.getString(13);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+
+    }
+
+    public static Object[] MaintenanceEHSStatutoryChecksReturnEntryByID(int id) throws Exception {
+
+        Object[] result = new Object[19];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainEHSStatutoryChecks WHERE MainEHSStatutoryChecks.ID = \"" + id + "\";";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            result[1] = rs.getString(2);
+            result[2] = rs.getString(3);
+            result[3] = rs.getString(4);
+            String df1 = (String) rs.getObject(5);
+            result[4] = df1;
+            result[5] = rs.getString(6);
+            result[6] = rs.getString(7);
+            result[7] = rs.getString(8);
+            result[8] = rs.getString(9);
+            result[9] = rs.getString(10);
+            result[10] = rs.getDouble(11);
+            String df2 = (String) rs.getObject(12);
+            result[11] = df2;
+            result[12] = rs.getString(13);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+
+    }
+
+    public static void MaintenanceEHSStatutoryChecksInsert(
+            int idIn,
+            String RefNoIn,
+            String IdentificationIn,
+            String LocationIn,
+            String DateIn,
+            String SWLIn,
+            String CertIssuerIn,
+            String DefectTypeIn,
+            String CorrectiveActionIn,
+            String SerialNumberIn,
+            Double FrequencyDaysIn,
+            String NextExamDateIn,
+            Double DaysRemainingIn
+    )
+            throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // TimeStamp in String Format
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date date = new Date();
+        String dateF = format.format(date);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        PreparedStatement EHSStatutoryChecksInsert = conn.prepareStatement("insert into MainEHSStatutoryChecks values(?,?,?,?,?,?,?,?,?,?, ?,?,?,?)");
+
+        EHSStatutoryChecksInsert.setInt(1, idIn);
+        EHSStatutoryChecksInsert.setString(2, RefNoIn);
+        EHSStatutoryChecksInsert.setString(3, IdentificationIn);
+        EHSStatutoryChecksInsert.setString(4, LocationIn);
+        EHSStatutoryChecksInsert.setString(5, DateIn);
+        EHSStatutoryChecksInsert.setString(6, SWLIn);
+        EHSStatutoryChecksInsert.setString(7, CertIssuerIn);
+        EHSStatutoryChecksInsert.setString(8, DefectTypeIn);
+        EHSStatutoryChecksInsert.setString(9, CorrectiveActionIn);
+        EHSStatutoryChecksInsert.setString(10, SerialNumberIn);
+        EHSStatutoryChecksInsert.setDouble(11, FrequencyDaysIn);
+        EHSStatutoryChecksInsert.setString(12, NextExamDateIn);
+        EHSStatutoryChecksInsert.setDouble(13, DaysRemainingIn);
+        EHSStatutoryChecksInsert.setString(14, dateF);
+
+        EHSStatutoryChecksInsert.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static void MaintenanceEHSStatutoryChecksUpdate(
+            String RefNoIn,
+            String IdentificationIn,
+            String LocationIn,
+            String DateIn,
+            String SWLIn,
+            String CertIssuerIn,
+            String DefectTypeIn,
+            String CorrectiveActionIn,
+            String SerialNumberIn,
+            Double FrequencyDaysIn,
+            String NextExamDateIn,
+            Double DaysRemainingIn,
+            int idIn
+    ) throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String sql = "update "
+                + "MainEHSStatutoryChecks set "
+                + "RefNo=?, "
+                + "Identification=? , "
+                + "Location=? , "
+                + "LastExamDate=?, "
+                + "SWL=? , "
+                + "CertIssuer=?, "
+                + "DefectType=? , "
+                + "CorrectiveAction=?,  "
+                + "SerialNumber=?, "
+                + "FrequencyDays=?, "
+                + "NextExamDate=?, "
+                + "DaysRemaining=? "
+                + "where "
+                + "ID=?";
+
+        PreparedStatement EHSStatutoryChecksUpdate = conn.prepareStatement(sql);
+
+        EHSStatutoryChecksUpdate.setString(1, RefNoIn);
+        EHSStatutoryChecksUpdate.setString(2, IdentificationIn);
+        EHSStatutoryChecksUpdate.setString(3, LocationIn);
+        EHSStatutoryChecksUpdate.setString(4, DateIn);
+        EHSStatutoryChecksUpdate.setString(5, SWLIn);
+        EHSStatutoryChecksUpdate.setString(6, CertIssuerIn);
+        EHSStatutoryChecksUpdate.setString(7, DefectTypeIn);
+        EHSStatutoryChecksUpdate.setString(8, CorrectiveActionIn);
+        EHSStatutoryChecksUpdate.setString(9, SerialNumberIn);
+        EHSStatutoryChecksUpdate.setDouble(10, FrequencyDaysIn);
+        EHSStatutoryChecksUpdate.setString(11, NextExamDateIn);
+        EHSStatutoryChecksUpdate.setDouble(12, DaysRemainingIn);
+        EHSStatutoryChecksUpdate.setInt(13, idIn);
+
+        EHSStatutoryChecksUpdate.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        System.out.println(sql);
+        s.close();
+        conn.close();
+
+    }
+
+    public static Object[] MaintenanceEHSStatutoryChecksGetNextEntryById(int idIn) throws SQLException {
+
+        Object[] result = new Object[19];
+        int nextId = idIn + 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainEHSStatutoryChecks WHERE MainEHSStatutoryChecks.ID = \"" + nextId + "\";";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            result[1] = rs.getString(2);
+            result[2] = rs.getString(3);
+            result[3] = rs.getString(4);
+            String df1 = (String) rs.getObject(5);
+            result[4] = df1;
+            result[5] = rs.getString(6);
+            result[6] = rs.getString(7);
+            result[7] = rs.getString(8);
+            result[8] = rs.getString(9);
+            result[9] = rs.getString(10);
+            result[10] = rs.getDouble(11);
+            String df2 = (String) rs.getObject(12);
+            result[11] = df2;
+            result[12] = rs.getString(13);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    public static Object[] MaintenanceEHSStatutoryChecksGetPreviousEntryById(int idIn) throws SQLException {
+
+        Object[] result = new Object[19];
+        int nextId = idIn - 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainEHSStatutoryChecks WHERE MainEHSStatutoryChecks.ID = \"" + nextId + "\";";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            result[1] = rs.getString(2);
+            result[2] = rs.getString(3);
+            result[3] = rs.getString(4);
+            String df1 = (String) rs.getObject(5);
+            result[4] = df1;
+            result[5] = rs.getString(6);
+            result[6] = rs.getString(7);
+            result[7] = rs.getString(8);
+            result[8] = rs.getString(9);
+            result[9] = rs.getString(10);
+            result[10] = rs.getDouble(11);
+            String df2 = (String) rs.getObject(12);
+            result[11] = df2;
+            result[12] = rs.getString(13);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    public static Object[] MaintenanceEHSStatutoryChecksCalculateTotalsByMonth(String monthIn, String yearIn) throws SQLException {
+
+        // Convert Input into Date Range
+        String month = "";
+        String year = yearIn;
+
+        if (monthIn.equals("January")) {
+            month = "01";
+        } else if (monthIn.equals("February")) {
+            month = "02";
+        } else if (monthIn.equals("March")) {
+            month = "03";
+        } else if (monthIn.equals("April")) {
+            month = "04";
+        } else if (monthIn.equals("May")) {
+            month = "05";
+        } else if (monthIn.equals("June")) {
+            month = "06";
+        } else if (monthIn.equals("July")) {
+            month = "07";
+        } else if (monthIn.equals("August")) {
+            month = "08";
+        } else if (monthIn.equals("September")) {
+            month = "09";
+        } else if (monthIn.equals("October")) {
+            month = "10";
+        } else if (monthIn.equals("November")) {
+            month = "11";
+        } else if (monthIn.equals("December")) {
+            month = "12";
+        }
+
+        String date = (year + "-" + month);
+
+        System.out.println("Date : " + date);
+
+        Object[] total = new Object[19];
+
+        // Return the sum of the selected month and Line - SQL Query SUM WHERE
+        // Month Contains /06/
+        // Query ////////
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        String sql1 = "SELECT SUM(Liner11) FROM MainEHSStatutoryChecks WHERE Date LIKE '%" + date + "%';";
+        String sql2 = "SELECT SUM(Liner12) FROM MainEHSStatutoryChecks WHERE Date LIKE '%" + date + "%';";
+        String sql3 = "SELECT SUM(Liner13) FROM MainEHSStatutoryChecks WHERE Date LIKE '%" + date + "%';";
+        String sql4 = "SELECT SUM(Liner14) FROM MainEHSStatutoryChecks WHERE Date LIKE '%" + date + "%';";
+        String sql5 = "SELECT SUM(Liner21) FROM MainEHSStatutoryChecks WHERE Date LIKE '%" + date + "%';";
+        String sql6 = "SELECT SUM(Liner22) FROM MainEHSStatutoryChecks WHERE Date LIKE '%" + date + "%';";
+        String sql7 = "SELECT SUM(Liner23) FROM MainEHSStatutoryChecks WHERE Date LIKE '%" + date + "%';";
+        String sql8 = "SELECT SUM(Liner24) FROM MainEHSStatutoryChecks WHERE Date LIKE '%" + date + "%';";
+        String sql9 = "SELECT SUM(Liner31) FROM MainEHSStatutoryChecks WHERE Date LIKE '%" + date + "%';";
+        String sql10 = "SELECT SUM(Liner32) FROM MainEHSStatutoryChecks WHERE Date LIKE '%" + date + "%';";
+        String sql11 = "SELECT SUM(Liner33) FROM MainEHSStatutoryChecks WHERE Date LIKE '%" + date + "%';";
+        String sql12 = "SELECT SUM(Liner34) FROM MainEHSStatutoryChecks WHERE Date LIKE '%" + date + "%';";
+        String sql13 = "SELECT SUM(Liner41) FROM MainEHSStatutoryChecks WHERE Date LIKE '%" + date + "%';";
+        String sql14 = "SELECT SUM(Liner42) FROM MainEHSStatutoryChecks WHERE Date LIKE '%" + date + "%';";
+        String sql15 = "SELECT SUM(Liner43) FROM MainEHSStatutoryChecks WHERE Date LIKE '%" + date + "%';";
+        String sql16 = "SELECT SUM(Liner44) FROM MainEHSStatutoryChecks WHERE Date LIKE '%" + date + "%';";
+
+        s.setQueryTimeout(5);
+
+        // W11 /////////////////
+        s.execute(sql1);
+
+        ResultSet rs1 = s.getResultSet();
+        while ((rs1 != null) && (rs1.next())) {
+            total[0] = rs1.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W12 //////////////////
+        s.execute(sql2);
+
+        ResultSet rs2 = s.getResultSet();
+        while ((rs2 != null) && (rs2.next())) {
+            total[1] = rs2.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W21 /////////////////
+        s.execute(sql3);
+
+        ResultSet rs3 = s.getResultSet();
+        while ((rs3 != null) && (rs3.next())) {
+            total[2] = rs3.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W22 /////////////////
+        s.execute(sql4);
+
+        ResultSet rs4 = s.getResultSet();
+        while ((rs4 != null) && (rs4.next())) {
+            total[3] = rs4.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql5);
+
+        ResultSet rs5 = s.getResultSet();
+        while ((rs5 != null) && (rs5.next())) {
+            total[4] = rs5.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql6);
+
+        ResultSet rs6 = s.getResultSet();
+        while ((rs6 != null) && (rs6.next())) {
+            total[5] = rs6.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql7);
+
+        ResultSet rs7 = s.getResultSet();
+        while ((rs7 != null) && (rs7.next())) {
+            total[6] = rs7.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql8);
+
+        ResultSet rs8 = s.getResultSet();
+        while ((rs8 != null) && (rs8.next())) {
+            total[7] = rs8.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql9);
+
+        ResultSet rs9 = s.getResultSet();
+        while ((rs9 != null) && (rs9.next())) {
+            total[8] = rs9.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql10);
+
+        ResultSet rs10 = s.getResultSet();
+        while ((rs10 != null) && (rs10.next())) {
+            total[9] = rs10.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql11);
+
+        ResultSet rs11 = s.getResultSet();
+        while ((rs11 != null) && (rs11.next())) {
+            total[10] = rs11.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql12);
+
+        ResultSet rs12 = s.getResultSet();
+        while ((rs12 != null) && (rs12.next())) {
+            total[11] = rs12.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql13);
+
+        ResultSet rs13 = s.getResultSet();
+        while ((rs13 != null) && (rs13.next())) {
+            total[12] = rs13.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql14);
+
+        ResultSet rs14 = s.getResultSet();
+        while ((rs14 != null) && (rs14.next())) {
+            total[13] = rs14.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql15);
+
+        ResultSet rs15 = s.getResultSet();
+        while ((rs15 != null) && (rs15.next())) {
+            total[14] = rs15.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql16);
+
+        ResultSet rs16 = s.getResultSet();
+        while ((rs16 != null) && (rs16.next())) {
+            total[15] = rs16.getInt(1);
+        }
+
+        // ///////////////////////////
+        // ///////////////////////////
+        rs1.close();
+        rs2.close();
+        rs3.close();
+        rs4.close();
+        rs5.close();
+        rs6.close();
+        rs7.close();
+        rs8.close();
+        rs9.close();
+        rs10.close();
+        rs11.close();
+        rs12.close();
+        rs13.close();
+        rs14.close();
+        rs15.close();
+        rs16.close();
+
+        s.close();
+        conn.close();
+
+        // ///////////////
+        return total;
+    }
+
+    public static JPanel MaintenanceEHSStatutoryChecksSummaryTable(int in) throws SQLException {
+
+        JPanel outerPanel = new JPanel(new BorderLayout());
+
+        Connection conn = Connect();
+        Statement stmt = conn.createStatement();
+        stmt.setQueryTimeout(10);
+
+        PreparedStatement psmt = conn.prepareStatement("SELECT * FROM MainEHSStatutoryChecks ORDER BY RefNo DESC");
+        psmt.setQueryTimeout(10);
+        ResultSet rs = psmt.executeQuery();
+        DefaultTableModel dm = new DefaultTableModel();
+
+        // get column names
+        int len = rs.getMetaData().getColumnCount();
+        System.out.println("LEN : " + len);
+        Vector cols = new Vector(len);
+        for (int i = 1; i <= len; i++) {// Note starting at 1
+
+            cols.add(rs.getMetaData().getColumnName(i));
+            System.out.println(rs.getMetaData().getColumnName(i));
+
+        }
+
+        // Add Data
+        Vector data = new Vector();
+
+        while (rs.next()) {
+
+            Vector row = new Vector(len);
+
+            row.add(rs.getInt(1));
+            row.add(rs.getString(2));
+            row.add(rs.getString(3));
+            row.add(rs.getString(4));
+            row.add(rs.getString(5));
+            row.add(rs.getString(6));
+            row.add(rs.getString(7));
+            row.add(rs.getString(8));
+            row.add(rs.getString(9));
+            row.add(rs.getString(10));
+            row.add(rs.getDouble(11));
+            row.add(rs.getString(12));
+            row.add(rs.getDouble(13));
+            row.add(rs.getString(14));
+
+            data.add(row);
+        }
+
+        // Now create the table
+        DefaultTableModel model = new DefaultTableModel(data, cols);
+
+        JTable table = new JTable(model);
+
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+        table.getColumnModel().getColumn(0).setMaxWidth(40);
+        table.getColumnModel().getColumn(1).setMaxWidth(50);
+
+        // Render Checkbox
+//        TableColumn tc = table.getColumnModel().getColumn(9);
+//        tc.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+                if (e.getClickCount() == 2) {
+                    JTable target = (JTable) e.getSource();
+
+                    int row = target.getSelectedRow() + 1;
+					// int column = target.getSelectedColumn();
+
+                    // System.out.println("Clicked : " + row );
+                    System.out.println(table.getValueAt(table.getSelectedRow(), 0).toString());
+
+                    String idString = table.getValueAt(table.getSelectedRow(), 0).toString();
+                    int id = Integer.valueOf(idString);
+                    try {
+                        EHSStatutoryChecks EHSStatutoryChecks = new EHSStatutoryChecks(1, -2);
+                        EHSStatutoryChecks.setEHSStatutoryChecksToID(id);
                     } catch (SQLException ex) {
                         Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
                     }
