@@ -1,19 +1,20 @@
 package com.gui.rexam;
 
+// WEBSTART 
 // TODO Update statistics on ChrisMaher.info with Usage / Views Etc..
 import java.sql.SQLException;
-
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
-
+// import javax.jnlp.*;
 import com.database.rexam.SQLiteConnection;
+import static java.util.Collections.list;
 
 public class Program {
 
-	// Create a Splash Screen.
+ //    static BasicService basicService = null;
+    // Create a Splash Screen.
     public static void main(String[] args) throws SQLException {
 
-        System.out.println("Test");
 
         try {
             for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
@@ -25,15 +26,20 @@ public class Program {
 
         } catch (Exception e) {
 
-			// If Nimbus is not available, you can set the GUI to another look
+            // If Nimbus is not available, you can set the GUI to another look
             // and feel.
         }
 
         new Gui();
 
         // Add a view to analytics.
-        SQLiteConnection.incrementViewsAnalytics(0, 1, 0, 0, 0, 0, 0, 0, 0);
+        SQLiteConnection.AnalyticsUpdate("Program");
 
+//        try {
+//            basicService = (BasicService) ServiceManager.lookup("javax.jnlp.BasicService");
+//        } catch (UnavailableServiceException e) {
+//            System.err.println("Lookup failed: " + e);
+//        }
     }
 
 }
