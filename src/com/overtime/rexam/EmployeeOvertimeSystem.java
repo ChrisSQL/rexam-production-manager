@@ -25,41 +25,48 @@ import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.border.EmptyBorder;
 
 import com.database.rexam.SQLiteConnection;
+import java.awt.Color;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JTable;
+import javax.swing.table.JTableHeader;
 import net.sourceforge.jdatepicker.impl.JDatePanelImpl;
 import net.sourceforge.jdatepicker.impl.JDatePickerImpl;
 import net.sourceforge.jdatepicker.impl.UtilDateModel;
 
 public class EmployeeOvertimeSystem {
 
-    static JButton save, delete, reset, reset2, addNew, confirmDelete, update, confirmUpdate, go, go2, summary, moveMarkerUpButton, moveMarkerDownButton;
+    static JButton save, delete, reset, reset2, addNew, confirmDelete, update, confirmUpdate, go, go2, summary, moveMarkerUpButton, moveMarkerDownButton, moveQueuePositionDown, moveQueuePositionUp, changeEmployeePosition;
     static JLabel employeeId, name, address, crew, departmentHead, processLeader, shiftManager, technician, leadHand, operator, engineer, forkliftDriver, toolmaker, fitter, electrician, packer, qcInspector, phoneNumber,
-            mobileNumber, nameLabel1, crewLabel1, nameLabel2, dateLabel2, statusLabel, currentTableLabel, selectTableLabel;
+            mobileNumber, nameLabel1, crewLabel1, nameLabel2, dateLabel2, statusLabel, currentTableLabel, selectTableLabel, currentPersonLabel, currentCrew;
     static JTextField employeeIdText, nametext, addressText, phoneNumberText, mobileNumberText;
     static JCheckBox departmentHeadJCheckBox, shiftManagerJCheckBox, technicianJCheckBox, leadHandJCheckBox, operatorJCheckBox, engineerJCheckBox, packerJCheckBox,
             qcInspectorJCheckBox, forkliftDriverJCheckBox, processLeaderJCheckBox, toolmakerJCheckBox, fitterJCheckBox, electricianJCheckBox;
-    static JComboBox crewCombo, nameAndId, nameCombo, crewSelectCombo, jobSelectCombo, statusCombo, currentJobCombo, currentCrewCombo;
+    static JComboBox crewCombo, nameAndId, nameCombo, crewSelectCombo, jobSelectCombo, statusCombo, currentJobCombo, currentCrewCombo, currentName, currentCrewCombo2, positionCombo;
     static int currentId;
     static JFrame frame9, frame10, frame11;
     static UtilDateModel model, model2;
     static JDatePanelImpl datePanel, datePanel2;
     static JDatePickerImpl datePicker, datePicker2;
 
+    public static String selectedName;
+
     public static void main(String args[]) {
 
-        for (int i = 0; i < 999; i++) {
-            moveMarkerDown("Operator", "A");
-            new EmployeeOvertimeSystem("Operator", "A");
-        }
-        for (int i = 0; i < 999; i++) {
-            moveMarkerUp("Operator", "A");
-            new EmployeeOvertimeSystem("Operator", "A");
-        }
-
- //       new EmployeeOvertimeSystem("Operator", "A"); 
+//        for (int i = 0; i < 999; i++) {
+//            moveMarkerDown("Operator", "A");
+//            new EmployeeOvertimeSystem("Operator", "A");
+//        }
+//        for (int i = 0; i < 999; i++) {
+//            moveMarkerUp("Operator", "A");
+//            new EmployeeOvertimeSystem("Operator", "A");
+//        }
+        new EmployeeOvertimeSystem("Operator", "A");
         //   modifyOvertimeEmployee(1,"AAA","TeamLeader","B");
     }
 
@@ -82,13 +89,15 @@ public class EmployeeOvertimeSystem {
         datePanel = new JDatePanelImpl(model);
         datePicker = new JDatePickerImpl(datePanel);
 
-        nameLabel1 = new JLabel("Job ");
-        crewLabel1 = new JLabel("Crew ");
-        nameLabel2 = new JLabel("Name");
-        dateLabel2 = new JLabel("Date Req. ");
-        statusLabel = new JLabel("Status ");
+        nameLabel1 = new JLabel("Job : ");
+        crewLabel1 = new JLabel("Crew : ");
+        nameLabel2 = new JLabel("Name : ");
+        dateLabel2 = new JLabel("Date Req. : ");
+        statusLabel = new JLabel("Status : ");
         currentTableLabel = new JLabel("Current Table : ");
-        selectTableLabel = new JLabel("Select Table : ");
+        selectTableLabel = new JLabel("Select Group - ");
+        currentPersonLabel = new JLabel("Current Name - ");
+        currentCrew = new JLabel("Crew : ");
 
         String[] crewArray = {"A", "B", "C", "D"};
         String[] jobsArray = {"Operator", "ForkLiftDriver", "Packer", "QCInspector", "TeamLeader"};
@@ -97,10 +106,14 @@ public class EmployeeOvertimeSystem {
         jobSelectCombo = new JComboBox(jobsArray);
         statusCombo = new JComboBox(statusArray);
         nameCombo = new JComboBox();
+        positionCombo = new JComboBox();
         currentCrewCombo = new JComboBox();
+        currentCrewCombo2 = new JComboBox();
         currentCrewCombo.addItem(crewIn);
+        currentCrewCombo2.addItem(crewIn);
         currentJobCombo = new JComboBox();
         currentJobCombo.addItem(typeIn);
+        currentName = new JComboBox();
 
         go = new JButton("Go");
         go.addActionListener(new ActionListener() {
@@ -128,7 +141,7 @@ public class EmployeeOvertimeSystem {
                 } else {
                     insertEmployeeOvertime();
                     frame9.dispose();
-                    
+
                     new EmployeeOvertimeSystem("All", "0");
                 }
 
@@ -158,7 +171,13 @@ public class EmployeeOvertimeSystem {
         if (!typeIn.equals("All")) {
             jobSelectCombo.setSelectedItem(typeIn);
             crewSelectCombo.setSelectedItem(crewIn);
+
             fillCrewCombos(typeIn, crewIn);
+        } else {
+            moveMarkerDownButton.setVisible(false);
+            moveMarkerUpButton.setVisible(false);
+            summary.setVisible(false);
+            changeEmployeePosition.setVisible(false);
         }
 
 //        if (typeIn.equals("") || typeIn.equals("Operator") || typeIn.equals("ForkLiftDriver") || typeIn.equals("QCInspector") || typeIn.equals("TeamLeader")) {
@@ -169,6 +188,10 @@ public class EmployeeOvertimeSystem {
 //
 //        }
         SQLiteConnection.AnalyticsUpdate("EmployeeOvertimeSystem");
+
+        System.out.println("Current Name : " + selectedName);
+        nameCombo.setSelectedItem(selectedName);
+        currentName.addItem(selectedName);
 
     }
 
@@ -256,13 +279,23 @@ public class EmployeeOvertimeSystem {
 
             }
         });
+        changeEmployeePosition = new JButton("Change Employee Queue Position");
+        changeEmployeePosition.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                
+                moveEmployeeFrame(nameCombo.getSelectedItem()+"", crewSelectCombo.getSelectedItem()+"");
+                
+            }
+        });
+        
         moveMarkerUpButton = new JButton("Move Marker Up");
         moveMarkerUpButton.addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
 
-                
                 moveMarkerUp(currentJobCombo.getSelectedItem() + "", currentCrewCombo.getSelectedItem() + "");
                 frame9.dispose();
                 new EmployeeOvertimeSystem(currentJobCombo.getSelectedItem() + "", currentCrewCombo.getSelectedItem() + "");
@@ -275,7 +308,6 @@ public class EmployeeOvertimeSystem {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-                
                 moveMarkerDown(currentJobCombo.getSelectedItem() + "", currentCrewCombo.getSelectedItem() + "");
                 frame9.dispose();
                 new EmployeeOvertimeSystem(currentJobCombo.getSelectedItem() + "", currentCrewCombo.getSelectedItem() + "");
@@ -286,19 +318,24 @@ public class EmployeeOvertimeSystem {
         JPanel outerPanel = new JPanel(new GridLayout(1, 2));
         outerPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
-        JPanel leftpanel = new JPanel(new FlowLayout());
+        JPanel leftPanel = new JPanel(new GridLayout(1, 1));
+
+        JPanel leftTopPanel = new JPanel(new FlowLayout());
+        leftTopPanel.add(currentTableLabel);
+        leftTopPanel.add(currentJobCombo);
+        leftTopPanel.add(currentCrewCombo);
+        leftTopPanel.add(moveMarkerDownButton);
+        leftTopPanel.add(moveMarkerUpButton);
+
         JPanel rightpanel = new JPanel(new FlowLayout());
 
-        outerPanel.add(leftpanel);
+        leftPanel.add(leftTopPanel);
+
+        outerPanel.add(leftPanel);
         outerPanel.add(rightpanel);
-
+        
+        rightpanel.add(changeEmployeePosition);
         rightpanel.add(summary);
-
-        leftpanel.add(currentTableLabel);
-        leftpanel.add(currentJobCombo);
-        leftpanel.add(currentCrewCombo);
-        leftpanel.add(moveMarkerDownButton);
-        leftpanel.add(moveMarkerUpButton);
 
         return outerPanel;
 
@@ -308,10 +345,18 @@ public class EmployeeOvertimeSystem {
 
         JPanel outerPanel = new JPanel(new BorderLayout());
 
-        JPanel tablePanel = new JPanel();
+        int position = 0;
+        try {
+            position = SQLiteConnection.EmployeeOvertimeGetQueuePosition(typeIn, crewIn);
+        } catch (SQLException ex) {
+            Logger.getLogger(EmployeeOvertimeSystem.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        JTable tablePanel = new JTable();
         try {
             if (typeIn.equalsIgnoreCase("ForkliftDriver")) {
                 tablePanel = SQLiteConnection.EmployeeOvertimeSummaryTableForkliftDriver(crewIn);
+
             } else if (typeIn.equalsIgnoreCase("Operator")) {
                 tablePanel = SQLiteConnection.EmployeeOvertimeSummaryTableMachineOperator(crewIn);
             } else if (typeIn.equalsIgnoreCase("TeamLeader")) {
@@ -340,10 +385,13 @@ public class EmployeeOvertimeSystem {
                 currentTableLabel.setVisible(false);
                 selectTableLabel.setVisible(false);
                 summary.setVisible(false);
+                changeEmployeePosition.setVisible(false);
                 go2.setText("back");
+
                 tablePanel = SQLiteConnection.EmployeeOvertimeSummaryEntries();
-                moveMarkerDownButton.setVisible(false);
-                moveMarkerUpButton.setVisible(false);
+
+                moveMarkerDownButton.setText("");
+                moveMarkerUpButton.setText("");
             }
 
         } catch (SQLException e) {
@@ -351,7 +399,13 @@ public class EmployeeOvertimeSystem {
             e.printStackTrace();
         }
 
-        JScrollPane scrollPane = new JScrollPane(tablePanel);
+        JTableHeader header = tablePanel.getTableHeader();
+
+        JPanel tableOuterPanel = new JPanel(new BorderLayout());
+        tableOuterPanel.add(tablePanel, BorderLayout.CENTER);
+        tableOuterPanel.add(header, BorderLayout.NORTH);
+
+        JScrollPane scrollPane = new JScrollPane(tableOuterPanel);
         outerPanel.add(scrollPane);
 
         outerPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -362,20 +416,55 @@ public class EmployeeOvertimeSystem {
     private static void fillCrewCombos(String typeIn, String crewIn) {
 
         try {
-
+            
             System.out.println(typeIn + " + " + crewIn);
-
+            
             String sql1 = "SELECT Employees.Name FROM Employees WHERE " + typeIn + " = '1' AND Crew = \'" + crewIn + "\' ORDER BY Name ASC";
             Connection conn = SQLiteConnection.Connect();
             PreparedStatement pst1 = conn.prepareStatement(sql1);
             pst1.setQueryTimeout(5);
             ResultSet rs = pst1.executeQuery();
-
+            
             while ((rs != null) && (rs.next())) {
-
+                
                 String name = rs.getString("Name");
                 nameCombo.addItem(name);
             }
+            
+            pst1.close();
+            rs.close();
+            conn.close();
+            
+        } catch (Exception e) {
+            System.err.println("Names : " + e.getClass().getName() + ": " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+       try {
+
+            System.out.println(typeIn + " + " + crewIn);
+
+            String sql1 = "SELECT COUNT(OvertimeQueuePosition) AS COUNT "
+                    + "FROM Employees "
+                    + "WHERE " + typeIn + " = '1' "
+                    + "AND Crew = \'" + crewIn + "\'";
+            Connection conn = SQLiteConnection.Connect();
+            PreparedStatement pst1 = conn.prepareStatement(sql1);
+            pst1.setQueryTimeout(5);
+            ResultSet rs = pst1.executeQuery();
+
+             
+
+                int count = rs.getInt("COUNT");
+                
+                for (int i = 0; i < count; i++) {
+                    
+                    positionCombo.addItem(i+1);
+               
+           }
+                
+                //positionCombo.addItem(count);
+            
 
             pst1.close();
             rs.close();
@@ -384,6 +473,8 @@ public class EmployeeOvertimeSystem {
         } catch (Exception e) {
             System.err.println("Names : " + e.getClass().getName() + ": " + e.getMessage());
             e.printStackTrace();
+            
+            
         }
 
     }
@@ -403,7 +494,7 @@ public class EmployeeOvertimeSystem {
                         statusCombo.getSelectedItem() + "",
                         1
                 );
-                 moveMarkerDown(currentJobCombo.getSelectedItem() + "", currentCrewCombo.getSelectedItem() + "");
+                moveMarkerDown(currentJobCombo.getSelectedItem() + "", currentCrewCombo.getSelectedItem() + "");
             } catch (SQLException ex) {
                 Logger.getLogger(EmployeeOvertimeSystem.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -499,7 +590,7 @@ public class EmployeeOvertimeSystem {
             System.out.println("Count " + crewCount);
 
             if (SQLiteConnection.EmployeeOvertimeGetQueuePosition(typeIn, crewIn) == crewCount - 1) {
-                SQLiteConnection.EmployeeOvertimeSetMarkerPosition(typeIn, crewIn, 1);
+                SQLiteConnection.EmployeeOvertimeSetMarkerPosition(typeIn, crewIn, crewCount);
             } else {
                 SQLiteConnection.EmployeeOvertimeSetQueuePositionUp(typeIn, crewIn);
             }
@@ -516,7 +607,7 @@ public class EmployeeOvertimeSystem {
             if (SQLiteConnection.EmployeeOvertimeGetQueuePosition(typeIn, crewIn) == 0) {
                 int position = SQLiteConnection.EmployeeOvertimeGetCrewCount(typeIn, crewIn);
                 System.out.println("New Count " + position);
-                SQLiteConnection.EmployeeOvertimeSetMarkerPosition(typeIn, crewIn, position);
+                SQLiteConnection.EmployeeOvertimeSetMarkerPosition(typeIn, crewIn, 1);
             } else {
                 SQLiteConnection.EmployeeOvertimeSetQueuePositionDown(typeIn, crewIn);
             }
@@ -525,4 +616,70 @@ public class EmployeeOvertimeSystem {
         }
 
     }
+
+    public static void setSelectedName(String selectedName) {
+        EmployeeOvertimeSystem.selectedName = selectedName;
+    }
+
+    public static void moveEmployeeFrame(String nameIn, String crewIn) {
+        
+        int count = 15;
+
+        String job = jobSelectCombo.getSelectedItem() + "";
+        try {
+            count = SQLiteConnection.EmployeeOvertimeGetCrewCount(job, crewIn);
+        } catch (SQLException ex) {
+            Logger.getLogger(EmployeeOvertimeSystem.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        JButton cancel, confirm;
+        
+        positionCombo = new JComboBox();
+        nameCombo = new JComboBox();
+        
+        
+        cancel = new JButton("Cancel");
+        cancel.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                
+            }
+        });
+        confirm = new JButton("Confirm");
+        confirm.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                
+            }
+        });
+        
+        JFrame moveFrame = new JFrame("Move Employee");
+        moveFrame.setSize(350, 180);
+        moveFrame.setLocationRelativeTo(null);
+        JPanel outerPanel = new JPanel(new BorderLayout());
+        outerPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
+        JPanel centerPanel = new JPanel(new GridLayout(2, 2));
+        centerPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        centerPanel.add(new JLabel("Move : ", JLabel.CENTER));
+        centerPanel.add(nameCombo);
+        centerPanel.add(new JLabel("To Position : ", JLabel.CENTER));
+        centerPanel.add(positionCombo);
+        JPanel bottomPanel = new JPanel(new FlowLayout());
+        bottomPanel.setBackground(Color.GRAY);
+        bottomPanel.add(cancel);
+        bottomPanel.add(confirm);
+        outerPanel.add(centerPanel, BorderLayout.CENTER);
+        outerPanel.add(bottomPanel, BorderLayout.SOUTH);
+        moveFrame.add(outerPanel);
+        moveFrame.setVisible(true);
+        System.out.println("Job - " + job);
+        System.out.println("nameIN - " + nameIn);
+        System.out.println("CrewIN - " + crewIn);
+        fillCrewCombos(job, crewIn);
+        nameCombo.setSelectedItem(nameIn);
+
+    }
+
 }
