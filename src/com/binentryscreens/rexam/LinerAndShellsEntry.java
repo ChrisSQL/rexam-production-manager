@@ -32,13 +32,22 @@ import com.database.rexam.SQLiteConnection;
 import com.productiontrackingscreens.rexam.LinerDataEntryScreen;
 import java.awt.Desktop;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.TableModel;
+import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFFont;
+import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -46,7 +55,7 @@ import org.apache.poi.ss.usermodel.Row;
 
 public class LinerAndShellsEntry {
 
-    static JButton add, find, next, previous, update, addNew, search, monthly, go, back, refresh, summary, exportToExcel;
+    static JButton add, find, next, previous, update, addNew, search, monthly, go, back, refresh, summary, exportToExcel, importFromExcel;
     JLabel dateLabel, dateLabel2, optime2Label, optime3Label, optime4Label, optimeTotal, m1LinersLabel, m2LinersLabel, m3LinersLabel, mod4LinersLabel, modTotal;
     JLabel optime2Monthly, optime3Monthly, optime4Monthly;
     static JTextField optime2TextField, optime3TextField, optime4TextField, optimeTotalTextfield, m1LinersTextField, m2LinersTextField, m3LinersTextField, m4LinersTextField,
@@ -65,8 +74,9 @@ public class LinerAndShellsEntry {
     static JDatePickerImpl datePicker, datePicker2, excelPicker1, excelPicker2;
 
     static String query, item;
-    
     static JFrame frameSummary, frame101;
+
+    static JFileChooser fileChooser;
 
     public static void main(String[] args) throws SQLException {
 
@@ -76,14 +86,6 @@ public class LinerAndShellsEntry {
 
     public LinerAndShellsEntry(int idIn, int view) throws SQLException {
 
-        // Add a view to analytics.
-        try {
-            SQLiteConnection.incrementViewsAnalytics(0, 0, 0, 0, 0, 0, 0, 0, 1);
-        } catch (SQLException e2) {
-            // TODO Auto-generated catch block
-            e2.printStackTrace();
-        }
-
         try {
             for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
@@ -92,7 +94,7 @@ public class LinerAndShellsEntry {
                 }
             }
         } catch (Exception e) {
-			// If Nimbus is not available, you can set the GUI to another look
+            // If Nimbus is not available, you can set the GUI to another look
             // and feel.
         }
 
@@ -107,7 +109,7 @@ public class LinerAndShellsEntry {
         frame101.setLocationRelativeTo(null);
         outerPanel.setLayout(new BorderLayout());
 
-		// Create Buttons , Labels, Checkboxes etc...
+        // Create Buttons , Labels, Checkboxes etc...
         Date date = new Date();
         String modifiedDate = new SimpleDateFormat("yyyy-MM-dd").format(date);
         String year = modifiedDate.substring(0, 4);
@@ -174,7 +176,7 @@ public class LinerAndShellsEntry {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 calculateTotals();
             }
 
@@ -195,7 +197,7 @@ public class LinerAndShellsEntry {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 calculateTotals();
             }
 
@@ -216,7 +218,7 @@ public class LinerAndShellsEntry {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 calculateTotals();
             }
 
@@ -238,7 +240,7 @@ public class LinerAndShellsEntry {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 calculateTotals();
             }
 
@@ -259,7 +261,7 @@ public class LinerAndShellsEntry {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 calculateTotals();
             }
 
@@ -280,7 +282,7 @@ public class LinerAndShellsEntry {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 calculateTotals();
             }
 
@@ -301,7 +303,7 @@ public class LinerAndShellsEntry {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 calculateTotals();
             }
 
@@ -322,7 +324,7 @@ public class LinerAndShellsEntry {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 calculateTotals();
             }
 
@@ -344,7 +346,7 @@ public class LinerAndShellsEntry {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 calculateTotals();
             }
 
@@ -398,7 +400,7 @@ public class LinerAndShellsEntry {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 try {
                     new LinerAndShellsEntry(1, -1);
                 } catch (SQLException e1) {
@@ -419,7 +421,7 @@ public class LinerAndShellsEntry {
                 selectedDate = (Date) datePicker.getModel().getValue();
                 String date = new SimpleDateFormat("yyyy-MM-dd").format(selectedDate);
 
-				// Get int value of a JTextfield
+                // Get int value of a JTextfield
                 int optimeTotalSum2 = Integer.parseInt(optime2TextField.getText());
                 int optimeTotalSum3 = Integer.parseInt(optime3TextField.getText());
                 int optimeTotalSum4 = Integer.parseInt(optime4TextField.getText());
@@ -451,7 +453,7 @@ public class LinerAndShellsEntry {
                     e1.printStackTrace();
                 }
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 frame101.dispose();
 
             }
@@ -463,7 +465,7 @@ public class LinerAndShellsEntry {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 try {
                     new LinerAndShellsEntry(1, -1);
                 } catch (SQLException e1) {
@@ -497,7 +499,7 @@ public class LinerAndShellsEntry {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 try {
                     new LinerAndShellsEntry(1, -2);
                     setLastEntry();
@@ -516,7 +518,7 @@ public class LinerAndShellsEntry {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 try {
                     new LinerAndShellsEntry(1, -3);
                 } catch (SQLException e1) {
@@ -554,7 +556,7 @@ public class LinerAndShellsEntry {
                     e1.printStackTrace();
                 }
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
             }
         });
 
@@ -564,7 +566,7 @@ public class LinerAndShellsEntry {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 // Set ID
                 try {
                     selectedDate = (Date) datePicker.getModel().getValue();
@@ -572,7 +574,7 @@ public class LinerAndShellsEntry {
                     Object[] array = new Object[10];
                     array = SQLiteConnection.LinerAndShellsReturnEntryByDate(selectedDate);
 
-					// String date = (String) array[1];
+                    // String date = (String) array[1];
                     // need to do
                     if (array[1] == null) {
 
@@ -600,7 +602,7 @@ public class LinerAndShellsEntry {
                     // TODO Auto-generated catch block
                     e1.printStackTrace();
                 }
-				// currentId = (int)array[0];
+                // currentId = (int)array[0];
                 // Set Date
                 // Send in
 
@@ -613,7 +615,7 @@ public class LinerAndShellsEntry {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 // Set ID
                 try {
 
@@ -629,9 +631,9 @@ public class LinerAndShellsEntry {
 
                         String dateFormatted = (String) array[1];
                         System.out.println("Date Formatted : " + dateFormatted);
-                        int day = Integer.parseInt(dateFormatted.substring(8,10)); // Correct
-                        int month = Integer.parseInt(dateFormatted.substring(5,7)) - 1; // Correct
-                        int year = Integer.parseInt(dateFormatted.substring(0,4)); // Correct
+                        int day = Integer.parseInt(dateFormatted.substring(8, 10)); // Correct
+                        int month = Integer.parseInt(dateFormatted.substring(5, 7)) - 1; // Correct
+                        int year = Integer.parseInt(dateFormatted.substring(0, 4)); // Correct
 
                         model.setDate(year, month, day);
                         model.setSelected(true);
@@ -650,7 +652,7 @@ public class LinerAndShellsEntry {
 
                     System.out.println("CurrentID " + currentId);
 
-					// Fill Boxes with results
+                    // Fill Boxes with results
                     // model.setDate(year2, month2, day2);
                     model.setSelected(true);
 
@@ -658,7 +660,7 @@ public class LinerAndShellsEntry {
                     // TODO Auto-generated catch block
                     e1.printStackTrace();
                 }
-				// currentId = (int)array[0];
+                // currentId = (int)array[0];
                 // Set Date
                 // Send in
 
@@ -671,7 +673,7 @@ public class LinerAndShellsEntry {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 // Set ID
                 try {
 
@@ -687,9 +689,9 @@ public class LinerAndShellsEntry {
 
                         String dateFormatted = (String) array[1];
                         System.out.println("Date Formatted : " + dateFormatted);
-                        int day = Integer.parseInt(dateFormatted.substring(8,10)); // Correct
-                        int month = Integer.parseInt(dateFormatted.substring(5,7)) - 1; // Correct
-                        int year = Integer.parseInt(dateFormatted.substring(0,4)); // Correct
+                        int day = Integer.parseInt(dateFormatted.substring(8, 10)); // Correct
+                        int month = Integer.parseInt(dateFormatted.substring(5, 7)) - 1; // Correct
+                        int year = Integer.parseInt(dateFormatted.substring(0, 4)); // Correct
 
                         model.setDate(year, month, day);
                         model.setSelected(true);
@@ -707,7 +709,7 @@ public class LinerAndShellsEntry {
 
                     System.out.println(currentId);
 
-					// Fill Boxes with results
+                    // Fill Boxes with results
                 } catch (Exception e1) {
                     // TODO Auto-generated catch block
                     e1.printStackTrace();
@@ -730,22 +732,22 @@ public class LinerAndShellsEntry {
         mod4LinersLabel = new JLabel("M4 Liners : ", SwingConstants.CENTER);
         modTotal = new JLabel("Total Liners : ", SwingConstants.CENTER);
 
-		// Buttons Top Panel
+        // Buttons Top Panel
         // JPanel buttonsPanel = new JPanel(new GridLayout(1, 4));
         JPanel buttonsPanel = new JPanel(new FlowLayout());
         // buttonsPanel.setBackground(Color.GRAY);
 
-        buttonsPanel.add(find);
+        // buttonsPanel.add(find);
         buttonsPanel.add(previous);
         buttonsPanel.add(next);
 
         outerPanel.add(buttonsPanel, BorderLayout.NORTH);
 
-		// Options Panel 1
+        // Options Panel 1
         JPanel optionPanel1 = new JPanel(new GridLayout(10, 2));
 		// optionPanel1.setBackground(Color.GRAY);
 
-		// ComboPanelMonthly
+        // ComboPanelMonthly
         JPanel comboPanel = new JPanel(new FlowLayout());
         comboPanel.add(monthCombo);
         comboPanel.add(yearCombo);
@@ -881,13 +883,13 @@ public class LinerAndShellsEntry {
             search.setVisible(false);
             update.setVisible(false);
             add.setVisible(false);
-            addNew.setVisible(false);
+            //addNew.setVisible(false);
 
         }
 
         outerPanel.add(optionPanel1, BorderLayout.CENTER);
 
-		// Options Panel 2
+        // Options Panel 2
         JPanel optionsPanel2 = new JPanel(new FlowLayout());
         optionsPanel2.add(addNew);
         optionsPanel2.add(summary);
@@ -903,13 +905,16 @@ public class LinerAndShellsEntry {
         bottomPanel.add(optionsPanel2, BorderLayout.SOUTH);
         outerPanel.add(bottomPanel, BorderLayout.SOUTH);
 
-		// JLabel dateLabel, shiftLabel, crewLabel, operatorLabel,
+        // JLabel dateLabel, shiftLabel, crewLabel, operatorLabel,
         // optimeNumberLabel, pressSpeedLabel, shellTypeLabel,
         // productionLabel, commentsLabel;
         outerPanel.repaint();
         frame101.add(outerPanel);
 
         frame101.setVisible(true);
+
+        // Add a view to analytics.
+        SQLiteConnection.AnalyticsUpdate("LinerAndShellsEntry");
 
     }
 
@@ -927,9 +932,9 @@ public class LinerAndShellsEntry {
             // Date
             String dateFormatted = (String) result[1];
             System.out.println("Date Formatted : " + dateFormatted);
-            int day = Integer.parseInt(dateFormatted.substring(8,10)); // Correct
-            int month = Integer.parseInt(dateFormatted.substring(5,7)) - 1; // Correct
-            int year = Integer.parseInt(dateFormatted.substring(0,4)); // Correct
+            int day = Integer.parseInt(dateFormatted.substring(8, 10)); // Correct
+            int month = Integer.parseInt(dateFormatted.substring(5, 7)) - 1; // Correct
+            int year = Integer.parseInt(dateFormatted.substring(0, 4)); // Correct
 
             model.setDate(year, month, day);
             model.setSelected(true);
@@ -991,14 +996,29 @@ public class LinerAndShellsEntry {
         });
 
         JButton print = new JButton("Print Report");
-        JButton ExportToExcel = new JButton("Export To Excel");
 
+        JButton ExportToExcel = new JButton("Export To Excel");
         ExportToExcel.addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
 
                 LinerAndShellsEntry.exportToExcel();
+
+            }
+        });
+
+        importFromExcel = new JButton("Import from Excel");
+        importFromExcel.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                try {
+                    LinerAndShellsEntry.importFromExcel();
+                } catch (IOException ex) {
+                    Logger.getLogger(LinerAndShellsEntry.class.getName()).log(Level.SEVERE, null, ex);
+                }
 
             }
         });
@@ -1014,13 +1034,15 @@ public class LinerAndShellsEntry {
 
         JPanel optionsPanel2 = new JPanel(new FlowLayout());
 
-        //optionsPanel2.add(addNew);
+        optionsPanel2.add(addNew);
         optionsPanel2.add(summary);
         optionsPanel2.add(refresh);
         //   optionsPanel2.add(print);
         optionsPanel2.add(ExportToExcel);
+        optionsPanel2.add(importFromExcel);
 
         JPanel summaryPanel = SQLiteConnection.LinersAndShellsSummaryTable(1);
+        JScrollPane scrollPane = new JScrollPane(summaryPanel);
 
 //        print.addActionListener(new ActionListener() {
 //
@@ -1033,7 +1055,7 @@ public class LinerAndShellsEntry {
 //        });
         optionsPanel2.setBackground(Color.GRAY);
 
-        outerPanel.add(summaryPanel, BorderLayout.CENTER);
+        outerPanel.add(scrollPane, BorderLayout.CENTER);
         outerPanel.add(optionsPanel2, BorderLayout.SOUTH);
         summary.setVisible(false);
         frameSummary.add(outerPanel);
@@ -1061,9 +1083,9 @@ public class LinerAndShellsEntry {
 
                 String dateFormatted = (String) array[1];
                 System.out.println("Date Formatted : " + dateFormatted);
-                int day = Integer.parseInt(dateFormatted.substring(8,10)); // Correct
-                int month = Integer.parseInt(dateFormatted.substring(5,7)) - 1; // Correct
-                int year = Integer.parseInt(dateFormatted.substring(0,4)); // Correct
+                int day = Integer.parseInt(dateFormatted.substring(8, 10)); // Correct
+                int month = Integer.parseInt(dateFormatted.substring(5, 7)) - 1; // Correct
+                int year = Integer.parseInt(dateFormatted.substring(0, 4)); // Correct
 
                 model.setDate(year, month, day);
                 model.setSelected(true);
@@ -1082,7 +1104,7 @@ public class LinerAndShellsEntry {
 
             System.out.println("CurrentID " + currentId);
 
-					// Fill Boxes with results
+            // Fill Boxes with results
             // model.setDate(year2, month2, day2);
             model.setSelected(true);
 
@@ -1098,7 +1120,6 @@ public class LinerAndShellsEntry {
 
     }
 
-    
     public static void exportToExcel() {
 
         String[] typesArray = {"Liners And Shells", "Liner Defects", "End Counts", "Spoilage By Day"};
@@ -1175,7 +1196,57 @@ public class LinerAndShellsEntry {
         excelQueryFrame.setVisible(true);
 
     }
-    
+
+    public static void importFromExcel() throws FileNotFoundException, IOException {
+
+        fileChooser = new JFileChooser();
+        fileChooser.setAcceptAllFileFilterUsed(false);
+        fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Excel Documents", "xls"));
+        int result = fileChooser.showOpenDialog(frameSummary);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File selectedFile = fileChooser.getSelectedFile();
+            System.out.println("Selected file: " + selectedFile.getAbsolutePath());
+
+            ////////////////
+            FileInputStream excelFile = new FileInputStream(selectedFile);
+            HSSFWorkbook workbook = new HSSFWorkbook(excelFile);
+            HSSFSheet worksheet = workbook.getSheet("Spoilage Summary");
+
+            HSSFRow row3 = worksheet.getRow(2);
+            HSSFRow row4 = worksheet.getRow(3);
+
+            HSSFCell cellB3 = row3.getCell((short) 1);
+            String startDate = cellB3.getStringCellValue(); // Start Date
+
+            HSSFCell cellB4 = row4.getCell((short) 1);
+            String endDate = cellB4.getStringCellValue(); // End Date
+
+            System.out.println("Start Date : " + startDate);
+            System.out.println("End Date : " + endDate);
+
+            if (startDate.equalsIgnoreCase(endDate)) {
+
+                try {
+
+                    LinerAndShellsEntry linerAndShellsEntry = new LinerAndShellsEntry(1, -1);
+                    LinerDefects linerDefects = new LinerDefects(1, -1);
+                    EndCounts endCounts = new EndCounts(1, -1);
+
+                } catch (SQLException ex) {
+                    Logger.getLogger(LinerAndShellsEntry.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
+            } else {
+                JOptionPane.showMessageDialog(null, "Excel File is for more than 1 day.");
+            }
+
+            ////////////////
+        }
+
+        // Import into Database with matching dates if it doesnt exist for LinersAndShells, LinerDefects, EndCounts
+        // If exist skip that individual section
+    }
+
     public static void generateExcelFile(String type, String query) {
 
         // Create A JFrame to Query
@@ -1240,7 +1311,7 @@ public class LinerAndShellsEntry {
         }
 
     }
-    
+
     public static void calculateTotals() {
 
         int optimeTotalSum2 = Integer.parseInt(optime2TextField.getText());
