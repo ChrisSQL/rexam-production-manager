@@ -1015,6 +1015,7 @@ public class LinerAndShellsEntry {
             public void actionPerformed(ActionEvent e) {
 
                 try {
+                    frameSummary.dispose();
                     LinerAndShellsEntry.importFromExcel();
                 } catch (IOException ex) {
                     Logger.getLogger(LinerAndShellsEntry.class.getName()).log(Level.SEVERE, null, ex);
@@ -1212,26 +1213,171 @@ public class LinerAndShellsEntry {
             HSSFWorkbook workbook = new HSSFWorkbook(excelFile);
             HSSFSheet worksheet = workbook.getSheet("Spoilage Summary");
 
-            HSSFRow row3 = worksheet.getRow(2);
-            HSSFRow row4 = worksheet.getRow(3);
+            // Create Array of Rows
+            HSSFRow[] rows = new HSSFRow[56];
 
-            HSSFCell cellB3 = row3.getCell((short) 1);
+            for (int i = 0; i < 55; i++) {
+
+                rows[i + 1] = worksheet.getRow(i);
+
+            }
+
+            HSSFCell cellB3 = rows[3].getCell((short) 1);
             String startDate = cellB3.getStringCellValue(); // Start Date
 
-            HSSFCell cellB4 = row4.getCell((short) 1);
+            HSSFCell cellB4 = rows[4].getCell((short) 1);
             String endDate = cellB4.getStringCellValue(); // End Date
+
+            // Shell Press Infeeds
+            HSSFCell cellB14 = rows[14].getCell((short) 1);
+            double shellPress21Infeed = cellB14.getNumericCellValue();
+
+            HSSFCell cellB15 = rows[15].getCell((short) 1);
+            double shellPress31Infeed = cellB15.getNumericCellValue();
+
+            HSSFCell cellB16 = rows[16].getCell((short) 1);
+            double shellPress41Infeed = cellB16.getNumericCellValue();
+
+            // Liner Infeeds
+            HSSFCell cellB22 = rows[22].getCell((short) 1);
+            double mod1LinersTotal = cellB22.getNumericCellValue();
+
+            HSSFCell cellB27 = rows[27].getCell((short) 1);
+            double mod2LinersTotal = cellB27.getNumericCellValue();
+
+            HSSFCell cellB32 = rows[32].getCell((short) 1);
+            double mod3LinersTotal = cellB32.getNumericCellValue();
+
+            HSSFCell cellB39 = rows[39].getCell((short) 1);
+            double mod4LinersTotal = cellB39.getNumericCellValue();
+
+            // Liner Defects
+            HSSFCell cellD22 = rows[22].getCell((short) 3);
+            double mod1LinersTotalDefects = cellD22.getNumericCellValue();
+
+            HSSFCell cellD27 = rows[27].getCell((short) 3);
+            double mod2LinersTotalDefects = cellD27.getNumericCellValue();
+
+            HSSFCell cellD32 = rows[32].getCell((short) 3);
+            double mod3LinersTotalDefects = cellD32.getNumericCellValue();
+
+            HSSFCell cellD39 = rows[39].getCell((short) 3);
+            double mod4LinersTotalDefects = cellD39.getNumericCellValue();
+
+            // Shell Press Infeeds
+            HSSFCell cellB43 = rows[43].getCell((short) 1);
+            double mod1StolleTotal = cellB43.getNumericCellValue();
+
+            HSSFCell cellB46 = rows[46].getCell((short) 1);
+            double mod2StolleTotal = cellB46.getNumericCellValue();
+
+            HSSFCell cellB50 = rows[50].getCell((short) 1);
+            double mod3StolleTotal = cellB50.getNumericCellValue();
+
+            HSSFCell cellB55 = rows[55].getCell((short) 1);
+            double mod4StolleTotal = cellB55.getNumericCellValue();
+
+            // End Counts Infeed
+            HSSFCell cellB41 = rows[41].getCell((short) 1);
+            double Stolle11 = cellB41.getNumericCellValue();
+
+            HSSFCell cellB42 = rows[42].getCell((short) 1);
+            double Stolle12 = cellB42.getNumericCellValue();
+
+            HSSFCell cellB44 = rows[44].getCell((short) 1);
+            double Stolle21 = cellB44.getNumericCellValue();
+
+            HSSFCell cellB45 = rows[45].getCell((short) 1);
+            double Stolle22 = cellB45.getNumericCellValue();
+
+            HSSFCell cellB47 = rows[47].getCell((short) 1);
+            double Stolle31 = cellB47.getNumericCellValue();
+
+            HSSFCell cellB48 = rows[48].getCell((short) 1);
+            double Stolle32 = cellB48.getNumericCellValue();
+
+            HSSFCell cellB49 = rows[49].getCell((short) 1);
+            double Stolle33 = cellB49.getNumericCellValue();
+
+            HSSFCell cellB51 = rows[51].getCell((short) 1);
+            double Stolle41 = cellB51.getNumericCellValue();
+
+            HSSFCell cellB52 = rows[52].getCell((short) 1);
+            double Stolle42 = cellB52.getNumericCellValue();
+
+            HSSFCell cellB53 = rows[53].getCell((short) 1);
+            double Stolle43 = cellB53.getNumericCellValue();
+
+            HSSFCell cellB54 = rows[54].getCell((short) 1);
+            double Stolle44 = cellB54.getNumericCellValue();
 
             System.out.println("Start Date : " + startDate);
             System.out.println("End Date : " + endDate);
+            
+         //    if (FileName == AcumenceReport16.xls){}
 
             if (startDate.equalsIgnoreCase(endDate)) {
 
                 try {
 
+                    // Create a new LinerAndShellsEntry and set JTextfields from Ecel File.
                     LinerAndShellsEntry linerAndShellsEntry = new LinerAndShellsEntry(1, -1);
-                    LinerDefects linerDefects = new LinerDefects(1, -1);
-                    EndCounts endCounts = new EndCounts(1, -1);
 
+                    String year = startDate.substring(6, 10);
+                    int yearInt = Integer.parseInt(year);
+                    String month = startDate.substring(3, 5);
+                    int monthInt = Integer.parseInt(month) - 1;
+                    String day = startDate.substring(0, 2);
+                    int dayInt = Integer.parseInt(day);
+
+                    model.setDate(yearInt, monthInt, dayInt);
+
+                    optime2TextField.setText((int) (shellPress21Infeed) + "");
+                    optime3TextField.setText((int) (shellPress31Infeed) + "");
+                    optime4TextField.setText((int) (shellPress41Infeed) + "");
+                    optimeTotalTextfield.setText((int) (shellPress21Infeed) + (int) (shellPress31Infeed) + (int) (shellPress41Infeed) + "");
+
+                    m1LinersTextField.setText((int) (mod1LinersTotal) + "");
+                    m2LinersTextField.setText((int) (mod2LinersTotal) + "");
+                    m3LinersTextField.setText((int) (mod3LinersTotal) + "");
+                    m4LinersTextField.setText((int) (mod4LinersTotal) + "");
+                    modTotalTextfield.setText((int) (mod1LinersTotal) + (int) (mod2LinersTotal) + (int) (mod3LinersTotal) + (int) (mod4LinersTotal) + "");
+
+                    ////////////////////////////////////////////////////////////////////////
+                    LinerDefects linerDefects = new LinerDefects(1, -1);
+                    linerDefects.setDefectToInput(
+                            yearInt,
+                            monthInt,
+                            dayInt,
+                            (int) mod1LinersTotal,
+                            (int) mod2LinersTotal,
+                            (int) mod3LinersTotal,
+                            (int) mod4LinersTotal,
+                            (int) mod1LinersTotalDefects,
+                            (int) mod2LinersTotalDefects,
+                            (int) mod3LinersTotalDefects,
+                            (int) mod4LinersTotalDefects
+                    );
+
+                    EndCounts endCounts = new EndCounts(1, -1);
+                    endCounts.setEndCountsToInput(
+                            yearInt,
+                            monthInt,
+                            dayInt,
+                            (int) Stolle11,
+                            (int) Stolle12,
+                            (int) Stolle21,
+                            (int) Stolle22,
+                            (int) Stolle31,
+                            (int) Stolle32,
+                            (int) Stolle33,
+                            (int) Stolle41,
+                            (int) Stolle42,
+                            (int) Stolle43,
+                            (int) Stolle44
+                    );
+
+               //     JOptionPane.showMessageDialog(null, "Double Check Dates and Values then Save Records.");
                 } catch (SQLException ex) {
                     Logger.getLogger(LinerAndShellsEntry.class.getName()).log(Level.SEVERE, null, ex);
                 }
