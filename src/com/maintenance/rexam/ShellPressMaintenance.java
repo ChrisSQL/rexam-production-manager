@@ -1,7 +1,6 @@
 package com.maintenance.rexam;
 
-// Fix SP04 Fill Boxes - Get Excel Totals Correct
-
+//  Get Excel Totals Correct
 import com.database.rexam.SQLiteConnection;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -10,8 +9,8 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.SQLException;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -52,6 +51,8 @@ public class ShellPressMaintenance {
 
     private static int currentId;
 
+    static JFrame frame;
+
     public static void main(String[] args) {
 
         try {
@@ -76,10 +77,8 @@ public class ShellPressMaintenance {
             // If Nimbus is not available, you can set the GUI to another look
             // and feel.
         }
-        
-        
 
-        JFrame frame = new JFrame("Shell Press Maintenance");
+        frame = new JFrame("Shell Press Maintenance");
         frame.setSize(1400, 450);
         frame.setLocationRelativeTo(null);
 
@@ -89,11 +88,16 @@ public class ShellPressMaintenance {
         outerPanel.add(createOptionsPanel(spIn), BorderLayout.NORTH);
         outerPanel.add(createMiddlePanel(spIn), BorderLayout.CENTER);
         outerPanel.add(createBottomPanel(spIn), BorderLayout.SOUTH);
-        
+
         setToMachineCode(1);
 
         frame.add(outerPanel);
         frame.setVisible(true);
+
+        setDaysRemaining();
+        setDatesSp01();
+
+        SQLiteConnection.AnalyticsUpdate("ShellPressMaintenance");
 
     }
 
@@ -108,6 +112,7 @@ public class ShellPressMaintenance {
             @Override
             public void actionPerformed(ActionEvent e) {
                 setToMachineCode(1);
+                setDatesSp01();
             }
         });
         SP02 = new JButton("SP02");
@@ -116,6 +121,7 @@ public class ShellPressMaintenance {
             @Override
             public void actionPerformed(ActionEvent e) {
                 setToMachineCode(2);
+                setDatesSp01();
             }
         });
         SP03 = new JButton("SP03");
@@ -124,6 +130,7 @@ public class ShellPressMaintenance {
             @Override
             public void actionPerformed(ActionEvent e) {
                 setToMachineCode(3);
+                setDatesSp01();
             }
         });
         SP04 = new JButton("SP04");
@@ -132,6 +139,7 @@ public class ShellPressMaintenance {
             @Override
             public void actionPerformed(ActionEvent e) {
                 setToSP04();
+                setDatesSp04();
             }
         });
 
@@ -169,6 +177,7 @@ public class ShellPressMaintenance {
                 }
 
             }
+
         });
 
         bottomPanel.add(update);
@@ -487,27 +496,27 @@ public class ShellPressMaintenance {
             int LastMaintenanceDate7month = Integer.valueOf((machineCodeArray[9] + "").substring(5, 7)) - 1;
             int LastMaintenanceDate7day = Integer.valueOf((machineCodeArray[9] + "").substring(8, 10));
 
-            int MaintenanceDueDate1year = Integer.valueOf((machineCodeArray[3] + "").substring(0, 4));
-            int MaintenanceDueDate1month = Integer.valueOf((machineCodeArray[3] + "").substring(5, 7)) - 1;
-            int MaintenanceDueDate1day = Integer.valueOf((machineCodeArray[3] + "").substring(8, 10));
-            int MaintenanceDueDate2year = Integer.valueOf((machineCodeArray[4] + "").substring(0, 4));
-            int MaintenanceDueDate2month = Integer.valueOf((machineCodeArray[4] + "").substring(5, 7)) - 1;
-            int MaintenanceDueDate2day = Integer.valueOf((machineCodeArray[4] + "").substring(8, 10));
-            int MaintenanceDueDate3year = Integer.valueOf((machineCodeArray[5] + "").substring(0, 4));
-            int MaintenanceDueDate3month = Integer.valueOf((machineCodeArray[5] + "").substring(5, 7)) - 1;
-            int MaintenanceDueDate3day = Integer.valueOf((machineCodeArray[5] + "").substring(8, 10));
-            int MaintenanceDueDate4year = Integer.valueOf((machineCodeArray[6] + "").substring(0, 4));
-            int MaintenanceDueDate4month = Integer.valueOf((machineCodeArray[6] + "").substring(5, 7)) - 1;
-            int MaintenanceDueDate4day = Integer.valueOf((machineCodeArray[6] + "").substring(8, 10));
-            int MaintenanceDueDate5year = Integer.valueOf((machineCodeArray[7] + "").substring(0, 4));
-            int MaintenanceDueDate5month = Integer.valueOf((machineCodeArray[7] + "").substring(5, 7)) - 1;
-            int MaintenanceDueDate5day = Integer.valueOf((machineCodeArray[7] + "").substring(8, 10));
-            int MaintenanceDueDate6year = Integer.valueOf((machineCodeArray[8] + "").substring(0, 4));
-            int MaintenanceDueDate6month = Integer.valueOf((machineCodeArray[8] + "").substring(5, 7)) - 1;
-            int MaintenanceDueDate6day = Integer.valueOf((machineCodeArray[8] + "").substring(8, 10));
-            int MaintenanceDueDate7year = Integer.valueOf((machineCodeArray[9] + "").substring(0, 4));
-            int MaintenanceDueDate7month = Integer.valueOf((machineCodeArray[9] + "").substring(5, 7)) - 1;
-            int MaintenanceDueDate7day = Integer.valueOf((machineCodeArray[9] + "").substring(8, 10));
+            int MaintenanceDueDate1year = Integer.valueOf((machineCodeArray[31] + "").substring(0, 4));
+            int MaintenanceDueDate1month = Integer.valueOf((machineCodeArray[31] + "").substring(5, 7)) - 1;
+            int MaintenanceDueDate1day = Integer.valueOf((machineCodeArray[31] + "").substring(8, 10));
+            int MaintenanceDueDate2year = Integer.valueOf((machineCodeArray[32] + "").substring(0, 4));
+            int MaintenanceDueDate2month = Integer.valueOf((machineCodeArray[32] + "").substring(5, 7)) - 1;
+            int MaintenanceDueDate2day = Integer.valueOf((machineCodeArray[32] + "").substring(8, 10));
+            int MaintenanceDueDate3year = Integer.valueOf((machineCodeArray[33] + "").substring(0, 4));
+            int MaintenanceDueDate3month = Integer.valueOf((machineCodeArray[33] + "").substring(5, 7)) - 1;
+            int MaintenanceDueDate3day = Integer.valueOf((machineCodeArray[33] + "").substring(8, 10));
+            int MaintenanceDueDate4year = Integer.valueOf((machineCodeArray[34] + "").substring(0, 4));
+            int MaintenanceDueDate4month = Integer.valueOf((machineCodeArray[34] + "").substring(5, 7)) - 1;
+            int MaintenanceDueDate4day = Integer.valueOf((machineCodeArray[34] + "").substring(8, 10));
+            int MaintenanceDueDate5year = Integer.valueOf((machineCodeArray[35] + "").substring(0, 4));
+            int MaintenanceDueDate5month = Integer.valueOf((machineCodeArray[35] + "").substring(5, 7)) - 1;
+            int MaintenanceDueDate5day = Integer.valueOf((machineCodeArray[35] + "").substring(8, 10));
+            int MaintenanceDueDate6year = Integer.valueOf((machineCodeArray[36] + "").substring(0, 4));
+            int MaintenanceDueDate6month = Integer.valueOf((machineCodeArray[36] + "").substring(5, 7)) - 1;
+            int MaintenanceDueDate6day = Integer.valueOf((machineCodeArray[36] + "").substring(8, 10));
+            int MaintenanceDueDate7year = Integer.valueOf((machineCodeArray[37] + "").substring(0, 4));
+            int MaintenanceDueDate7month = Integer.valueOf((machineCodeArray[37] + "").substring(5, 7)) - 1;
+            int MaintenanceDueDate7day = Integer.valueOf((machineCodeArray[37] + "").substring(8, 10));
 
             currentId = (int) machineCodeArray[0];
 
@@ -517,7 +526,7 @@ public class ShellPressMaintenance {
             LastMaintenanceModel1.setSelected(true);
             TargetProductionJTexField1.setText(machineCodeArray[10] + "");
             ProductionJTexField1.setText(machineCodeArray[17] + "");
-            PlusMinusJTexField1.setText(machineCodeArray[24] + "");
+            PlusMinusJTexField1.setText(((int) machineCodeArray[10] - (int) machineCodeArray[17]) + "");
             MaintenanceDue1.setDate(MaintenanceDueDate1year, MaintenanceDueDate1month, MaintenanceDueDate1day);
             MaintenanceDue1.setSelected(true);
             DaysRemainingJTexField1.setText(machineCodeArray[38] + "");
@@ -526,7 +535,7 @@ public class ShellPressMaintenance {
             LastMaintenanceModel2.setSelected(true);
             TargetProductionJTexField2.setText(machineCodeArray[11] + "");
             ProductionJTexField2.setText(machineCodeArray[18] + "");
-            PlusMinusJTexField2.setText(machineCodeArray[25] + "");
+            PlusMinusJTexField2.setText(((int) machineCodeArray[11] - (int) machineCodeArray[18]) + "");
             MaintenanceDue2.setDate(MaintenanceDueDate2year, MaintenanceDueDate2month, MaintenanceDueDate2day);
             MaintenanceDue2.setSelected(true);
             DaysRemainingJTexField2.setText(machineCodeArray[39] + "");
@@ -535,7 +544,7 @@ public class ShellPressMaintenance {
             LastMaintenanceModel3.setSelected(true);
             TargetProductionJTexField3.setText(machineCodeArray[12] + "");
             ProductionJTexField3.setText(machineCodeArray[19] + "");
-            PlusMinusJTexField3.setText(machineCodeArray[26] + "");
+            PlusMinusJTexField3.setText(((int) machineCodeArray[12] - (int) machineCodeArray[19]) + "");
             MaintenanceDue3.setDate(MaintenanceDueDate3year, MaintenanceDueDate3month, MaintenanceDueDate3day);
             MaintenanceDue3.setSelected(true);
             DaysRemainingJTexField3.setText(machineCodeArray[40] + "");
@@ -544,7 +553,7 @@ public class ShellPressMaintenance {
             LastMaintenanceModel4.setSelected(true);
             TargetProductionJTexField4.setText(machineCodeArray[13] + "");
             ProductionJTexField4.setText(machineCodeArray[20] + "");
-            PlusMinusJTexField4.setText(machineCodeArray[27] + "");
+            PlusMinusJTexField4.setText(((int) machineCodeArray[13] - (int) machineCodeArray[20]) + "");
             MaintenanceDue4.setDate(MaintenanceDueDate4year, MaintenanceDueDate4month, MaintenanceDueDate4day);
             MaintenanceDue4.setSelected(true);
             DaysRemainingJTexField4.setText(machineCodeArray[41] + "");
@@ -553,7 +562,7 @@ public class ShellPressMaintenance {
             LastMaintenanceModel5.setSelected(true);
             TargetProductionJTexField5.setText(machineCodeArray[14] + "");
             ProductionJTexField5.setText(machineCodeArray[21] + "");
-            PlusMinusJTexField5.setText(machineCodeArray[28] + "");
+            PlusMinusJTexField5.setText(((int) machineCodeArray[14] - (int) machineCodeArray[21]) + "");
             MaintenanceDue5.setDate(MaintenanceDueDate5year, MaintenanceDueDate5month, MaintenanceDueDate5day);
             MaintenanceDue5.setSelected(true);
             DaysRemainingJTexField5.setText(machineCodeArray[42] + "");
@@ -562,7 +571,7 @@ public class ShellPressMaintenance {
             LastMaintenanceModel6.setSelected(true);
             TargetProductionJTexField6.setText(machineCodeArray[15] + "");
             ProductionJTexField6.setText(machineCodeArray[22] + "");
-            PlusMinusJTexField6.setText(machineCodeArray[29] + "");
+            PlusMinusJTexField6.setText(((int) machineCodeArray[15] - (int) machineCodeArray[22]) + "");
             MaintenanceDue6.setDate(MaintenanceDueDate6year, MaintenanceDueDate6month, MaintenanceDueDate6day);
             MaintenanceDue6.setSelected(true);
             DaysRemainingJTexField6.setText(machineCodeArray[43] + "");
@@ -571,7 +580,7 @@ public class ShellPressMaintenance {
             LastMaintenanceModel7.setSelected(true);
             TargetProductionJTexFieldTotal.setText(machineCodeArray[16] + "");
             ProductionJTexFieldTotal.setText(machineCodeArray[23] + "");
-            PlusMinusJTexFieldTotal.setText(machineCodeArray[30] + "");
+            PlusMinusJTexFieldTotal.setText(((int) machineCodeArray[16] - (int) machineCodeArray[23]) + "");
             MaintenanceDue7.setDate(MaintenanceDueDate7year, MaintenanceDueDate7month, MaintenanceDueDate7day);
             MaintenanceDue7.setSelected(true);
             DaysRemainingJTexFieldTotal.setText(machineCodeArray[44] + "");
@@ -582,6 +591,13 @@ public class ShellPressMaintenance {
     }
 
     private static void setToSP04() {
+
+        Object[] machineCodeArray = new Object[50];
+        try {
+            machineCodeArray = SQLiteConnection.MaintenanceShellPressMaintenanceReturnEntryByID(4);
+        } catch (Exception ex) {
+            Logger.getLogger(ShellPressMaintenance.class.getName()).log(Level.SEVERE, null, ex);
+        }
 
         MachineCodeJTexField1.setText("SP04");
         MachineNameJTexField1.setText("Formatec 04");
@@ -633,11 +649,225 @@ public class ShellPressMaintenance {
         MaintenanceDueDatePicker5.setVisible(false);
         MaintenanceDueDatePicker6.setVisible(false);
 
+        int LastMaintenanceDate1year = Integer.valueOf((machineCodeArray[3] + "").substring(0, 4));
+        int LastMaintenanceDate1month = Integer.valueOf((machineCodeArray[3] + "").substring(5, 7)) - 1;
+        int LastMaintenanceDate1day = Integer.valueOf((machineCodeArray[3] + "").substring(8, 10));
+        int LastMaintenanceDate2year = Integer.valueOf((machineCodeArray[4] + "").substring(0, 4));
+        int LastMaintenanceDate2month = Integer.valueOf((machineCodeArray[4] + "").substring(5, 7)) - 1;
+        int LastMaintenanceDate2day = Integer.valueOf((machineCodeArray[4] + "").substring(8, 10));
+        int LastMaintenanceDate7year = Integer.valueOf((machineCodeArray[9] + "").substring(0, 4));
+        int LastMaintenanceDate7month = Integer.valueOf((machineCodeArray[9] + "").substring(5, 7)) - 1;
+        int LastMaintenanceDate7day = Integer.valueOf((machineCodeArray[9] + "").substring(8, 10));
+
+        int MaintenanceDueDate1year = Integer.valueOf((machineCodeArray[31] + "").substring(0, 4));
+        int MaintenanceDueDate1month = Integer.valueOf((machineCodeArray[31] + "").substring(5, 7)) - 1;
+        int MaintenanceDueDate1day = Integer.valueOf((machineCodeArray[31] + "").substring(8, 10));
+        int MaintenanceDueDate2year = Integer.valueOf((machineCodeArray[32] + "").substring(0, 4));
+        int MaintenanceDueDate2month = Integer.valueOf((machineCodeArray[32] + "").substring(5, 7)) - 1;
+        int MaintenanceDueDate2day = Integer.valueOf((machineCodeArray[32] + "").substring(8, 10));
+        int MaintenanceDueDate7year = Integer.valueOf((machineCodeArray[33] + "").substring(0, 4));
+        int MaintenanceDueDate7month = Integer.valueOf((machineCodeArray[33] + "").substring(5, 7)) - 1;
+        int MaintenanceDueDate7day = Integer.valueOf((machineCodeArray[33] + "").substring(8, 10));
+
+        MachineCodeJTexField1.setText(machineCodeArray[1] + "");
+        MachineNameJTexField1.setText(machineCodeArray[2] + "");
+        LastMaintenanceModel1.setDate(LastMaintenanceDate1year, LastMaintenanceDate1month, LastMaintenanceDate1day);
+        LastMaintenanceModel1.setSelected(true);
+        TargetProductionJTexField1.setText(machineCodeArray[10] + "");
+        ProductionJTexField1.setText(machineCodeArray[17] + "");
+        PlusMinusJTexField1.setText(((int) machineCodeArray[10] - (int) machineCodeArray[17]) + "");
+        MaintenanceDue1.setDate(MaintenanceDueDate1year, MaintenanceDueDate1month, MaintenanceDueDate1day);
+        MaintenanceDue1.setSelected(true);
+        DaysRemainingJTexField1.setText(machineCodeArray[38] + "");
+
+        LastMaintenanceModel2.setDate(LastMaintenanceDate2year, LastMaintenanceDate2month, LastMaintenanceDate2day);
+        LastMaintenanceModel2.setSelected(true);
+        TargetProductionJTexField2.setText(machineCodeArray[11] + "");
+        ProductionJTexField2.setText(machineCodeArray[18] + "");
+        PlusMinusJTexField2.setText(((int) machineCodeArray[11] - (int) machineCodeArray[18]) + "");
+        MaintenanceDue2.setDate(MaintenanceDueDate2year, MaintenanceDueDate2month, MaintenanceDueDate2day);
+        MaintenanceDue2.setSelected(true);
+        DaysRemainingJTexField2.setText(machineCodeArray[39] + "");
+
+        LastMaintenanceModel7.setDate(LastMaintenanceDate7year, LastMaintenanceDate7month, LastMaintenanceDate7day);
+        LastMaintenanceModel7.setSelected(true);
+        TargetProductionJTexFieldTotal.setText(machineCodeArray[16] + "");
+        ProductionJTexFieldTotal.setText(machineCodeArray[23] + "");
+        PlusMinusJTexFieldTotal.setText(((int) machineCodeArray[16] - (int) machineCodeArray[23]) + "");
+        MaintenanceDue7.setDate(MaintenanceDueDate7year, MaintenanceDueDate7month, MaintenanceDueDate7day);
+        MaintenanceDue7.setSelected(true);
+        DaysRemainingJTexFieldTotal.setText(machineCodeArray[44] + "");
+
         optionsPanel.repaint();
 
     }
 
+    private static void setDaysRemaining() {
+
+        int daysRemaining1Int, daysRemaining2Int, daysRemaining3Int, daysRemaining4Int, daysRemaining5Int, daysRemaining6Int, daysRemaining7Int;
+
+        daysRemaining1Int = (Integer.valueOf(PlusMinusJTexField1.getText()) / 8916480);
+        daysRemaining2Int = (Integer.valueOf(PlusMinusJTexField2.getText()) / 8916480);
+        daysRemaining3Int = (Integer.valueOf(PlusMinusJTexField3.getText()) / 8916480);
+        daysRemaining4Int = (Integer.valueOf(PlusMinusJTexField4.getText()) / 8916480);
+        daysRemaining5Int = (Integer.valueOf(PlusMinusJTexField5.getText()) / 8916480);
+        daysRemaining6Int = (Integer.valueOf(PlusMinusJTexField6.getText()) / 8916480);
+        daysRemaining7Int = (Integer.valueOf(PlusMinusJTexFieldTotal.getText()) / 8916480);
+
+        DaysRemainingJTexField1.setText(daysRemaining1Int + "");
+        DaysRemainingJTexField2.setText(daysRemaining2Int + "");
+        DaysRemainingJTexField3.setText(daysRemaining3Int + "");
+        DaysRemainingJTexField4.setText(daysRemaining4Int + "");
+        DaysRemainingJTexField5.setText(daysRemaining5Int + "");
+        DaysRemainingJTexField6.setText(daysRemaining6Int + "");
+        DaysRemainingJTexFieldTotal.setText(daysRemaining7Int + "");
+
+        DaysRemainingJTexField1.setEditable(false);
+        DaysRemainingJTexField2.setEditable(false);
+        DaysRemainingJTexField3.setEditable(false);
+        DaysRemainingJTexField4.setEditable(false);
+        DaysRemainingJTexField5.setEditable(false);
+        DaysRemainingJTexField6.setEditable(false);
+        DaysRemainingJTexFieldTotal.setEditable(false);
+
+        PlusMinusJTexField1.setEditable(false);
+        PlusMinusJTexField2.setEditable(false);
+        PlusMinusJTexField3.setEditable(false);
+        PlusMinusJTexField4.setEditable(false);
+        PlusMinusJTexField5.setEditable(false);
+        PlusMinusJTexField6.setEditable(false);
+        PlusMinusJTexFieldTotal.setEditable(false);
+
+    }
+
+    private static void setDatesSp01() {
+
+        int days1, days2, days3, days4, days5, days6, days7;
+
+        days1 = Integer.valueOf(DaysRemainingJTexField1.getText());
+        days2 = Integer.valueOf(DaysRemainingJTexField2.getText());
+        days3 = Integer.valueOf(DaysRemainingJTexField3.getText());
+        days4 = Integer.valueOf(DaysRemainingJTexField4.getText());
+        days5 = Integer.valueOf(DaysRemainingJTexField5.getText());
+        days6 = Integer.valueOf(DaysRemainingJTexField6.getText());
+        days7 = Integer.valueOf(DaysRemainingJTexFieldTotal.getText());
+
+        Date date1 = LastMaintenanceModel1.getValue();
+        Date date2 = LastMaintenanceModel2.getValue();
+        Date date3 = LastMaintenanceModel3.getValue();
+        Date date4 = LastMaintenanceModel4.getValue();
+        Date date5 = LastMaintenanceModel5.getValue();
+        Date date6 = LastMaintenanceModel6.getValue();
+        Date date7 = LastMaintenanceModel7.getValue();
+
+        SimpleDateFormat sdf1 = new SimpleDateFormat("dd");
+        SimpleDateFormat sdf2 = new SimpleDateFormat("MM");
+        SimpleDateFormat sdf3 = new SimpleDateFormat("yyyy");
+        
+        Calendar c1 = Calendar.getInstance();
+        c1.setTime(date1); // Now use today date.
+        c1.add(Calendar.DATE, days1); // Adding 5 days
+        String output1 = sdf1.format(c1.getTime());
+        String output2 = sdf2.format(c1.getTime());
+        String output3 = sdf3.format(c1.getTime());       
+        MaintenanceDue1.setDate(Integer.valueOf(output3), Integer.valueOf(output2)-1, Integer.valueOf(output1));
+        
+        Calendar c2 = Calendar.getInstance();
+        c2.setTime(date2); // Now use today date.
+        c2.add(Calendar.DATE, days2); // Adding 5 days
+        output1 = sdf1.format(c2.getTime());
+        output2 = sdf2.format(c2.getTime());
+        output3 = sdf3.format(c2.getTime());       
+        MaintenanceDue2.setDate(Integer.valueOf(output3), Integer.valueOf(output2)-1, Integer.valueOf(output1));
+        
+        Calendar c3 = Calendar.getInstance();
+        c3.setTime(date3); // Now use today date.
+        c3.add(Calendar.DATE, days3); // Adding 5 days
+        output1 = sdf1.format(c3.getTime());
+        output2 = sdf2.format(c3.getTime());
+        output3 = sdf3.format(c3.getTime());       
+        MaintenanceDue3.setDate(Integer.valueOf(output3), Integer.valueOf(output2)-1, Integer.valueOf(output1));
+        
+        Calendar c4 = Calendar.getInstance();
+        c4.setTime(date4); // Now use today date.
+        c4.add(Calendar.DATE, days4); // Adding 5 days
+        output1 = sdf1.format(c4.getTime());
+        output2 = sdf2.format(c4.getTime());
+        output3 = sdf3.format(c4.getTime());       
+        MaintenanceDue4.setDate(Integer.valueOf(output3), Integer.valueOf(output2)-1, Integer.valueOf(output1));
+        
+        Calendar c5 = Calendar.getInstance();
+        c5.setTime(date5); // Now use today date.
+        c5.add(Calendar.DATE, days5); // Adding 5 days
+        output1 = sdf1.format(c5.getTime());
+        output2 = sdf2.format(c5.getTime());
+        output3 = sdf3.format(c5.getTime());       
+        MaintenanceDue5.setDate(Integer.valueOf(output3), Integer.valueOf(output2)-1, Integer.valueOf(output1));
+        
+        Calendar c6 = Calendar.getInstance();
+        c6.setTime(date6); // Now use today date.
+        c6.add(Calendar.DATE, days6); // Adding 5 days
+        output1 = sdf1.format(c6.getTime());
+        output2 = sdf2.format(c6.getTime());
+        output3 = sdf3.format(c6.getTime());       
+        MaintenanceDue6.setDate(Integer.valueOf(output3), Integer.valueOf(output2)-1, Integer.valueOf(output1));
+        
+        Calendar c7 = Calendar.getInstance();
+        c7.setTime(date7); // Now use today date.
+        c7.add(Calendar.DATE, days7); // Adding 5 days
+        output1 = sdf1.format(c7.getTime());
+        output2 = sdf2.format(c7.getTime());
+        output3 = sdf3.format(c7.getTime());       
+        MaintenanceDue7.setDate(Integer.valueOf(output3), Integer.valueOf(output2)-1, Integer.valueOf(output1));
+
+    }
+
+    private static void setDatesSp04() {
+
+        int days1, days2, days3, days4, days5, days6, days7;
+
+        days1 = Integer.valueOf(DaysRemainingJTexField1.getText());
+        days2 = Integer.valueOf(DaysRemainingJTexField2.getText());      
+        days7 = Integer.valueOf(DaysRemainingJTexFieldTotal.getText());
+
+        Date date1 = LastMaintenanceModel1.getValue();
+        Date date2 = LastMaintenanceModel2.getValue();       
+        Date date7 = LastMaintenanceModel7.getValue();
+
+        SimpleDateFormat sdf1 = new SimpleDateFormat("dd");
+        SimpleDateFormat sdf2 = new SimpleDateFormat("MM");
+        SimpleDateFormat sdf3 = new SimpleDateFormat("yyyy");
+        
+        Calendar c1 = Calendar.getInstance();
+        c1.setTime(date1); // Now use today date.
+        c1.add(Calendar.DATE, days1); // Adding 5 days
+        String output1 = sdf1.format(c1.getTime());
+        String output2 = sdf2.format(c1.getTime());
+        String output3 = sdf3.format(c1.getTime());       
+        MaintenanceDue1.setDate(Integer.valueOf(output3), Integer.valueOf(output2)-1, Integer.valueOf(output1));
+        
+        Calendar c2 = Calendar.getInstance();
+        c2.setTime(date2); // Now use today date.
+        c2.add(Calendar.DATE, days2); // Adding 5 days
+        output1 = sdf1.format(c2.getTime());
+        output2 = sdf2.format(c2.getTime());
+        output3 = sdf3.format(c2.getTime());       
+        MaintenanceDue2.setDate(Integer.valueOf(output3), Integer.valueOf(output2)-1, Integer.valueOf(output1));
+               
+        
+        Calendar c7 = Calendar.getInstance();
+        c7.setTime(date7); // Now use today date.
+        c7.add(Calendar.DATE, days7); // Adding 5 days
+        output1 = sdf1.format(c7.getTime());
+        output2 = sdf2.format(c7.getTime());
+        output3 = sdf3.format(c7.getTime());       
+        MaintenanceDue7.setDate(Integer.valueOf(output3), Integer.valueOf(output2)-1, Integer.valueOf(output1));
+
+    }
+    
     private static void updateEntry(int machineCodeIn) {
+
+        setDaysRemaining();
 
         Date LastMaintenanceDate1 = (Date) LastMaintenanceDatePanel1.getModel().getValue();
         String date1 = new SimpleDateFormat("yyyy-MM-dd").format(LastMaintenanceDate1);
@@ -717,6 +947,13 @@ public class ShellPressMaintenance {
                     Integer.valueOf(DaysRemainingJTexFieldTotal.getText()),
                     machineCodeIn
             );
+        } catch (SQLException ex) {
+            Logger.getLogger(ShellPressMaintenance.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        frame.dispose();
+        try {
+            new ShellPressMaintenance(1);
         } catch (SQLException ex) {
             Logger.getLogger(ShellPressMaintenance.class.getName()).log(Level.SEVERE, null, ex);
         }
