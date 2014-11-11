@@ -2,19 +2,28 @@ package com.gui.rexam;
 
 // WEBSTART 
 // TODO Update statistics on ChrisMaher.info with Usage / Views Etc..
+// Fill JTextfields if record Exists
+// Liners and Shells Update not bringing up summary screen
+// Format Percentages on JTables to 2 Decimals
+
+ // Create Database on ChrisMaher.Info to Store Analytics.
+
 import java.sql.SQLException;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
-// import javax.jnlp.*;
+import javax.jnlp.*;
 import com.database.rexam.SQLiteConnection;
-import static java.util.Collections.list;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 public class Program {
 
- //    static BasicService basicService = null;
+    static BasicService basicService = null;
+
+    //    static BasicService basicService = null;
     // Create a Splash Screen.
     public static void main(String[] args) throws SQLException {
-
+        
 
         try {
             for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
@@ -41,5 +50,7 @@ public class Program {
 //            System.err.println("Lookup failed: " + e);
 //        }
     }
+
+ 
 
 }
