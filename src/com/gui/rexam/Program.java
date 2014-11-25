@@ -13,8 +13,6 @@ import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.jnlp.*;
 import com.database.rexam.SQLiteConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
 
 public class Program {
 
