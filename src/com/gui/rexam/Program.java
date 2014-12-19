@@ -25,10 +25,8 @@ public class Program {
     //    static BasicService basicService = null;
     // Create a Splash Screen.
     public static void main(String[] args) throws SQLException {
+       
         
-        SQLiteConnection.LinerEntryExists("2014", "12", "07", "1");
-        
-
         try {
             for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
