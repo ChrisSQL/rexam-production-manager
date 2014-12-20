@@ -31,12 +31,14 @@ import net.sourceforge.jdatepicker.impl.JDatePanelImpl;
 import net.sourceforge.jdatepicker.impl.JDatePickerImpl;
 import net.sourceforge.jdatepicker.impl.UtilDateModel;
 import com.database.rexam.SQLiteConnection;
+import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JScrollPane;
 
 public class LinerUsageEntryScreen {
 
-    static JButton add, find, next, previous, update, addNew, search, refresh, summary;
+    static JButton add, find, next, previous, update, addNew, search, refresh, summary, delete;
     static JLabel dateLabel, linerNumberLabel, crewLabel, leadHandLabel, reasonlabel, quantityUsedLabel, partNumberLabel, Gun1Label, Gun2Label, Gun3Label,
             Gun4Label, Gun5Label, Gun6Label, Gun7Label, Gun8Label, commentsLabel;
     static JComboBox linerNumberCombo, crewCombo, leadHandCombo, reasonCombo;
@@ -46,7 +48,7 @@ public class LinerUsageEntryScreen {
     static int view, currentId;
     static Date selectedDate;
 
-    UtilDateModel model;
+    static UtilDateModel model;
     JDatePanelImpl datePanel;
     JDatePickerImpl datePicker;
 
@@ -60,13 +62,7 @@ public class LinerUsageEntryScreen {
 
     public LinerUsageEntryScreen(int id, int view) {
 
-        // Add a view to analytics.
-        try {
-            SQLiteConnection.incrementViewsAnalytics(0, 0, 0, 1, 0, 0, 0, 0, 0);
-        } catch (SQLException e2) {
-            // TODO Auto-generated catch block
-            e2.printStackTrace();
-        }
+        
 
         try {
             for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
@@ -117,12 +113,12 @@ public class LinerUsageEntryScreen {
         Gun8Label = new JLabel("Gun 8 : ", SwingConstants.CENTER);
         commentsLabel = new JLabel("Comments : ", SwingConstants.CENTER);
 
-        quantityUsedTextField = new JTextField();
+        quantityUsedTextField = new JTextField("0");
         PlainDocument doc2 = (PlainDocument) quantityUsedTextField.getDocument();
         doc2.setDocumentFilter(new MyIntFilter());
-        partNumberTextField = new JTextField();
+        partNumberTextField = new JTextField("0");
 
-        commentsTextArea = new JTextArea();
+        commentsTextArea = new JTextArea("NA");
         commentsTextArea.setLineWrap(true);
         commentsTextArea.setWrapStyleWord(true);
 
@@ -192,6 +188,14 @@ public class LinerUsageEntryScreen {
                     );
 
                     frame10.dispose();
+                    
+                    try {
+                    createSummaryScreen();
+                    
+                    // TODO Auto-generated method stub
+                } catch (SQLException ex) {
+                    Logger.getLogger(LinerUsageEntryScreen.class.getName()).log(Level.SEVERE, null, ex);
+                }
 
                 } catch (SQLException e1) {
                     // TODO Auto-generated catch block
@@ -517,8 +521,15 @@ public class LinerUsageEntryScreen {
                     // TODO Auto-generated catch block
                     e1.printStackTrace();
                 }
-
-                // TODO Auto-generated method stub
+                
+                frame10.dispose();
+                try {
+                    createSummaryScreen();
+                    
+                    // TODO Auto-generated method stub
+                } catch (SQLException ex) {
+                    Logger.getLogger(LinerUsageEntryScreen.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
         });
 
@@ -528,8 +539,11 @@ public class LinerUsageEntryScreen {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-                new LinerUsageEntryScreen(1, -2);
-                setLastEntry();
+               try {
+                    LinerUsageEntryScreen.createSummaryScreen();
+                } catch (SQLException ex) {
+                    Logger.getLogger(LinerUsageEntryScreen.class.getName()).log(Level.SEVERE, null, ex);
+                }
                 frame10.dispose();
             }
         });
@@ -561,12 +575,35 @@ public class LinerUsageEntryScreen {
             }
         });
 
+        delete = new JButton("Delete");
+        delete.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                try {
+                    // Delete CurrentID
+                    SQLiteConnection.LinerUsageDelete(currentId);
+
+                    // Create Summary Screen
+                    frameSummary.dispose();
+                    frame10.dispose();
+                    
+                    createSummaryScreen();
+                } catch (SQLException ex) {
+                    Logger.getLogger(LinerDataEntryScreen.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
+            }
+        });
+        
         // BorderLayout - ButtonsPanels North and South - Gridlayout Middle
         // Top Buttons Panel
         JPanel buttonPanelTop = new JPanel(new FlowLayout());
-        buttonPanelTop.add(find);
+      //  buttonPanelTop.add(find);
         buttonPanelTop.add(previous);
         buttonPanelTop.add(next);
+        buttonPanelTop.add(delete);
         outerPanel.add(buttonPanelTop, BorderLayout.NORTH);
 
         // Middle Panel
@@ -624,6 +661,7 @@ public class LinerUsageEntryScreen {
         buttonPanelBottom.add(search);
         buttonPanelBottom.add(addNew);
         buttonPanelBottom.add(summary);
+        
         buttonPanelBottom.add(update);
         buttonPanelBottom.add(add);
         buttonPanelBottom.setBackground(Color.GRAY);
@@ -638,6 +676,7 @@ public class LinerUsageEntryScreen {
             addNew.setVisible(false);
             update.setVisible(false);
             summary.setVisible(false);
+            delete.setVisible(false);
 
         } // Searching
         else {
@@ -655,6 +694,8 @@ public class LinerUsageEntryScreen {
         // Set Frame Visible
         frame10.add(outerPanel);
         frame10.setVisible(true);
+        
+        SQLiteConnection.AnalyticsUpdate("LinerUsageEntryScreen");
 
     }
 
@@ -699,6 +740,24 @@ public class LinerUsageEntryScreen {
 
             }
         });
+        
+        JButton importFromViscan = new JButton("Import from Viscan");
+
+        importFromViscan.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                
+
+                try {
+                    frameSummary.dispose();
+                    LinerDataEntryScreen.importFromExcel();
+                } catch (IOException ex) {
+                    Logger.getLogger(LinerUsageEntryScreen.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
+            }
+        });
 
         // Outer Frame
         frameSummary = new JFrame("Liner Data Report");
@@ -716,10 +775,12 @@ public class LinerUsageEntryScreen {
         optionsPanel2.add(refresh);
         //optionsPanel2.add(print);
         optionsPanel2.add(ExportToExcel);
+        optionsPanel2.add(importFromViscan);
         // }
 
         JPanel summaryPanel = SQLiteConnection.LinerUsageSummaryTable(1);
-
+        JScrollPane scrollPane = new JScrollPane(summaryPanel);
+        
 //        print.addActionListener(new ActionListener() {
 //
 //            @Override
@@ -731,7 +792,7 @@ public class LinerUsageEntryScreen {
 //        });
         optionsPanel2.setBackground(Color.GRAY);
 
-        outerPanel.add(summaryPanel, BorderLayout.CENTER);
+        outerPanel.add(scrollPane, BorderLayout.CENTER);
         outerPanel.add(optionsPanel2, BorderLayout.SOUTH);
         frameSummary.add(outerPanel);
         frameSummary.setVisible(true);
@@ -748,7 +809,8 @@ public class LinerUsageEntryScreen {
             PreparedStatement pst = conn.prepareStatement(sql);
             pst.setQueryTimeout(5);
             ResultSet rs = pst.executeQuery();
-
+            
+            
             while (rs.next()) {
 
                 String name = rs.getString("LinerName");
@@ -781,11 +843,13 @@ public class LinerUsageEntryScreen {
         // Lead Hand
         try {
 
-            String sql = "SELECT Employees.Name FROM Employees ORDER BY Name ASC";
+            String sql = "select Employees.Name from Employees ORDER BY Name ASC";
             Connection conn = SQLiteConnection.Connect();
             PreparedStatement pst = conn.prepareStatement(sql);
             pst.setQueryTimeout(5);
             ResultSet rs = pst.executeQuery();
+            
+            leadHandCombo.addItem("NA");
 
             while (rs.next()) {
 
@@ -985,4 +1049,21 @@ public class LinerUsageEntryScreen {
 
     }
 
+    public static void setModel(String yearIn, String monthIn, String dayIn) {
+
+        // Date
+        int yearInt = Integer.parseInt(yearIn);
+        int monthInt = Integer.parseInt(monthIn) - 1;
+        int dayInt = Integer.parseInt(dayIn);
+
+        LinerUsageEntryScreen.model.setDate(yearInt, monthInt, dayInt);
+    }
+   
+
+    public static void setCrewCombo(String crewIn) {
+        LinerUsageEntryScreen.crewCombo.setSelectedItem(crewIn);
+    }
+
+    
+    
 }

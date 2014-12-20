@@ -35,7 +35,6 @@ import javax.swing.text.PlainDocument;
 
 import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JasperCompileManager;
-import net.sf.jasperreports.engine.JasperExportManager;
 import net.sf.jasperreports.engine.JasperFillManager;
 import net.sf.jasperreports.engine.JasperPrint;
 import net.sf.jasperreports.engine.JasperReport;
@@ -44,17 +43,19 @@ import net.sf.jasperreports.engine.xml.JRXmlLoader;
 import net.sourceforge.jdatepicker.impl.JDatePanelImpl;
 import net.sourceforge.jdatepicker.impl.JDatePickerImpl;
 import net.sourceforge.jdatepicker.impl.UtilDateModel;
-import org.apache.pdfbox.pdmodel.PDDocument;
 
 import com.database.rexam.SQLiteConnection;
-import static com.productiontrackingscreens.rexam.StolleDataEntryScreen.exportToExcel;
 import java.awt.Desktop;
 import java.io.FileOutputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JCheckBox;
+import javax.swing.JDialog;
+import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.TableModel;
+import net.sf.jasperreports.view.JasperViewer;
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFFont;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
@@ -64,7 +65,7 @@ import org.apache.poi.ss.usermodel.Row;
 
 public class OptimeDataEntryScreen {
 
-    static JButton add, update, find, next, previous, addNew, search, exportToExcel, newEntry, print, refresh, summary;
+    static JButton add, update, find, next, previous, addNew, search, exportToExcel, newEntry, print, refresh, summary, delete;
     static JLabel dateLabel, shiftLabel, crewLabel, operatorLabel, optimeNumberLabel, pressSpeedLabel, shellTypeLabel, productionLabel,
             commentsLabel;
     static JTextField dateTextField, pressSpeedTextField, productionTextField;
@@ -74,6 +75,7 @@ public class OptimeDataEntryScreen {
     static JComboBox operatorCombo, shiftCombo, crewCombo, pressCombo, packerCombo, qcCombo, optimeNumberCombo, shellTypeCombo;
     static JFrame frameSummary;
     static UtilDateModel model, model2, excelModel1, excelModel2;
+
     static JDatePanelImpl datePanel, datePanel2, excelDate1, excelDate2;
     static JDatePickerImpl datePicker, datePicker2, excelPicker1, excelPicker2;
     static String query, item;
@@ -85,14 +87,6 @@ public class OptimeDataEntryScreen {
     }
 
     public OptimeDataEntryScreen(int idIn, int view) {
-
-        // Add a view to analytics.
-        try {
-            SQLiteConnection.incrementViewsAnalytics(0, 0, 0, 0, 0, 0, 1, 0, 0);
-        } catch (SQLException e2) {
-            // TODO Auto-generated catch block
-            e2.printStackTrace();
-        }
 
         try {
             for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
@@ -320,8 +314,11 @@ public class OptimeDataEntryScreen {
 
                 // TODO Auto-generated method stub
                 frame3.dispose();
-                new OptimeDataEntryScreen(2, 2);
-                setLastEntry();
+                try {
+                    OptimeDataEntryScreen.createSummaryScreen();
+                } catch (SQLException ex) {
+                    Logger.getLogger(OptimeDataEntryScreen.class.getName()).log(Level.SEVERE, null, ex);
+                }
 
             }
         });
@@ -343,14 +340,46 @@ public class OptimeDataEntryScreen {
             }
         });
 
+        delete = new JButton("Delete");
+        delete.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                JDialog.setDefaultLookAndFeelDecorated(true);
+                int response = JOptionPane.showConfirmDialog(null, "Are you sure you want to delete?", "Confirm",
+                        JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                if (response == JOptionPane.NO_OPTION) {
+                    System.out.println("No button clicked");
+                } else if (response == JOptionPane.YES_OPTION) {
+                    try {
+                    // Delete CurrentID
+                    SQLiteConnection.OptimeEntryDelete(currentId);
+
+                    // Create Summary Screen
+                    frameSummary.dispose();
+                    frame3.dispose();
+
+                    createSummaryScreen();
+                } catch (SQLException ex) {
+                    Logger.getLogger(LinerDataEntryScreen.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                } else if (response == JOptionPane.CLOSED_OPTION) {
+                    System.out.println("JOptionPane closed");
+                }
+
+                
+
+            }
+        });
+
         // Buttons Top Panel
         // JPanel buttonsPanel = new JPanel(new GridLayout(1, 4));
         JPanel buttonsPanel = new JPanel(new FlowLayout());
 
-        buttonsPanel.add(find);
-        // buttonsPanel.add(add);
         buttonsPanel.add(previous);
         buttonsPanel.add(next);
+        buttonsPanel.add(delete);
 
         outerPanel.add(buttonsPanel, BorderLayout.NORTH);
 
@@ -368,6 +397,7 @@ public class OptimeDataEntryScreen {
         model.setSelected(true);
 
         pressSpeedTextField = new JTextField();
+        pressSpeedTextField.setText("0");
         PlainDocument doc1 = (PlainDocument) pressSpeedTextField.getDocument();
         doc1.setDocumentFilter(new MyIntFilter());
 
@@ -398,10 +428,12 @@ public class OptimeDataEntryScreen {
         JPanel commentsPanel = new JPanel();
 
         productionTextField = new JTextField();
+        productionTextField.setText("0");
         PlainDocument doc2 = (PlainDocument) productionTextField.getDocument();
         doc2.setDocumentFilter(new MyIntFilter());
 
         commentsTextArea = new JTextArea(7, 30);
+        commentsTextArea.setText("NA");
         commentsTextArea.setLineWrap(true);
         commentsTextArea.setWrapStyleWord(true);
 
@@ -433,6 +465,7 @@ public class OptimeDataEntryScreen {
             addNew.setVisible(false);
             update.setVisible(false);
             summary.setVisible(false);
+            delete.setVisible(false);
 
         } // Searching
         else if (view == 2) {
@@ -467,6 +500,7 @@ public class OptimeDataEntryScreen {
         JPanel optionsPanel2 = new JPanel(new FlowLayout());
 
         optionsPanel2.add(summary);
+
         optionsPanel2.add(addNew);
         optionsPanel2.add(search);
         optionsPanel2.add(update);
@@ -492,6 +526,8 @@ public class OptimeDataEntryScreen {
                             commentsTextArea.getText());
 
                     frame3.dispose();
+                    OptimeDataEntryScreen.frameSummary.dispose();
+                    createSummaryScreen();
 
                 } catch (SQLException e1) {
                     // TODO Auto-generated catch block
@@ -506,34 +542,71 @@ public class OptimeDataEntryScreen {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-                selectedDate = (Date) datePicker.getModel().getValue();
-                System.out.println("selectedDate : " + selectedDate);
-
-                String date = new SimpleDateFormat("yyyy-MM-dd").format(selectedDate);
-
-                System.out.println("date : " + date);
-
-                // int crewInt =
-                // Integer.parseInt((String)crewCombo.getSelectedItem());
-                int optimeNumberInt = Integer.parseInt((String) optimeNumberCombo.getSelectedItem());
-                int shiftInt = Integer.parseInt((String) shiftCombo.getSelectedItem());
-                int pressSpeedInt = Integer.parseInt(pressSpeedTextField.getText());
-                int productionInt = Integer.parseInt(productionTextField.getText());
-
                 try {
-                    SQLiteConnection.OPTimeInsert(
-                            (SQLiteConnection.OPTimeGetHighestID() + 1), date, shiftInt, (String) crewCombo.getSelectedItem(),
-                            (String) operatorCombo.getSelectedItem(), optimeNumberInt, pressSpeedInt,
-                            (String) shellTypeCombo.getSelectedItem(), productionInt, commentsTextArea.getText());
+                    selectedDate = (Date) datePicker.getModel().getValue();
+                    String date = new SimpleDateFormat("yyyy-MM-dd").format(selectedDate);
+                    String year = new SimpleDateFormat("yyyy").format(selectedDate);
+                    String month = new SimpleDateFormat("MM").format(selectedDate);
+                    String day = new SimpleDateFormat("dd").format(selectedDate);
 
-                    frame3.dispose();
+                    int optimeNumberInt = Integer.parseInt((String) optimeNumberCombo.getSelectedItem());
+                    int shiftInt = Integer.parseInt((String) shiftCombo.getSelectedItem());
+                    int pressSpeedInt = Integer.parseInt(pressSpeedTextField.getText());
+                    int productionInt = Integer.parseInt(productionTextField.getText());
 
-                } catch (SQLException e1) {
-                    // TODO Auto-generated catch block
-                    e1.printStackTrace();
+                    if (SQLiteConnection.OptimeEntryExists(year, month, day, optimeNumberInt + "", (String) shiftCombo.getSelectedItem())) {
+                        try {
+                            SQLiteConnection.OPTimeUpdate(
+                                    currentId,
+                                    date,
+                                    shiftInt,
+                                    (String) crewCombo.getSelectedItem(),
+                                    (String) operatorCombo.getSelectedItem(),
+                                    optimeNumberInt, pressSpeedInt,
+                                    (String) shellTypeCombo.getSelectedItem(),
+                                    productionInt,
+                                    commentsTextArea.getText());
+
+                            frame3.dispose();
+                            createSummaryScreen();
+
+                        } catch (SQLException e1) {
+                            // TODO Auto-generated catch block
+                            e1.printStackTrace();
+                        }
+                    } else {
+                        try {
+                            SQLiteConnection.OPTimeInsert(
+                                    (SQLiteConnection.OPTimeGetHighestID() + 1),
+                                    date,
+                                    shiftInt,
+                                    (String) crewCombo.getSelectedItem(),
+                                    (String) operatorCombo.getSelectedItem(),
+                                    optimeNumberInt, pressSpeedInt,
+                                    (String) shellTypeCombo.getSelectedItem(),
+                                    productionInt,
+                                    commentsTextArea.getText());
+
+                            frame3.dispose();
+                            createSummaryScreen();
+
+                        } catch (SQLException e1) {
+                            // TODO Auto-generated catch block
+                            e1.printStackTrace();
+                        }
+                    }
+
+                    selectedDate = (Date) datePicker.getModel().getValue();
+                    System.out.println("selectedDate : " + selectedDate);
+
+                    System.out.println("date : " + date);
+
+                    // int crewInt =
+                    // Integer.parseInt((String)crewCombo.getSelectedItem());
+                    // TODO Auto-generated method stub
+                } catch (SQLException ex) {
+                    Logger.getLogger(OptimeDataEntryScreen.class.getName()).log(Level.SEVERE, null, ex);
                 }
-
-                // TODO Auto-generated method stub
             }
         });
 
@@ -549,6 +622,8 @@ public class OptimeDataEntryScreen {
         frame3.add(outerPanel);
 
         frame3.setVisible(true);
+
+        SQLiteConnection.AnalyticsUpdate("OptimeDataEntryScreen");
 
     }
 
@@ -594,8 +669,26 @@ public class OptimeDataEntryScreen {
             }
         });
 
+        JButton importFromViscan = new JButton("Import from Viscan");
+
+        importFromViscan.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                try {
+                    frameSummary.dispose();
+                    LinerDataEntryScreen.importFromExcel();
+                } catch (IOException ex) {
+                    Logger.getLogger(LinerUsageEntryScreen.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
+            }
+        });
+
         // Outer Frame
         frameSummary = new JFrame("Optime Production Report");
+        frameSummary.toFront();
         frameSummary.setSize(1366, 768);
         frameSummary.setLocationRelativeTo(null);
 
@@ -610,9 +703,11 @@ public class OptimeDataEntryScreen {
         optionsPanel2.add(refresh);
         optionsPanel2.add(print);
         optionsPanel2.add(ExportToExcel);
+        optionsPanel2.add(importFromViscan);
         // }
 
         JPanel summaryPanel = SQLiteConnection.OPTimeSummaryTable(1);
+        JScrollPane scrollPane = new JScrollPane(summaryPanel);
         print.addActionListener(new ActionListener() {
 
             @Override
@@ -625,7 +720,7 @@ public class OptimeDataEntryScreen {
 
         optionsPanel2.setBackground(Color.GRAY);
 
-        outerPanel.add(summaryPanel, BorderLayout.CENTER);
+        outerPanel.add(scrollPane, BorderLayout.CENTER);
         outerPanel.add(optionsPanel2, BorderLayout.SOUTH);
         frameSummary.add(outerPanel);
         frameSummary.setVisible(true);
@@ -877,9 +972,10 @@ public class OptimeDataEntryScreen {
 
     public static void createReport(String date1, String date2) throws JRException, IOException, PrinterException, SQLException {
 
+        //  JOptionPane.showMessageDialog(null, "Creating Report.");
         Connection conn = SQLiteConnection.Connect();
 
-        File file = new File("C:/Users/Chris/Documents/SPRING/Rexam4/src/com/productiontrackingscreens/rexam/Optime.jrxml");
+        File file = new File("Reports/Optime.jrxml");
         InputStream stream = new FileInputStream(file);
         JasperDesign design = JRXmlLoader.load(stream);
         JasperReport report = JasperCompileManager.compileReport(design);
@@ -890,12 +986,14 @@ public class OptimeDataEntryScreen {
         // would be utilized by the report
         params.put("Date2", date2);
 
-        JasperPrint print = JasperFillManager.fillReport(report, params, conn);
-        JasperExportManager.exportReportToPdfFile(print, "opTimeReport" + date1 + "-" + date2 + ".pdf");
-
-        PDDocument pdf = PDDocument.load("opTimeReport" + date1 + "-" + date2 + ".pdf");
-        pdf.print();
-        pdf.close();
+        InputStream inputStream = new FileInputStream("Reports/Optime.jrxml");
+        JasperCompileManager.compileReportToFile("Reports/Optime.jrxml");
+        JasperDesign jasperDesign = JRXmlLoader.load(inputStream);
+        JasperReport jasperReport = JasperCompileManager.compileReport(jasperDesign);
+        JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, params, conn);
+        JasperViewer view = new net.sf.jasperreports.view.JasperViewer(jasperPrint, false);
+        view.setVisible(true);
+        view.toFront();
 
         conn.close();
 
@@ -906,7 +1004,7 @@ public class OptimeDataEntryScreen {
 
         Connection conn = SQLiteConnection.Connect();
 
-        File file = new File("C:/Users/Chris/Documents/SPRING/Rexam4/src/com/productiontrackingscreens/rexam/OptimeGroup.jrxml");
+        File file = new File("Reports/OptimeGroup.jrxml");
         InputStream stream = new FileInputStream(file);
         JasperDesign design = JRXmlLoader.load(stream);
         JasperReport report = JasperCompileManager.compileReport(design);
@@ -917,12 +1015,14 @@ public class OptimeDataEntryScreen {
         // would be utilized by the report
         params.put("Date2", date2);
 
-        JasperPrint print = JasperFillManager.fillReport(report, params, conn);
-        JasperExportManager.exportReportToPdfFile(print, "opTimeGroupReport" + date1 + "-" + date2 + ".pdf");
-
-        PDDocument pdf = PDDocument.load("opTimeGroupReport" + date1 + "-" + date2 + ".pdf");
-        pdf.print();
-        pdf.close();
+        InputStream inputStream = new FileInputStream("Reports/OptimeGroup.jrxml");
+        JasperCompileManager.compileReportToFile("Reports/OptimeGroup.jrxml");
+        JasperDesign jasperDesign = JRXmlLoader.load(inputStream);
+        JasperReport jasperReport = JasperCompileManager.compileReport(jasperDesign);
+        JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, params, conn);
+        JasperViewer view = new net.sf.jasperreports.view.JasperViewer(jasperPrint, false);
+        view.setVisible(true);
+        view.toFront();
 
         conn.close();
 
@@ -933,7 +1033,7 @@ public class OptimeDataEntryScreen {
 
         Connection conn = SQLiteConnection.Connect();
 
-        File file = new File("C:/Users/Chris/Documents/SPRING/Rexam4/src/com/productiontrackingscreens/rexam/OptimeCommentsReport.jrxml");
+        File file = new File("Reports/OptimeCommentsReport.jrxml");
         InputStream stream = new FileInputStream(file);
         JasperDesign design = JRXmlLoader.load(stream);
         JasperReport report = JasperCompileManager.compileReport(design);
@@ -944,12 +1044,14 @@ public class OptimeDataEntryScreen {
         // would be utilized by the report
         params.put("Shift", shiftIn);
 
-        JasperPrint print = JasperFillManager.fillReport(report, params, conn);
-        JasperExportManager.exportReportToPdfFile(print, "opTimeCommentsReport" + date1 + "-" + shiftIn + ".pdf");
-
-        PDDocument pdf = PDDocument.load("opTimeCommentsReport" + date1 + "-" + shiftIn + ".pdf");
-        pdf.print();
-        pdf.close();
+        InputStream inputStream = new FileInputStream("Reports/OptimeCommentsReport.jrxml");
+        JasperCompileManager.compileReportToFile("Reports/OptimeCommentsReport.jrxml");
+        JasperDesign jasperDesign = JRXmlLoader.load(inputStream);
+        JasperReport jasperReport = JasperCompileManager.compileReport(jasperDesign);
+        JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, params, conn);
+        JasperViewer view = new net.sf.jasperreports.view.JasperViewer(jasperPrint, false);
+        view.setVisible(true);
+        view.toFront();
 
         conn.close();
 
@@ -960,7 +1062,7 @@ public class OptimeDataEntryScreen {
 
         Connection conn = SQLiteConnection.Connect();
 
-        File file = new File("C:/Users/Chris/Documents/SPRING/Rexam4/src/com/productiontrackingscreens/rexam/OptimeShellsByMonthReport2.jrxml");
+        File file = new File("Reports/OptimeShellsByMonthReport2.jrxml");
         InputStream stream = new FileInputStream(file);
         JasperDesign design = JRXmlLoader.load(stream);
         JasperReport report = JasperCompileManager.compileReport(design);
@@ -969,12 +1071,14 @@ public class OptimeDataEntryScreen {
 
         params.put("Date1", date1); // note here you can add parameters which would be utilized by the report
 
-        JasperPrint print = JasperFillManager.fillReport(report, params, conn);
-        JasperExportManager.exportReportToPdfFile(print, "opTimeShellsByMonthReport" + date1 + "" + "" + ".pdf");
-
-        PDDocument pdf = PDDocument.load("opTimeShellsByMonthReport" + date1 + "" + "" + ".pdf");
-        pdf.print();
-        pdf.close();
+        InputStream inputStream = new FileInputStream("Reports/OptimeShellsByMonthReport2.jrxml");
+        JasperCompileManager.compileReportToFile("Reports/OptimeShellsByMonthReport2.jrxml");
+        JasperDesign jasperDesign = JRXmlLoader.load(inputStream);
+        JasperReport jasperReport = JasperCompileManager.compileReport(jasperDesign);
+        JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, params, conn);
+        JasperViewer view = new net.sf.jasperreports.view.JasperViewer(jasperPrint, false);
+        view.setVisible(true);
+        view.toFront();
 
         conn.close();
 
@@ -991,13 +1095,14 @@ public class OptimeDataEntryScreen {
             PreparedStatement pst = conn.prepareStatement(sql);
             pst.setQueryTimeout(5);
             ResultSet rs = pst.executeQuery();
+            
+            operatorCombo.addItem("NA");
 
             while (rs.next()) {
-
+                              
                 String name = rs.getString("Name");
                 operatorCombo.addItem(name);
-                packerCombo.addItem(name);
-                qcCombo.addItem(name);
+                
             }
 
             pst.close();
@@ -1118,6 +1223,8 @@ public class OptimeDataEntryScreen {
             PreparedStatement pst = conn.prepareStatement(sql);
             pst.setQueryTimeout(5);
             ResultSet rs = pst.executeQuery();
+            
+            shellTypeCombo.addItem("NA");
 
             while (rs.next()) {
 
@@ -1218,7 +1325,7 @@ public class OptimeDataEntryScreen {
         }
 
     }
-    
+
     public static void getDate(String titleIn, int reportType) {
 
         Date todaysDate = new Date();
@@ -1547,17 +1654,64 @@ public class OptimeDataEntryScreen {
         }
 
         try {
-            FileOutputStream output = new FileOutputStream("OptimeExcel.xls");
+            FileOutputStream output = new FileOutputStream("ExcelFiles/OptimeExcel.xls");
             workBook.write(output);
 
             Desktop dt = Desktop.getDesktop();
-            dt.open(new File("OptimeExcel.xls"));
+            dt.open(new File("ExcelFiles/OptimeExcel.xls"));
 
             output.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
 
+    }
+
+    public static void setModel(String yearIn, String monthIn, String dayIn) {
+
+        // Date
+        int yearInt = Integer.parseInt(yearIn);
+        int monthInt = Integer.parseInt(monthIn) - 1;
+        int dayInt = Integer.parseInt(dayIn);
+
+        OptimeDataEntryScreen.model.setDate(yearInt, monthInt, dayInt);
+    }
+
+    public static void setShiftCombo(String shiftIn) {
+        OptimeDataEntryScreen.shiftCombo.setSelectedItem(shiftIn);
+    }
+
+    public static void setCrewCombo(String crewIn) {
+        OptimeDataEntryScreen.crewCombo.setSelectedItem(crewIn);
+    }
+
+    public static void setModel(int yearIn, int monthIn, int dayIn) {
+        OptimeDataEntryScreen.model.setDate(yearIn, monthIn, dayIn);
+    }
+
+    public static void setCrewCombo(JComboBox crewCombo) {
+        OptimeDataEntryScreen.crewCombo = crewCombo;
+    }
+
+    public static void setOptimeNumberCombo(String optimeNumber) {
+        OptimeDataEntryScreen.optimeNumberCombo.setSelectedItem(optimeNumber);
+    }
+
+    public static void setOperatorCombo(String nameIn) {
+        OptimeDataEntryScreen.operatorCombo.setSelectedItem(nameIn);
+    }
+
+    public static void setPressCombo(String selectedIn) {
+
+        OptimeDataEntryScreen.pressCombo.setSelectedItem(selectedIn);
+    }
+
+    public static void setProductionTextField(String productionIn) {
+        OptimeDataEntryScreen.productionTextField.setText(productionIn);
+    }
+
+    public static void setShellTypeCombo(String shellTypeIn) {
+        OptimeDataEntryScreen.shellTypeCombo.setSelectedItem(shellTypeIn);
     }
 
 }

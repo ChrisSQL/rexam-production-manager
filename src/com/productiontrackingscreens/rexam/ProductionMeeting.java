@@ -31,6 +31,7 @@ import net.sourceforge.jdatepicker.impl.UtilDateModel;
 import com.database.rexam.SQLiteConnection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JScrollPane;
 
 public class ProductionMeeting {
 
@@ -94,13 +95,7 @@ public class ProductionMeeting {
 
         view1 = view;
 
-        // Add a view to analytics.
-        try {
-            SQLiteConnection.incrementViewsAnalytics(0, 0, 0, 0, 0, 0, 0, 1, 0);
-        } catch (SQLException e2) {
-            // TODO Auto-generated catch block
-            e2.printStackTrace();
-        }
+      
 
         try {
             for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
@@ -111,7 +106,7 @@ public class ProductionMeeting {
             }
         } catch (Exception e) {
 
-			// If Nimbus is not available, you can set the GUI to another look
+            // If Nimbus is not available, you can set the GUI to another look
             // and feel.
         }
 
@@ -127,7 +122,7 @@ public class ProductionMeeting {
         JPanel innerPanelUpper = new JPanel(new BorderLayout());
         outerPanel.add(innerPanelUpper);
 
-		// TopButton Panel
+        // TopButton Panel
         date = new JLabel("Date", SwingConstants.CENTER);
         meetingDate = new JLabel("Meeting Date", SwingConstants.CENTER);
 
@@ -147,7 +142,7 @@ public class ProductionMeeting {
         model.setSelected(true);
         datePanel = new JDatePanelImpl(model);
         datePicker = new JDatePickerImpl(datePanel);
-		// /////////////////////////////
+        // /////////////////////////////
         // Date 2 /////////////////////
         model2 = new UtilDateModel();
         model2.setDate(yearInt, monthInt, dayInt);
@@ -166,10 +161,10 @@ public class ProductionMeeting {
         topButtonPanel.setBackground(Color.GRAY);
         innerPanelUpper.add(topButtonPanel, BorderLayout.NORTH);
 
-		// MiddlePanel JLabels , JTextAreas
+        // MiddlePanel JLabels , JTextAreas
         JPanel middlePanel = new JPanel(new GridLayout(2, 2));
 
-		// 4 panels with BorderLayouts
+        // 4 panels with BorderLayouts
         JPanel panel1 = new JPanel(new BorderLayout());
         safetyIssues = new JLabel("Safety Issues", SwingConstants.CENTER);
         panel1.add(safetyIssues, BorderLayout.NORTH);
@@ -203,7 +198,7 @@ public class ProductionMeeting {
         engineeringActionsTextArea.setLineWrap(true);
         panel4.add(engineeringActionsTextArea, BorderLayout.CENTER);
 
-		// JPanel labelHeader4 = new JPanel();
+        // JPanel labelHeader4 = new JPanel();
         // engineeringActions = new JLabel("Engineering Actions");
         // labelHeader4.add(engineeringActions);
         // panel4.add(labelHeader4);
@@ -212,9 +207,9 @@ public class ProductionMeeting {
         middlePanel.add(panel3);
         middlePanel.add(panel4);
 
-		// JTablePanel
+        // JTablePanel
         JPanel tablePanel = new JPanel(new GridLayout(12, 8));
-		// JTable table = new JTable(12, 8);
+        // JTable table = new JTable(12, 8);
         // tablePanel.add(table);
 
         daysRemainingLabel = new JLabel("Days Remaining");
@@ -269,7 +264,7 @@ public class ProductionMeeting {
         A07HiFiShells = new JLabel("07 HiFi Shells");
         A08HiFiShells = new JLabel("08 HiFi Shells");
 
-		// -------------------------------------------------------------------------
+        // -------------------------------------------------------------------------
         NonPetUnlinedSilverShellsTextField1 = new JTextField("0");
         NonPetUnlinedSilverShellsTextField1.setText("0");
         NonPetUnlinedSilverShellsTextField2 = new JTextField("0");
@@ -284,7 +279,7 @@ public class ProductionMeeting {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 refreshTotals();
             }
 
@@ -300,7 +295,7 @@ public class ProductionMeeting {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 refreshTotals();
             }
 
@@ -316,7 +311,7 @@ public class ProductionMeeting {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 refreshTotals();
             }
 
@@ -328,7 +323,7 @@ public class ProductionMeeting {
             }
         });
 
-		// -------------------------------------------------------------------------
+        // -------------------------------------------------------------------------
         NonPetUnlinedGoldRx219TextField1 = new JTextField("0");
         NonPetUnlinedGoldRx219TextField1.setText("0");
         NonPetUnlinedGoldRx219TextField2 = new JTextField("0");
@@ -344,7 +339,7 @@ public class ProductionMeeting {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 refreshTotals();
             }
 
@@ -360,7 +355,7 @@ public class ProductionMeeting {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 refreshTotals();
             }
 
@@ -376,7 +371,7 @@ public class ProductionMeeting {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 refreshTotals();
             }
 
@@ -388,7 +383,7 @@ public class ProductionMeeting {
             }
         });
 
-		// -------------------------------------------------------------------------
+        // -------------------------------------------------------------------------
         Mod4FUnlinedSilverShellsTextField1 = new JTextField("0");
         Mod4FUnlinedSilverShellsTextField1.setText("0");
         Mod4FUnlinedSilverShellsTextField2 = new JTextField("0");
@@ -404,7 +399,7 @@ public class ProductionMeeting {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 refreshTotals();
             }
 
@@ -420,7 +415,7 @@ public class ProductionMeeting {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 refreshTotals();
             }
 
@@ -436,7 +431,7 @@ public class ProductionMeeting {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 refreshTotals();
             }
 
@@ -448,7 +443,7 @@ public class ProductionMeeting {
             }
         });
 
-		// -------------------------------------------------------------------------
+        // -------------------------------------------------------------------------
         NonPetUnlinedSilver215TextField1 = new JTextField("0");
         NonPetUnlinedSilver215TextField1.setText("0");
         NonPetUnlinedSilver215TextField2 = new JTextField("0");
@@ -464,7 +459,7 @@ public class ProductionMeeting {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 refreshTotals();
             }
 
@@ -480,7 +475,7 @@ public class ProductionMeeting {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 refreshTotals();
             }
 
@@ -496,7 +491,7 @@ public class ProductionMeeting {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 refreshTotals();
             }
 
@@ -508,7 +503,7 @@ public class ProductionMeeting {
             }
         });
 
-		// -------------------------------------------------------------------------
+        // -------------------------------------------------------------------------
         A03HiFiShellsTextField1 = new JTextField("0");
         A03HiFiShellsTextField1.setText("0");
         A03HiFiShellsTextField2 = new JTextField("0");
@@ -524,7 +519,7 @@ public class ProductionMeeting {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 refreshTotals();
             }
 
@@ -540,7 +535,7 @@ public class ProductionMeeting {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 refreshTotals();
             }
 
@@ -556,7 +551,7 @@ public class ProductionMeeting {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 refreshTotals();
             }
 
@@ -568,7 +563,7 @@ public class ProductionMeeting {
             }
         });
 
-		// -------------------------------------------------------------------------
+        // -------------------------------------------------------------------------
         A03HiFiShellsRX219TextField1 = new JTextField("0");
         A03HiFiShellsRX219TextField1.setText("0");
         A03HiFiShellsRX219TextField2 = new JTextField("0");
@@ -584,7 +579,7 @@ public class ProductionMeeting {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 refreshTotals();
             }
 
@@ -600,7 +595,7 @@ public class ProductionMeeting {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 refreshTotals();
             }
 
@@ -616,7 +611,7 @@ public class ProductionMeeting {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 refreshTotals();
             }
 
@@ -628,7 +623,7 @@ public class ProductionMeeting {
             }
         });
 
-		// -------------------------------------------------------------------------
+        // -------------------------------------------------------------------------
         A13HiFiShellsTextField1 = new JTextField("0");
         A13HiFiShellsTextField1.setText("0");
         A13HiFiShellsTextField2 = new JTextField("0");
@@ -644,7 +639,7 @@ public class ProductionMeeting {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 refreshTotals();
             }
 
@@ -660,7 +655,7 @@ public class ProductionMeeting {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 refreshTotals();
             }
 
@@ -676,7 +671,7 @@ public class ProductionMeeting {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 refreshTotals();
             }
 
@@ -688,7 +683,7 @@ public class ProductionMeeting {
             }
         });
 
-		// -------------------------------------------------------------------------
+        // -------------------------------------------------------------------------
         A07HiFiShellsTextField1 = new JTextField("0");
         A07HiFiShellsTextField1.setText("0");
         A07HiFiShellsTextField2 = new JTextField("0");
@@ -705,7 +700,7 @@ public class ProductionMeeting {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 refreshTotals();
             }
 
@@ -721,7 +716,7 @@ public class ProductionMeeting {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 refreshTotals();
             }
 
@@ -737,7 +732,7 @@ public class ProductionMeeting {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 refreshTotals();
             }
 
@@ -749,7 +744,7 @@ public class ProductionMeeting {
             }
         });
 
-		// -------------------------------------------------------------------------
+        // -------------------------------------------------------------------------
         daysRemainingTextField = new JTextField("1");
         daysRemainingTextField.setText("1");
         daysRemainingTextField.addFocusListener(new FocusListener() {
@@ -757,7 +752,7 @@ public class ProductionMeeting {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 refreshTotals();
             }
 
@@ -776,7 +771,7 @@ public class ProductionMeeting {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 refreshTotals();
             }
 
@@ -795,7 +790,7 @@ public class ProductionMeeting {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 refreshTotals();
             }
 
@@ -814,7 +809,7 @@ public class ProductionMeeting {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 refreshTotals();
             }
 
@@ -832,7 +827,7 @@ public class ProductionMeeting {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 refreshTotals();
             }
 
@@ -851,7 +846,7 @@ public class ProductionMeeting {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 refreshTotals();
             }
 
@@ -870,7 +865,7 @@ public class ProductionMeeting {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 refreshTotals();
             }
 
@@ -889,7 +884,7 @@ public class ProductionMeeting {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 refreshTotals();
             }
 
@@ -908,7 +903,7 @@ public class ProductionMeeting {
             @Override
             public void focusLost(FocusEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 refreshTotals();
             }
 
@@ -920,7 +915,7 @@ public class ProductionMeeting {
             }
         });
 
-		// -------------------------------------------------------------------------
+        // -------------------------------------------------------------------------
         tablePanel.add(NonPetUnlinedSilverShells);
         tablePanel.add(NonPetUnlinedSilverShellsTextField1);
         tablePanel.add(NonPetUnlinedSilverShellsTextField2);
@@ -1053,7 +1048,7 @@ public class ProductionMeeting {
         tablePanel.add(blank21);
         tablePanel.add(blank22);
 
-		// -------------------------------------------------------------------------
+        // -------------------------------------------------------------------------
         JPanel centerPanel = new JPanel(new BorderLayout());
 
         centerPanel.add(tablePanel, BorderLayout.SOUTH);
@@ -1102,13 +1097,14 @@ public class ProductionMeeting {
                     );
 
                     frame8.dispose();
+                    createSummaryScreen();
 
                 } catch (SQLException e1) {
                     // TODO Auto-generated catch block
                     e1.printStackTrace();
                 }
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
             }
         });
 
@@ -1118,8 +1114,11 @@ public class ProductionMeeting {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-                new ProductionMeeting(1, 2);
-                setLastEntry();
+                try {
+                    ProductionMeeting.createSummaryScreen();
+                } catch (SQLException ex) {
+                    Logger.getLogger(ProductionMeeting.class.getName()).log(Level.SEVERE, null, ex);
+                }
                 frame8.dispose();
             }
         });
@@ -1171,13 +1170,14 @@ public class ProductionMeeting {
                     );
 
                     frame8.dispose();
+                    createSummaryScreen();
 
                 } catch (SQLException e1) {
                     // TODO Auto-generated catch block
                     e1.printStackTrace();
                 }
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
             }
         });
 
@@ -1204,7 +1204,7 @@ public class ProductionMeeting {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 // Set ID
                 try {
                     selectedDate = (Date) datePicker.getModel().getValue();
@@ -1212,7 +1212,7 @@ public class ProductionMeeting {
                     Object[] array = new Object[41];
                     array = SQLiteConnection.ProductionMeetingReturnEntryByDate(selectedDate);
 
-					// String date = (String) array[1];
+                    // String date = (String) array[1];
                     // need to do
                     if (array[1] == null) {
 
@@ -1224,7 +1224,7 @@ public class ProductionMeeting {
                         String dateFormatted = (String) array[1];
                         int day = Integer.parseInt(dateFormatted.substring(8, 10)); // Correct
                         int month = Integer.parseInt(dateFormatted.substring(5, 7)) - 1; // Correct
-                        int year = Integer.parseInt(dateFormatted.substring(1, 4)); // Correct
+                        int year = Integer.parseInt(dateFormatted.substring(0, 4)); // Correct
 //						System.out.println(day);
 //						System.out.println(month);
 //						System.out.println(year);
@@ -1236,7 +1236,7 @@ public class ProductionMeeting {
 
                         int day2 = Integer.parseInt(dateFormatted2.substring(8, 10)); // Correct
                         int month2 = Integer.parseInt(dateFormatted2.substring(5, 7)) - 1; // Correct
-                        int year2 = Integer.parseInt(dateFormatted2.substring(1, 4)); // Correct
+                        int year2 = Integer.parseInt(dateFormatted2.substring(0, 4)); // Correct
                         model2.setDate(year2, month2, day2);
                         model2.setSelected(true);
 
@@ -1298,7 +1298,7 @@ public class ProductionMeeting {
                     // TODO Auto-generated catch block
                     e1.printStackTrace();
                 }
-				// currentId = (int)array[0];
+                // currentId = (int)array[0];
                 // Set Date
                 // Send in
 
@@ -1311,7 +1311,7 @@ public class ProductionMeeting {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 // Set ID
                 try {
 
@@ -1325,12 +1325,12 @@ public class ProductionMeeting {
 
                         currentId = currentId - 1;
 
-						// System.out.println("Previous Array 2" + array[2]);
+                        // System.out.println("Previous Array 2" + array[2]);
                         // Date 1
                         String dateFormatted = (String) array[1];
                         int day = Integer.parseInt(dateFormatted.substring(8, 10)); // Correct
                         int month = Integer.parseInt(dateFormatted.substring(5, 7)) - 1; // Correct
-                        int year = Integer.parseInt(dateFormatted.substring(1, 4)); // Correct
+                        int year = Integer.parseInt(dateFormatted.substring(0, 4)); // Correct
 //						System.out.println(day);
 //						System.out.println(month);
 //						System.out.println(year);
@@ -1342,7 +1342,7 @@ public class ProductionMeeting {
 
                         int day2 = Integer.parseInt(dateFormatted2.substring(8, 10)); // Correct
                         int month2 = Integer.parseInt(dateFormatted2.substring(5, 7)) - 1; // Correct
-                        int year2 = Integer.parseInt(dateFormatted2.substring(1, 4)); // Correct
+                        int year2 = Integer.parseInt(dateFormatted2.substring(0, 4)); // Correct
                         model2.setDate(year2, month2, day2);
                         model2.setSelected(true);
 
@@ -1398,12 +1398,12 @@ public class ProductionMeeting {
                     System.out.println(currentId);
                     refreshTotals();
 
-					// Fill Boxes with results
+                    // Fill Boxes with results
                 } catch (Exception e1) {
                     // TODO Auto-generated catch block
                     e1.printStackTrace();
                 }
-				// currentId = (int)array[0];
+                // currentId = (int)array[0];
                 // Set Date
                 // Send in
 
@@ -1416,7 +1416,7 @@ public class ProductionMeeting {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 // Set ID
                 try {
 
@@ -1434,7 +1434,7 @@ public class ProductionMeeting {
                         String dateFormatted = (String) array[1];
                         int day = Integer.parseInt(dateFormatted.substring(8, 10)); // Correct
                         int month = Integer.parseInt(dateFormatted.substring(5, 7)) - 1; // Correct
-                        int year = Integer.parseInt(dateFormatted.substring(1, 4)); // Correct
+                        int year = Integer.parseInt(dateFormatted.substring(0, 4)); // Correct
 //						System.out.println(day);
 //						System.out.println(month);
 //						System.out.println(year);
@@ -1446,7 +1446,7 @@ public class ProductionMeeting {
 
                         int day2 = Integer.parseInt(dateFormatted2.substring(8, 10)); // Correct
                         int month2 = Integer.parseInt(dateFormatted2.substring(5, 7)) - 1; // Correct
-                        int year2 = Integer.parseInt(dateFormatted2.substring(1, 4)); // Correct
+                        int year2 = Integer.parseInt(dateFormatted2.substring(0, 4)); // Correct
                         model2.setDate(year2, month2, day2);
                         model2.setSelected(true);
 
@@ -1503,7 +1503,7 @@ public class ProductionMeeting {
 
                     refreshTotals();
 
-					// Fill Boxes with results
+                    // Fill Boxes with results
                     // model.setDate(year2, month2, day2);
                     model.setSelected(true);
 
@@ -1511,7 +1511,7 @@ public class ProductionMeeting {
                     // TODO Auto-generated catch block
                     e1.printStackTrace();
                 }
-				// currentId = (int)array[0];
+                // currentId = (int)array[0];
                 // Set Date
                 // Send in
 
@@ -1534,7 +1534,7 @@ public class ProductionMeeting {
         // JPanel buttonsPanel = new JPanel(new GridLayout(1, 4));
         JPanel buttonsPanel = new JPanel(new FlowLayout());
 
-        buttonsPanel.add(find);
+        //buttonsPanel.add(find);
         buttonsPanel.add(previous);
         buttonsPanel.add(next);
 
@@ -1570,6 +1570,8 @@ public class ProductionMeeting {
 
         frame8.add(outerPanel);
         frame8.setVisible(true);
+        
+        SQLiteConnection.AnalyticsUpdate("ProductionMeeting");
     }
 
     private void setLastEntry() {
@@ -1583,7 +1585,7 @@ public class ProductionMeeting {
 
             System.out.println("Date " + result[1]);
 
-			// 27/08/2014
+            // 27/08/2014
 //			// Date 1
 //			 String dateFormatted = (String) result[1];
 //			//String dateFormatted = "28/08/2014";
@@ -1725,7 +1727,8 @@ public class ProductionMeeting {
         optionsPanel2.add(ExportToExcel);
 
         JPanel summaryPanel = SQLiteConnection.ProductionMeetingSummaryTable(1);
-
+        JScrollPane scrollPane = new JScrollPane(summaryPanel);
+        
 //        print.addActionListener(new ActionListener() {
 //
 //            @Override
@@ -1737,7 +1740,7 @@ public class ProductionMeeting {
 //        });
         optionsPanel2.setBackground(Color.GRAY);
 
-        outerPanel.add(summaryPanel, BorderLayout.CENTER);
+        outerPanel.add(scrollPane, BorderLayout.CENTER);
         outerPanel.add(optionsPanel2, BorderLayout.SOUTH);
         frameSummary.add(outerPanel);
         frameSummary.setVisible(true);
@@ -1752,82 +1755,80 @@ public class ProductionMeeting {
 
             Object[] array = SQLiteConnection.ProductionMeetingReturnEntryByID(currentId);
 
-                currentId = idIn;
+            currentId = idIn;
 
-                // Date 1
-                String dateFormatted = (String) array[1];
-                int day = Integer.parseInt(dateFormatted.substring(8, 10)); // Correct
-                int month = Integer.parseInt(dateFormatted.substring(5, 7)) - 1; // Correct
-                int year = Integer.parseInt(dateFormatted.substring(1, 4)); // Correct
+            // Date 1
+            String dateFormatted = (String) array[1];
+            int day = Integer.parseInt(dateFormatted.substring(8, 10)); // Correct
+            int month = Integer.parseInt(dateFormatted.substring(5, 7)) - 1; // Correct
+            int year = Integer.parseInt(dateFormatted.substring(0, 4)); // Correct
 //						System.out.println(day);
 //						System.out.println(month);
 //						System.out.println(year);
-                model.setDate(year, month, day);
-                model.setSelected(true);
+            model.setDate(year, month, day);
+            model.setSelected(true);
 
-                // Date 2
-                String dateFormatted2 = (String) array[2];
+            // Date 2
+            String dateFormatted2 = (String) array[2];
 
-                int day2 = Integer.parseInt(dateFormatted2.substring(8, 10)); // Correct
-                int month2 = Integer.parseInt(dateFormatted2.substring(5, 7)) - 1; // Correct
-                int year2 = Integer.parseInt(dateFormatted2.substring(1, 4)); // Correct
-                model2.setDate(year2, month2, day2);
-                model2.setSelected(true);
+            int day2 = Integer.parseInt(dateFormatted2.substring(8, 10)); // Correct
+            int month2 = Integer.parseInt(dateFormatted2.substring(5, 7)) - 1; // Correct
+            int year2 = Integer.parseInt(dateFormatted2.substring(0, 4)); // Correct
+            model2.setDate(year2, month2, day2);
+            model2.setSelected(true);
 
-                safetyIssuesTextArea.setText((String) array[3]);
-                productionActionsTextArea.setText((String) array[4]);
-                hygieneManagementOfChangeTextArea.setText((String) array[5]);
-                engineeringActionsTextArea.setText((String) array[6]);
+            safetyIssuesTextArea.setText((String) array[3]);
+            productionActionsTextArea.setText((String) array[4]);
+            hygieneManagementOfChangeTextArea.setText((String) array[5]);
+            engineeringActionsTextArea.setText((String) array[6]);
 
-                NonPetUnlinedSilverShellsTextField1.setText((String) array[7]);
-                NonPetlinedSilverShellsTextField1.setText((String) array[8]);
-                NonPetlinedSilverShellsTotal.setText((String) array[9]);
+            NonPetUnlinedSilverShellsTextField1.setText((String) array[7]);
+            NonPetlinedSilverShellsTextField1.setText((String) array[8]);
+            NonPetlinedSilverShellsTotal.setText((String) array[9]);
 
-                NonPetUnlinedGoldRx219TextField1.setText((String) array[10]);
-                NonPetlinedGoldRx219TextField1.setText((String) array[11]);
-                NonPetlinedGoldRx219Total.setText((String) array[12]);
+            NonPetUnlinedGoldRx219TextField1.setText((String) array[10]);
+            NonPetlinedGoldRx219TextField1.setText((String) array[11]);
+            NonPetlinedGoldRx219Total.setText((String) array[12]);
 
-                Mod4FUnlinedSilverShellsTextField1.setText((String) array[13]);
-                Mod4FlinedSilverShellsTextField1.setText((String) array[14]);
-                Mod4FlinedSilverShellsTextFieldTotal.setText((String) array[15]);
+            Mod4FUnlinedSilverShellsTextField1.setText((String) array[13]);
+            Mod4FlinedSilverShellsTextField1.setText((String) array[14]);
+            Mod4FlinedSilverShellsTextFieldTotal.setText((String) array[15]);
 
-                NonPetUnlinedSilver215TextField1.setText((String) array[16]);
-                NonPetlinedSilver215TextField1.setText((String) array[17]);
-                NonPetlinedSilver215TextFieldTotal.setText((String) array[18]);
+            NonPetUnlinedSilver215TextField1.setText((String) array[16]);
+            NonPetlinedSilver215TextField1.setText((String) array[17]);
+            NonPetlinedSilver215TextFieldTotal.setText((String) array[18]);
 
-                A03HiFiShellsTextField1.setText((String) array[19]);
-                A04HiFiShellsTextField1.setText((String) array[20]);
-                A04HiFiShellsTextFieldTotal.setText((String) array[21]);
+            A03HiFiShellsTextField1.setText((String) array[19]);
+            A04HiFiShellsTextField1.setText((String) array[20]);
+            A04HiFiShellsTextFieldTotal.setText((String) array[21]);
 
-                A03HiFiShellsRX219TextField1.setText((String) array[22]);
-                A04HiFiShellsRX219TextField1.setText((String) array[23]);
-                A04HiFiShellsRX219TextFieldTotal.setText((String) array[24]);
+            A03HiFiShellsRX219TextField1.setText((String) array[22]);
+            A04HiFiShellsRX219TextField1.setText((String) array[23]);
+            A04HiFiShellsRX219TextFieldTotal.setText((String) array[24]);
 
-                A13HiFiShellsTextField1.setText((String) array[25]);
-                A14HiFiShellsTextField1.setText((String) array[26]);
-                A14HiFiShellsTextFieldTotal.setText((String) array[27]);
+            A13HiFiShellsTextField1.setText((String) array[25]);
+            A14HiFiShellsTextField1.setText((String) array[26]);
+            A14HiFiShellsTextFieldTotal.setText((String) array[27]);
 
-                A07HiFiShellsTextField1.setText((String) array[28]);
-                A08HiFiShellsTextField1.setText((String) array[29]);
-                A08HiFiShellsTextFieldTotal.setText((String) array[30]);
+            A07HiFiShellsTextField1.setText((String) array[28]);
+            A08HiFiShellsTextField1.setText((String) array[29]);
+            A08HiFiShellsTextFieldTotal.setText((String) array[30]);
 
-                daysRemainingTextField.setText((String) array[31]);
-                packedEndsTextField.setText((String) array[32]);
-                monthlyLineLoadTextField.setText((String) array[33]);
-                remainingTextField.setText((String) array[34]);
-                dailyAverageTextField.setText((String) array[35]);
-                spoiledPercentageTextField.setText((String) array[36]);
-                daysGoneTextField.setText((String) array[37]);
-                lineLoadTextField.setText((String) array[38]);
-                packedVsLineLoadTextField.setText((String) array[39]);
-
-            
+            daysRemainingTextField.setText((String) array[31]);
+            packedEndsTextField.setText((String) array[32]);
+            monthlyLineLoadTextField.setText((String) array[33]);
+            remainingTextField.setText((String) array[34]);
+            dailyAverageTextField.setText((String) array[35]);
+            spoiledPercentageTextField.setText((String) array[36]);
+            daysGoneTextField.setText((String) array[37]);
+            lineLoadTextField.setText((String) array[38]);
+            packedVsLineLoadTextField.setText((String) array[39]);
 
             System.out.println("CurrentID " + currentId);
 
             refreshTotals();
 
-					// Fill Boxes with results
+            // Fill Boxes with results
             // model.setDate(year2, month2, day2);
             model.setSelected(true);
 
@@ -1853,7 +1854,7 @@ public class ProductionMeeting {
         NonPetlinedSilverShellsTextField2.setText(box2 * 198000 + "");
         NonPetlinedSilverShellsTotal.setText(box3 * 198000 + "");
 
-		// -----------------------------------------------------------------------
+        // -----------------------------------------------------------------------
         int box4 = Integer.valueOf(NonPetUnlinedGoldRx219TextField1.getText());
         int box5 = Integer.valueOf(NonPetlinedGoldRx219TextField1.getText());
         int box6 = box4 + box5;
@@ -1927,7 +1928,7 @@ public class ProductionMeeting {
         int remaining = monthlyLineLoad - packedEnds;
         remainingTextField.setText(remaining + "");
 
-		// -----------------------------------------------------------------------
+        // -----------------------------------------------------------------------
         int packedVsLined = packedEnds - ((Integer.valueOf(monthlyLineLoadTextField.getText()) * (Integer.valueOf(daysGoneTextField.getText()))));
         packedVsLineLoadTextField.setText(packedVsLined + "");
         // -----------------------------------------------------------------------

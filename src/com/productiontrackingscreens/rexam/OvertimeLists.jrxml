@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Jaspersoft Studio version last-->
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="OvertimeLists" pageWidth="595" pageHeight="842" columnWidth="535" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="8a305fce-c355-4e4e-a1c9-4ffdc8577024">
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="SQLite"/>
+	<style name="Title" fontName="Arial" fontSize="26" isBold="true" pdfFontName="Helvetica-Bold"/>
+	<style name="SubTitle" forecolor="#666666" fontName="Arial" fontSize="18"/>
+	<style name="Column header" forecolor="#666666" fontName="Arial" fontSize="12" isBold="true"/>
+	<style name="Detail" fontName="Arial" fontSize="12"/>
+	<parameter name="Crew" class="java.lang.String"/>
+	<queryString language="SQL">
+		<![CDATA[SELECT OvertimeQueuePosition AS Queue, Name, JobsTitle AS JOB, PhoneNumber, MobileNumber  FROM Employees WHERE Crew=$P{Crew} ORDER BY JOB, Queue, Name ;]]>
+	</queryString>
+	<field name="Queue" class="java.lang.Object"/>
+	<field name="Name" class="java.lang.Object"/>
+	<field name="PhoneNumber" class="java.lang.Object"/>
+	<field name="MobileNumber" class="java.lang.Object"/>
+	<field name="JOB" class="java.lang.Object"/>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<title>
+		<band height="62" splitType="Stretch">
+			<staticText>
+				<reportElement x="260" y="0" width="292" height="30" uuid="91a8feff-ffcf-4989-8fae-5816ddaea50f"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="18" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Overtime List]]></text>
+			</staticText>
+			<image>
+				<reportElement x="11" y="10" width="220" height="50" uuid="fe79f467-4537-4d62-9aa9-daec6b5a88a3"/>
+				<imageExpression><![CDATA["C:/Users/Chris/Documents/SPRING/Rexam3/rexam-logo.png"]]></imageExpression>
+			</image>
+			<textField>
+				<reportElement x="260" y="30" width="294" height="32" forecolor="#FC0C08" uuid="0d4eedb4-9246-4582-9994-5a9b847044c2"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="22" isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Crew "+$P{Crew}]]></textFieldExpression>
+			</textField>
+		</band>
+	</title>
+	<pageHeader>
+		<band splitType="Stretch"/>
+	</pageHeader>
+	<columnHeader>
+		<band height="36" splitType="Stretch">
+			<line>
+				<reportElement positionType="FixRelativeToBottom" x="0" y="35" width="555" height="1" uuid="476e2b0d-1955-406c-a823-430de540cdf6"/>
+				<graphicElement>
+					<pen lineWidth="0.5" lineColor="#999999"/>
+				</graphicElement>
+			</line>
+			<staticText>
+				<reportElement style="Column header" x="0" y="19" width="50" height="15" uuid="9f71a637-42d7-40ba-a242-794bf002eaed"/>
+				<textElement textAlignment="Center">
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Queue]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Column header" x="50" y="19" width="134" height="15" uuid="3bddc1bd-65ce-42d9-aa49-10878bc950f2"/>
+				<textElement textAlignment="Center"/>
+				<text><![CDATA[Name]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Column header" x="184" y="19" width="126" height="15" uuid="261dfc3d-f3e8-4dca-b298-e18a6c0acb0b"/>
+				<textElement textAlignment="Center"/>
+				<text><![CDATA[JOB]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Column header" x="310" y="19" width="123" height="15" uuid="44280c42-c231-4a68-9e8c-5516efa03f40"/>
+				<textElement textAlignment="Center"/>
+				<text><![CDATA[PhoneNumber]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="Column header" x="433" y="19" width="119" height="15" uuid="db896ed1-e541-4413-b682-40f95bc3ee6c"/>
+				<textElement textAlignment="Center"/>
+				<text><![CDATA[MobileNumber]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="16" splitType="Stretch">
+			<line>
+				<reportElement positionType="FixRelativeToBottom" x="0" y="15" width="555" height="1" uuid="e02243cc-d2ba-4fce-b6fb-b430bb1131c5"/>
+				<graphicElement>
+					<pen lineWidth="0.5" lineColor="#999999"/>
+				</graphicElement>
+			</line>
+			<textField>
+				<reportElement style="Detail" x="0" y="0" width="50" height="15" uuid="99cd7d7e-0b68-442a-b8d0-af3c5b306fdd"/>
+				<textElement textAlignment="Center">
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{Queue}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Detail" x="50" y="0" width="134" height="15" uuid="b35c8bb6-a439-44b1-92d6-13727b9af821"/>
+				<textElement textAlignment="Center"/>
+				<textFieldExpression><![CDATA[$F{Name}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Detail" x="184" y="0" width="126" height="15" uuid="cbd8d610-db46-4817-9291-a40400d67ca2"/>
+				<textElement textAlignment="Center">
+					<font isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{JOB}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Detail" x="310" y="0" width="123" height="15" uuid="a356c484-2904-427f-b16d-a8e37b7d9926"/>
+				<textElement textAlignment="Center"/>
+				<textFieldExpression><![CDATA[$F{PhoneNumber}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement style="Detail" x="433" y="0" width="119" height="15" uuid="292c964d-45b5-481e-8873-7b8923bbfbfd"/>
+				<textElement textAlignment="Center"/>
+				<textFieldExpression><![CDATA[$F{MobileNumber}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<columnFooter>
+		<band height="59" splitType="Stretch">
+			<line>
+				<reportElement positionType="FixRelativeToBottom" x="3" y="19" width="555" height="1" uuid="eaef99e7-9e02-4906-a463-5bd9aa99cbc6"/>
+				<graphicElement>
+					<pen lineWidth="0.5" lineColor="#999999"/>
+				</graphicElement>
+			</line>
+		</band>
+	</columnFooter>
+	<pageFooter>
+		<band height="20" splitType="Stretch">
+			<textField>
+				<reportElement style="Column header" x="433" y="0" width="80" height="20" uuid="a74789c7-252c-452a-be8d-32e831fea6d8"/>
+				<textElement textAlignment="Right">
+					<font size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Page "+$V{PAGE_NUMBER}+" of"]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report">
+				<reportElement style="Column header" x="513" y="0" width="40" height="20" uuid="f9b4570f-c3ff-43e9-b820-f607fcecee44"/>
+				<textElement>
+					<font size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[" " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField pattern="EEEEE dd MMMMM yyyy">
+				<reportElement style="Column header" x="0" y="0" width="197" height="20" uuid="9efba9bf-a11c-4f04-9acf-f8736f1fca66"/>
+				<textElement>
+					<font size="10" isBold="false"/>
+				</textElement>
+				<textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+	<summary>
+		<band splitType="Stretch"/>
+	</summary>
+</jasperReport>

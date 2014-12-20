@@ -26,6 +26,7 @@ import com.database.rexam.SQLiteConnection;
 import java.awt.Color;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JScrollPane;
 
 public class LSSPMActivityEntry2 extends JFrame {
 
@@ -53,13 +54,7 @@ public class LSSPMActivityEntry2 extends JFrame {
     public LSSPMActivityEntry2(int id, String date, String comment, int view)
             throws Exception {
 
-        // Add a view to analytics.
-        try {
-            SQLiteConnection.incrementViewsAnalytics(0, 0, 0, 0, 1, 0, 0, 0, 0);
-        } catch (SQLException e2) {
-            // TODO Auto-generated catch block
-            e2.printStackTrace();
-        }
+        
 
         try {
             for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
@@ -259,9 +254,14 @@ public class LSSPMActivityEntry2 extends JFrame {
                 System.out.println("CurrentID : " + currentId);
 
                 try {
-                    SQLiteConnection.LSSPMUpdate(currentId, date, commentTextArea.getText());
+                    SQLiteConnection.LSSPMUpdate(
+                            
+                            currentId, 
+                            date, 
+                            commentTextArea.getText());
 
                     frame2.dispose();
+                    createSummaryScreen();
 
                 } catch (SQLException e1) {
                     // TODO Auto-generated catch block
@@ -286,6 +286,7 @@ public class LSSPMActivityEntry2 extends JFrame {
                     SQLiteConnection.LSSPMInsert(dateFormatted, commentTextArea.getText());
 
                     frame2.dispose();
+                    createSummaryScreen();
 
                 } catch (Exception e1) {
                     // TODO Auto-generated catch block
@@ -316,12 +317,9 @@ public class LSSPMActivityEntry2 extends JFrame {
 
                 frame2.dispose();
                 try {
-                    new LSSPMActivityEntry2(2, "", "", -2);
-                    setLastEntry();
-
-                } catch (Exception e1) {
-                    // TODO Auto-generated catch block
-                    e1.printStackTrace();
+                    LSSPMActivityEntry2.createSummaryScreen();
+                } catch (SQLException ex) {
+                    Logger.getLogger(LSSPMActivityEntry2.class.getName()).log(Level.SEVERE, null, ex);
                 }
 
             }
@@ -374,7 +372,7 @@ public class LSSPMActivityEntry2 extends JFrame {
         }
 
 		// Add JButtons
-        topButtonPanel.add(find);
+        // topButtonPanel.add(find);
         topButtonPanel.add(previous);
         topButtonPanel.add(next);
 
@@ -402,6 +400,8 @@ public class LSSPMActivityEntry2 extends JFrame {
         commentsPanel.add(commentTextArea, BorderLayout.SOUTH);
 
         frame2.setVisible(true);
+        
+        SQLiteConnection.AnalyticsUpdate("LSSPMActivityEntry");
     }
 
     public void setLinerUsageToId(int idIn) {
@@ -416,7 +416,7 @@ public class LSSPMActivityEntry2 extends JFrame {
             String dateFormatted = (String) result[1];
             int day = Integer.parseInt(dateFormatted.substring(8, 10)); // Correct
             int month = Integer.parseInt(dateFormatted.substring(5, 7)) - 1; // Correct
-            int year = Integer.parseInt(dateFormatted.substring(1, 4)); // Correct
+            int year = Integer.parseInt(dateFormatted.substring(0, 4)); // Correct
 
             model.setDate(year, month, day);
             model.setSelected(true);
@@ -501,6 +501,7 @@ public class LSSPMActivityEntry2 extends JFrame {
         // }
 
         JPanel summaryPanel = SQLiteConnection.LSSPMSummaryTable(1);
+        JScrollPane scrollPane = new JScrollPane(summaryPanel);
 
 //        print.addActionListener(new ActionListener() {
 //
@@ -513,7 +514,7 @@ public class LSSPMActivityEntry2 extends JFrame {
 //        });
         optionsPanel2.setBackground(Color.GRAY);
 
-        outerPanel.add(summaryPanel, BorderLayout.CENTER);
+        outerPanel.add(scrollPane, BorderLayout.CENTER);
         outerPanel.add(optionsPanel2, BorderLayout.SOUTH);
         frameSummary.add(outerPanel);
         frameSummary.setVisible(true);

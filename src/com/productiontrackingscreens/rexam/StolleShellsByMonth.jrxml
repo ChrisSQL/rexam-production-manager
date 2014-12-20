@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Created with Jaspersoft Studio version 5.6.1.final using JasperReports Library version 5.6.1  -->
-<!-- 2014-09-13T00:37:44 -->
+<!-- Created with Jaspersoft Studio version last-->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="OptimeShellsByMonthReport2" pageWidth="842" pageHeight="595" orientation="Landscape" columnWidth="802" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="e5177f9b-63eb-4311-8abc-096bbb9e0e13">
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="New Data Adapter (2)"/>
 	<style name="Table_TH" mode="Opaque" backcolor="#F0F8FF">
@@ -598,16 +597,7 @@
 		<band splitType="Stretch"/>
 	</background>
 	<title>
-		<band height="91" splitType="Stretch">
-			<image>
-				<reportElement x="20" y="10" width="348" height="70" uuid="2499bb45-566c-44cb-aff4-a3869ecc347c">
-					<property name="local_mesure_unitx" value="pixel"/>
-					<property name="com.jaspersoft.studio.unit.x" value="px"/>
-					<property name="local_mesure_unity" value="pixel"/>
-					<property name="com.jaspersoft.studio.unit.y" value="px"/>
-				</reportElement>
-				<imageExpression><![CDATA["C:/Users/Chris/Documents/SPRING/Rexam4/rexam-logo.png"]]></imageExpression>
-			</image>
+		<band height="101" splitType="Stretch">
 			<staticText>
 				<reportElement x="420" y="0" width="381" height="40" uuid="5b4ac099-274b-4433-bb2f-38af9e93d2b8"/>
 				<textElement textAlignment="Center" verticalAlignment="Middle">
@@ -622,6 +612,10 @@
 				</textElement>
 				<textFieldExpression><![CDATA[$P{Date1}]]></textFieldExpression>
 			</textField>
+			<image>
+				<reportElement x="20" y="5" width="340" height="90" uuid="4dd434d7-f184-4139-be6f-df44b429632c"/>
+				<imageExpression><![CDATA["rexam-logo.png"]]></imageExpression>
+			</image>
 		</band>
 	</title>
 	<pageHeader>

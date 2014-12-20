@@ -29,10 +29,11 @@ import net.sourceforge.jdatepicker.impl.UtilDateModel;
 import com.database.rexam.SQLiteConnection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JScrollPane;
 
 public class MeetingQualityIssues {
 
-    static JButton add, find, next, previous, update, addNew, search, refresh, summary ;
+    static JButton add, find, next, previous, update, addNew, search, refresh, summary;
     JLabel date, percentageOfChecksDoneDays, percentageOfChecksDoneNights, customerComplaints, qualityIssuesPreviousDays, qualityIssuesToday,
             qualityEquipment, shellsMTD, HFICreateMTD, HFIRecoverMTD, HFIScrapMTD, endsInHFI, auditsDue;
     static JTextField percentageOfChecksDoneDaysText, percentageOfChecksDoneNightsText, customerComplaintsText, shellsMTDText, HFICreateMTDText,
@@ -55,13 +56,7 @@ public class MeetingQualityIssues {
 
     public MeetingQualityIssues(int id, int view) {
 
-        // Add a view to analytics.
-        try {
-            SQLiteConnection.incrementViewsAnalytics(0, 0, 0, 0, 0, 1, 0, 0, 0);
-        } catch (SQLException e2) {
-            // TODO Auto-generated catch block
-            e2.printStackTrace();
-        }
+        
 
         try {
             for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
@@ -110,33 +105,33 @@ public class MeetingQualityIssues {
         datePicker = new JDatePickerImpl(datePanel);
         // JTextFields
 
-        percentageOfChecksDoneDaysText = new JTextField();
+        percentageOfChecksDoneDaysText = new JTextField("0");
 //		PlainDocument doc1 = (PlainDocument) percentageOfChecksDoneDaysText.getDocument();
 //		doc1.setDocumentFilter(new MyIntFilter());
 
-        percentageOfChecksDoneNightsText = new JTextField();
+        percentageOfChecksDoneNightsText = new JTextField("0");
 //		PlainDocument doc2 = (PlainDocument) percentageOfChecksDoneNightsText.getDocument();
 //		doc2.setDocumentFilter(new MyIntFilter());
 
-        customerComplaintsText = new JTextField();
+        customerComplaintsText = new JTextField("0");
 
-        shellsMTDText = new JTextField();
+        shellsMTDText = new JTextField("0");
         PlainDocument doc3 = (PlainDocument) shellsMTDText.getDocument();
         doc3.setDocumentFilter(new MyIntFilter());
 
-        HFICreateMTDText = new JTextField();
+        HFICreateMTDText = new JTextField("0");
         PlainDocument doc4 = (PlainDocument) HFICreateMTDText.getDocument();
         doc4.setDocumentFilter(new MyIntFilter());
 
-        HFIRecoverMTDText = new JTextField();
+        HFIRecoverMTDText = new JTextField("0");
         PlainDocument doc5 = (PlainDocument) HFIRecoverMTDText.getDocument();
         doc5.setDocumentFilter(new MyIntFilter());
 
-        HFIScrapMTDText = new JTextField();
+        HFIScrapMTDText = new JTextField("0");
         PlainDocument doc6 = (PlainDocument) HFIScrapMTDText.getDocument();
         doc6.setDocumentFilter(new MyIntFilter());
 
-        endsInHFIText = new JTextField();
+        endsInHFIText = new JTextField("0");
         PlainDocument doc7 = (PlainDocument) endsInHFIText.getDocument();
         doc7.setDocumentFilter(new MyIntFilter());
 
@@ -163,6 +158,7 @@ public class MeetingQualityIssues {
                     );
 
                     frame7.dispose();
+                    createSummaryScreen();
 
                 } catch (SQLException e1) {
                     // TODO Auto-generated catch block
@@ -179,8 +175,11 @@ public class MeetingQualityIssues {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-                new MeetingQualityIssues(1, 2);
-                setLastEntry();
+                try {
+                    MeetingQualityIssues.createSummaryScreen();
+                } catch (SQLException ex) {
+                    Logger.getLogger(MeetingQualityIssues.class.getName()).log(Level.SEVERE, null, ex);
+                }
                 frame7.dispose();
             }
         });
@@ -216,6 +215,7 @@ public class MeetingQualityIssues {
                     );
 
                     frame7.dispose();
+                    createSummaryScreen();
 
                 } catch (SQLException e1) {
                     // TODO Auto-generated catch block
@@ -406,7 +406,7 @@ public class MeetingQualityIssues {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                
+
                 try {
                     frame7.dispose();
                     MeetingQualityIssues.createSummaryScreen();
@@ -415,21 +415,25 @@ public class MeetingQualityIssues {
                 }
             }
         });
-        
+
         // JTextAreas
         qualityIssuesPreviousDaysTextArea = new JTextArea(7, 20);
+        qualityIssuesPreviousDaysTextArea.setText("NA");
         qualityIssuesPreviousDaysTextArea.setLineWrap(true);
         qualityIssuesPreviousDaysTextArea.setWrapStyleWord(true);
 
         qualityIssuesTodayTextArea = new JTextArea(7, 20);
+        qualityIssuesTodayTextArea.setText("NA");
         qualityIssuesTodayTextArea.setLineWrap(true);
         qualityIssuesTodayTextArea.setWrapStyleWord(true);
 
         qualityEquipmentTextArea = new JTextArea(7, 20);
+        qualityEquipmentTextArea.setText("NA");
         qualityEquipmentTextArea.setLineWrap(true);
         qualityEquipmentTextArea.setWrapStyleWord(true);
 
         auditsDueTextArea = new JTextArea(7, 20);
+        auditsDueTextArea.setText("NA");
         auditsDueTextArea.setLineWrap(true);
         auditsDueTextArea.setWrapStyleWord(true);
 		// ////////
@@ -442,7 +446,7 @@ public class MeetingQualityIssues {
         // JPanel buttonsPanel = new JPanel(new GridLayout(1, 4));
         JPanel buttonsPanel = new JPanel(new FlowLayout());
 
-        buttonsPanel.add(find);
+        // buttonsPanel.add(find);
         buttonsPanel.add(previous);
         buttonsPanel.add(next);
 
@@ -534,7 +538,7 @@ public class MeetingQualityIssues {
             summary.setVisible(false);
 
         } // Searching
-         else if (view == 2) {
+        else if (view == 2) {
 
             // currentId = SQLiteConnection.StolleGetHighestID()+1;
             buttonsPanel.setBackground(Color.GRAY);
@@ -561,6 +565,8 @@ public class MeetingQualityIssues {
         outerPanel.add(buttonPanel, BorderLayout.SOUTH);
 
         frame7.setVisible(true);
+        
+        SQLiteConnection.AnalyticsUpdate("MeetingQualityIssues");
     }
 
     public static void createSummaryScreen() throws SQLException {
@@ -619,10 +625,11 @@ public class MeetingQualityIssues {
 
         optionsPanel2.add(addNew);
         optionsPanel2.add(refresh);
-    //   optionsPanel2.add(print);
+        //   optionsPanel2.add(print);
         optionsPanel2.add(ExportToExcel);
 
         JPanel summaryPanel = SQLiteConnection.MeetingQualityIssuesSummaryTable(1);
+        JScrollPane scrollPane = new JScrollPane(summaryPanel);
 
 //        print.addActionListener(new ActionListener() {
 //
@@ -635,7 +642,7 @@ public class MeetingQualityIssues {
 //        });
         optionsPanel2.setBackground(Color.GRAY);
 
-        outerPanel.add(summaryPanel, BorderLayout.CENTER);
+        outerPanel.add(scrollPane, BorderLayout.CENTER);
         outerPanel.add(optionsPanel2, BorderLayout.SOUTH);
         frameSummary.add(outerPanel);
         frameSummary.setVisible(true);
@@ -661,8 +668,8 @@ public class MeetingQualityIssues {
             model.setDate(year, month, day);
             model.setSelected(true);
 
-            percentageOfChecksDoneDaysText.setText((Double) array[2]+"");
-            percentageOfChecksDoneNightsText.setText((Double) array[3]+"");
+            percentageOfChecksDoneDaysText.setText((Double) array[2] + "");
+            percentageOfChecksDoneNightsText.setText((Double) array[3] + "");
             customerComplaintsText.setText((String) array[4]);
             qualityIssuesPreviousDaysTextArea.setText((String) array[5]);
             qualityIssuesTodayTextArea.setText((String) array[6]);
@@ -704,7 +711,7 @@ public class MeetingQualityIssues {
             // Date
             String dateFormatted = (String) result[1];
             System.out.println("Date Formatted : " + dateFormatted);
-            int day = Integer.parseInt(dateFormatted.substring(8,10)); // Correct
+            int day = Integer.parseInt(dateFormatted.substring(8, 10)); // Correct
             int month = Integer.parseInt(dateFormatted.substring(5, 7)) - 1; // Correct
             int year = Integer.parseInt(dateFormatted.substring(0, 4)); // Correct
 

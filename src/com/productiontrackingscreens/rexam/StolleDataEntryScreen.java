@@ -33,11 +33,8 @@ import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.border.EmptyBorder;
 import javax.swing.text.PlainDocument;
 
-import org.apache.pdfbox.pdmodel.PDDocument;
-
 import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JasperCompileManager;
-import net.sf.jasperreports.engine.JasperExportManager;
 import net.sf.jasperreports.engine.JasperFillManager;
 import net.sf.jasperreports.engine.JasperPrint;
 import net.sf.jasperreports.engine.JasperReport;
@@ -48,1412 +45,1562 @@ import net.sourceforge.jdatepicker.impl.JDatePickerImpl;
 import net.sourceforge.jdatepicker.impl.UtilDateModel;
 
 import com.database.rexam.SQLiteConnection;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.JDialog;
+import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
+import net.sf.jasperreports.view.JasperViewer;
 
 public class StolleDataEntryScreen {
 
-	static JButton add, find, next, previous, update, addNew, search, newEntry, refresh, exportToExcel, summary;
-	static JLabel dateLabel, shiftLabel, crewLabel, operatorLabel, optimeNumberLabel, pressLabel, pressSpeedLabel, shellTypeLabel, productionLabel,
-			commentsLabel, packerLabel, qcInspectorLabel, stolleProductionLabel, packedEndsLabel, HFICreatedLabel, HFIRecoveredLabel,
-			HFIScrappedLabel, sacobaDowntimeLabel;
-	static JTextField dateTextField, pressSpeedTextField, productionTextField, stolleProductionTextField, packedEndsTextField, HFICreatedTextField,
-			HFIRecoveredTextField, HFIScrappedTextField, sacobaDowntimeTextField;
-	static JTextArea commentsTextArea;
-	static int view, currentId;
-	static Date selectedDate;
-	static JComboBox operatorCombo, shiftCombo, crewCombo, pressCombo, packerCombo, qcCombo, optimeNumberCombo, shellTypeCombo;
-	static JFrame frameSummary;
-
-	UtilDateModel model;
-	JDatePanelImpl datePanel;
-	JDatePickerImpl datePicker;
-
-	public static void main(String[] args) throws SQLException {
-
-		new StolleDataEntryScreen(1, -1);
-
-	}
-
-	public StolleDataEntryScreen(int idIn, int view) throws SQLException {
-
-		// Add a view to analytics.
-		try {
-			SQLiteConnection.incrementViewsAnalytics(0, 0, 0, 0, 0, 0, 0, 0, 1);
-		}
-		catch (SQLException e2) {
-			// TODO Auto-generated catch block
-			e2.printStackTrace();
-		}
-
-		try {
-			for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-				if ("Nimbus".equals(info.getName())) {
-					UIManager.setLookAndFeel(info.getClassName());
-					break;
-				}
-			}
-		}
-		catch (Exception e) {
-			// If Nimbus is not available, you can set the GUI to another look
-			// and feel.
-		}
-
-		// Fill Combos From Database
-		shiftCombo = new JComboBox();
-		crewCombo = new JComboBox();
-		optimeNumberCombo = new JComboBox();
-		shellTypeCombo = new JComboBox();
-		operatorCombo = new JComboBox();
-		packerCombo = new JComboBox();
-		qcCombo = new JComboBox();
-		pressCombo = new JComboBox();
-		fillCombos();
-		// ////////////////////////////
-
-		JFrame frame5 = new JFrame();
-		// frame5.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-
-		JPanel outerPanel = new JPanel();
-		outerPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
-
-		frame5.setTitle("Stolle Data Entry");
-		frame5.setSize(360, 700);
-		frame5.setLocationRelativeTo(null);
-		outerPanel.setLayout(new BorderLayout());
-
-		// Create Buttons , Labels, Checkboxes etc...
-
-		Date date = new Date();
-		String modifiedDate = new SimpleDateFormat("yyyy-MM-dd").format(date);
-		String year = modifiedDate.substring(0, 4);
-		int yearInt = Integer.parseInt(year);
-		String month = modifiedDate.substring(5, 7);
-		int monthInt = Integer.parseInt(month) - 1;
-		String day = modifiedDate.substring(8, 10);
-		int dayInt = Integer.parseInt(day);
-		model = new UtilDateModel();
-		model.setDate(yearInt, monthInt, dayInt);
-		model.setSelected(true);
-		datePanel = new JDatePanelImpl(model);
-		datePicker = new JDatePickerImpl(datePanel);
-
-		summary = new JButton("Summary");
-		summary.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-
-				// TODO Auto-generated method stub
-				try {
-					frame5.dispose();
-					createSummaryScreen();
-				}
-				catch (SQLException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-
-			}
-		});
-
-		add = new JButton("Save Record");
-		add.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-
-				selectedDate = (Date) datePicker.getModel().getValue();
-				String date = new SimpleDateFormat("yyyy-MM-dd").format(selectedDate);
-
-				try {
-					SQLiteConnection.StolleInsert(
-
-							// int idIn, String dateIn, int shiftIn,
-							// String crewIn, String pressIn, String operatorIn,
-							// String packerIn, String QCInspectorIn,
-							// int stolleProductionIn, int packedEndsIn, int
-							// HFICreatedIn, int HFIRecoveredIn,
-							// int HFIScrappedIn, int SacobaDowntime
-
-							SQLiteConnection.StolleGetHighestID() + 1, 
-							date,
-							Integer.parseInt((String) shiftCombo.getSelectedItem()), 
-							(String) crewCombo.getSelectedItem(),
-							(String) pressCombo.getSelectedItem(), 
-							(String) operatorCombo.getSelectedItem(), 
-							(String) packerCombo.getSelectedItem(),
-							(String) qcCombo.getSelectedItem(), 
-							Integer.parseInt(pressSpeedTextField.getText()),
-							Integer.parseInt(stolleProductionTextField.getText()), 
-							Integer.parseInt(packedEndsTextField.getText()),
-							Integer.parseInt(HFICreatedTextField.getText()), 
-							Integer.parseInt(HFIRecoveredTextField.getText()),
-							Integer.parseInt(HFIScrappedTextField.getText()), 
-							Integer.parseInt(sacobaDowntimeTextField.getText()),
-							commentsTextArea.getText()
-
-					);
-
-					frame5.dispose();
-
-				}
-				catch (SQLException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-
-				// TODO Auto-generated method stub
-
-			}
-		});
-
-		search = new JButton("Search Mode");
-		search.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-
-				// TODO Auto-generated method stub
-
-				try {
-					new StolleDataEntryScreen(1, -2);
-					setLastEntry();
-				}
-				catch (SQLException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-				frame5.dispose();
-
-			}
-		});
-
-		addNew = new JButton("New Entry Mode");
-		addNew.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-
-				// TODO Auto-generated method stub
-
-				try {
-					new StolleDataEntryScreen(1, -1);
-				}
-				catch (SQLException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-				frame5.dispose();
-
-			}
-		});
-
-		update = new JButton("Update Record");
-		update.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-
-				selectedDate = (Date) datePicker.getModel().getValue();
-				String date = new SimpleDateFormat("yyyy-MM-dd").format(selectedDate);
-
-				try {
-					SQLiteConnection.StolleUpdate(
-
-					date, Integer.parseInt((String) shiftCombo.getSelectedItem()), (String) crewCombo.getSelectedItem(),
-							(String) pressCombo.getSelectedItem(), (String) operatorCombo.getSelectedItem(), (String) packerCombo.getSelectedItem(),
-							(String) qcCombo.getSelectedItem(), Integer.parseInt(pressSpeedTextField.getText()),
-							Integer.parseInt(stolleProductionTextField.getText()), Integer.parseInt(packedEndsTextField.getText()),
-							Integer.parseInt(HFICreatedTextField.getText()), Integer.parseInt(HFIRecoveredTextField.getText()),
-							Integer.parseInt(HFIScrappedTextField.getText()), Integer.parseInt(sacobaDowntimeTextField.getText()),
-							commentsTextArea.getText(), currentId
-
-					);
-
-					frame5.dispose();
-
-				}
-				catch (SQLException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-
-				// TODO Auto-generated method stub
-
-			}
-		});
-
-		find = new JButton("Find Record");
-		find.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-
-				// TODO Auto-generated method stub
-
-				// Set ID
-				try {
-					selectedDate = (Date) datePicker.getModel().getValue();
-
-					Object[] array = new Object[16];
-					array = SQLiteConnection.StolleReturnEntryByDate(selectedDate);
-
-					// String date = (String) array[1];
-					// need to do
-
-					if (array[1] == null) {
-
-						SQLiteConnection.infoBox("No Result. Have you selected a date?", "");
-
-					}
-
-					else {
-
-						currentId = (int) array[0];
-
-						shiftCombo.setSelectedItem(array[2]);
-						crewCombo.setSelectedItem(array[3]);
-						pressCombo.setSelectedItem(array[4]);
-						operatorCombo.setSelectedItem(array[5]);
-						packerCombo.setSelectedItem(array[6]);
-						qcCombo.setSelectedItem(array[7]);
-
-						pressSpeedTextField.setText((String) array[8]);
-						stolleProductionTextField.setText((String) array[9]);
-						packedEndsTextField.setText((String) array[10]);
-						HFICreatedTextField.setText((String) array[11]);
-						HFIRecoveredTextField.setText((String) array[12]);
-						HFIScrappedTextField.setText((String) array[13]);
-						sacobaDowntimeTextField.setText((String) array[14]);
-
-						commentsTextArea.setText((String) array[15]);
-
-					}
-
-					System.out.println("CurrentID " + currentId);
-
-				}
-				catch (Exception e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-				// currentId = (int)array[0];
-				// Set Date
-				// Send in
-
-			}
-		});
-
-		next = new JButton("Next Record");
-		next.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-
-				// TODO Auto-generated method stub
-
-				// Set ID
-				try {
-
-					Object[] array = SQLiteConnection.StolleGetNextEntryById(currentId);
-
-					if (array[0] == null) {
-
-						SQLiteConnection.infoBox("No Next Result.", "");
-
-					}
-					else {
-
-						currentId = currentId + 1;
-
-						System.out.println("Array[1]" + array[1]);
-
-						String dateFormatted = (String) array[1];
-						System.out.println("Date Formatted : " + dateFormatted);
-						int year = Integer.parseInt(dateFormatted.substring(0, 4)); // Correct
-						int month = Integer.parseInt(dateFormatted.substring(5, 7)) - 1; // Correct
-						int day = Integer.parseInt(dateFormatted.substring(8, 10)); // Correct
-
-						model.setDate(year, month, day);
-						model.setSelected(true);
-
-						shiftCombo.setSelectedItem(array[2]);
-						crewCombo.setSelectedItem(array[3]);
-						pressCombo.setSelectedItem(array[4]);
-						operatorCombo.setSelectedItem(array[5]);
-						packerCombo.setSelectedItem(array[6]);
-						qcCombo.setSelectedItem(array[7]);
-
-						pressSpeedTextField.setText((String) array[8]);
-						stolleProductionTextField.setText((String) array[9]);
-						packedEndsTextField.setText((String) array[10]);
-						HFICreatedTextField.setText((String) array[11]);
-						HFIRecoveredTextField.setText((String) array[12]);
-						HFIScrappedTextField.setText((String) array[13]);
-						sacobaDowntimeTextField.setText((String) array[14]);
-
-						commentsTextArea.setText((String) array[15]);
-
-					}
-
-					System.out.println("CurrentID " + currentId);
-
-					// Fill Boxes with results
-
-					// model.setDate(year2, month2, day2);
-					model.setSelected(true);
-
-				}
-				catch (Exception e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-				// currentId = (int)array[0];
-				// Set Date
-				// Send in
-
-			}
-		});
-
-		previous = new JButton("Previous Record");
-		previous.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-
-				// TODO Auto-generated method stub
-
-				// Set ID
-				try {
-
-					Object[] array = SQLiteConnection.StolleGetPreviousEntryById(currentId);
-
-					if (array[0] == null) {
-
-						SQLiteConnection.infoBox("No Previous Result.", "");
-
-					}
-					else {
-
-						currentId = currentId - 1;
-
-						System.out.println("Array[1]" + array[1]);
-
-						String dateFormatted = (String) array[1];
-						System.out.println("Date Formatted : " + dateFormatted);
-						int year = Integer.parseInt(dateFormatted.substring(0, 4)); // Correct
-						int month = Integer.parseInt(dateFormatted.substring(5, 7)) - 1; // Correct
-						int day = Integer.parseInt(dateFormatted.substring(8, 10)); // Correct
-
-						model.setDate(year, month, day);
-						model.setSelected(true);
-
-						shiftCombo.setSelectedItem(array[2]);
-						crewCombo.setSelectedItem(array[3]);
-						pressCombo.setSelectedItem(array[4]);
-						operatorCombo.setSelectedItem(array[5]);
-						packerCombo.setSelectedItem(array[6]);
-						qcCombo.setSelectedItem(array[7]);
-
-						pressSpeedTextField.setText((String) array[8]);
-						stolleProductionTextField.setText((String) array[9]);
-						packedEndsTextField.setText((String) array[10]);
-						HFICreatedTextField.setText((String) array[11]);
-						HFIRecoveredTextField.setText((String) array[12]);
-						HFIScrappedTextField.setText((String) array[13]);
-						sacobaDowntimeTextField.setText((String) array[14]);
-
-						commentsTextArea.setText((String) array[15]);
-
-					}
-
-					System.out.println(currentId);
-
-					// Fill Boxes with results
-
-				}
-				catch (Exception e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-				// currentId = (int)array[0];
-				// Set Date
-				// Send in
-
-			}
-		});
-
-		dateLabel = new JLabel("Date : ", SwingConstants.CENTER);
-		shiftLabel = new JLabel("Shift : ", SwingConstants.CENTER);
-		crewLabel = new JLabel("Crew : ", SwingConstants.CENTER);
-		packerLabel = new JLabel("Packer : ", SwingConstants.CENTER);
-		pressLabel = new JLabel("Press : ", SwingConstants.CENTER);
-		operatorLabel = new JLabel("Operator : ", SwingConstants.CENTER);
-		qcInspectorLabel = new JLabel("QC Inspector : ", SwingConstants.CENTER);
-		optimeNumberLabel = new JLabel("Optime Number : ", SwingConstants.CENTER);
-		pressSpeedLabel = new JLabel("Press Speed : ", SwingConstants.CENTER);
-		stolleProductionLabel = new JLabel("Stolle Production : ", SwingConstants.CENTER);
-		packedEndsLabel = new JLabel("Packed Ends : ", SwingConstants.CENTER);
-		HFICreatedLabel = new JLabel("HFI Created : ", SwingConstants.CENTER);
-		HFIRecoveredLabel = new JLabel("HFI Recovered : ", SwingConstants.CENTER);
-		HFIScrappedLabel = new JLabel("HFI Scrapped : ", SwingConstants.CENTER);
-		sacobaDowntimeLabel = new JLabel("Sacoba Downtime : ", SwingConstants.CENTER);
-		shellTypeLabel = new JLabel("Shell Type : ", SwingConstants.CENTER);
-		productionLabel = new JLabel("Production : ", SwingConstants.CENTER);
-		commentsLabel = new JLabel("Comments : ", SwingConstants.CENTER);
-
-		// Buttons Top Panel
-
-		// JPanel buttonsPanel = new JPanel(new GridLayout(1, 4));
-		JPanel buttonsPanel = new JPanel(new FlowLayout());
-		// buttonsPanel.setBackground(Color.GRAY);
-
-		buttonsPanel.add(find);
-		buttonsPanel.add(previous);
-		buttonsPanel.add(next);
-
-		outerPanel.add(buttonsPanel, BorderLayout.NORTH);
-
-		// Options Panel 1
-
-		dateTextField = new JTextField();
-
-		pressSpeedTextField = new JTextField();
-		PlainDocument doc1 = (PlainDocument) pressSpeedTextField.getDocument();
-		doc1.setDocumentFilter(new MyIntFilter());
-
-		stolleProductionTextField = new JTextField();
-		PlainDocument doc2 = (PlainDocument) stolleProductionTextField.getDocument();
-		doc2.setDocumentFilter(new MyIntFilter());
-
-		packedEndsTextField = new JTextField();
-		PlainDocument doc3 = (PlainDocument) packedEndsTextField.getDocument();
-		doc3.setDocumentFilter(new MyIntFilter());
-
-		HFICreatedTextField = new JTextField();
-		PlainDocument doc4 = (PlainDocument) HFICreatedTextField.getDocument();
-		doc4.setDocumentFilter(new MyIntFilter());
-
-		HFIRecoveredTextField = new JTextField();
-		PlainDocument doc5 = (PlainDocument) HFIRecoveredTextField.getDocument();
-		doc5.setDocumentFilter(new MyIntFilter());
-
-		HFIScrappedTextField = new JTextField();
-		PlainDocument doc6 = (PlainDocument) HFIScrappedTextField.getDocument();
-		doc6.setDocumentFilter(new MyIntFilter());
-
-		sacobaDowntimeTextField = new JTextField();
-		PlainDocument doc7 = (PlainDocument) sacobaDowntimeTextField.getDocument();
-		doc7.setDocumentFilter(new MyIntFilter());
-
-		// dateLabel, shiftLabel, crewLabel, operatorLabel, optimeNumberLabel,
-		// pressSpeedLabel, shellTypeLabel,
-		// productionLabel, commentsLabel;
-
-		JPanel optionPanel1 = new JPanel(new GridLayout(14, 2));
-		// optionPanel1.setBackground(Color.GRAY);
-
-		optionPanel1.add(dateLabel);
-		optionPanel1.add(datePicker);
-
-		optionPanel1.add(shiftLabel);
-		optionPanel1.add(shiftCombo);
-
-		optionPanel1.add(crewLabel);
-		optionPanel1.add(crewCombo);
-
-		optionPanel1.add(pressLabel);
-		optionPanel1.add(pressCombo);
-
-		optionPanel1.add(operatorLabel);
-		optionPanel1.add(operatorCombo);
-
-		optionPanel1.add(packerLabel);
-		optionPanel1.add(qcCombo);
-
-		optionPanel1.add(qcInspectorLabel);
-		optionPanel1.add(packerCombo);
-
-		optionPanel1.add(pressSpeedLabel);
-		optionPanel1.add(pressSpeedTextField);
-
-		optionPanel1.add(stolleProductionLabel);
-		optionPanel1.add(stolleProductionTextField);
-
-		optionPanel1.add(packedEndsLabel);
-		optionPanel1.add(packedEndsTextField);
-
-		optionPanel1.add(HFICreatedLabel);
-		optionPanel1.add(HFICreatedTextField);
-
-		optionPanel1.add(HFIRecoveredLabel);
-		optionPanel1.add(HFIRecoveredTextField);
-
-		optionPanel1.add(HFIScrappedLabel);
-		optionPanel1.add(HFIScrappedTextField);
-
-		optionPanel1.add(sacobaDowntimeLabel);
-		optionPanel1.add(sacobaDowntimeTextField);
-
-		// Adding
-		if (view == -1) {
-
-			find.setVisible(false);
-			previous.setVisible(false);
-			next.setVisible(false);
-			addNew.setVisible(false);
-			update.setVisible(false);
-			summary.setVisible(false);
-
-		}
-
-		// Searching
-		else {
-
-			currentId = SQLiteConnection.StolleGetHighestID() + 1;
-			buttonsPanel.setBackground(Color.GRAY);
-			search.setVisible(false);
-			model.setDate(yearInt, monthInt, dayInt);
-			model.setSelected(true);
-			add.setVisible(false);
-
-		}
-
-		JPanel commentsPanel = new JPanel();
-
-		commentsTextArea = new JTextArea(7, 28);
-		commentsTextArea.setLineWrap(true);
-		commentsTextArea.setWrapStyleWord(true);
-
-		commentsPanel.add(commentsLabel);
-		commentsPanel.add(commentsTextArea);
-
-		// optionPanel1.add(productionLabel);
-		// optionPanel1.add(productionTextField);
-
-		outerPanel.add(optionPanel1, BorderLayout.CENTER);
-
-		// Options Panel 2
-
-		JPanel optionsPanel2 = new JPanel(new FlowLayout());
-		optionsPanel2.add(summary);
-		optionsPanel2.add(search);
-		optionsPanel2.add(update);
-		optionsPanel2.add(add);
-		optionsPanel2.setBackground(Color.GRAY);
-
-		JPanel bottomPanel = new JPanel(new BorderLayout());
-
-		bottomPanel.add(commentsPanel, BorderLayout.NORTH);
-		bottomPanel.add(optionsPanel2, BorderLayout.SOUTH);
-		outerPanel.add(bottomPanel, BorderLayout.SOUTH);
-
-		// JLabel dateLabel, shiftLabel, crewLabel, operatorLabel,
-		// optimeNumberLabel, pressSpeedLabel, shellTypeLabel,
-		// productionLabel, commentsLabel;
-
-		outerPanel.repaint();
-		frame5.add(outerPanel);
-
-		frame5.setVisible(true);
-
-	}
-
-	private void setLastEntry() {
-
-		try {
-
-			int highestID = SQLiteConnection.StolleGetHighestID();
-			System.out.println("Highest ID : " + highestID);
-			Object[] result = new Object[16];
-			result = SQLiteConnection.StolleReturnEntryByID(highestID);
-
-			System.out.println("Date " + result[1]);
-
-			// Date
-			String dateFormatted = (String) result[1];
-			System.out.println("Date Formatted : " + dateFormatted);
-			int day = Integer.parseInt(dateFormatted.substring(8, 10)); // Correct
-			int month = Integer.parseInt(dateFormatted.substring(5, 7)) - 1; // Correct
-			int year = Integer.parseInt(dateFormatted.substring(0,4)); // Correct
-			model.setDate(year, month, day);
-			model.setSelected(true);
-
-			// Shift, Crew, Module, Operator, Liner, LinerInfeed, ShellsSpoiled,
-			// CalculatedSpoilage
-
-			shiftCombo.setSelectedItem(result[2]);
-			crewCombo.setSelectedItem(result[3]);
-			pressCombo.setSelectedItem(result[4]);
-			operatorCombo.setSelectedItem(result[5]);
-			packerCombo.setSelectedItem(result[6]);
-			qcCombo.setSelectedItem(result[7]);
-			pressSpeedTextField.setText((String) result[8]);
-			stolleProductionTextField.setText((String) result[9]);
-			packedEndsTextField.setText((String) result[10]);
-			HFICreatedTextField.setText((String) result[11]);
-			HFIRecoveredTextField.setText((String) result[12]);
-			HFIScrappedTextField.setText((String) result[13]);
-			sacobaDowntimeTextField.setText((String) result[14]);
-			commentsTextArea.setText((String) result[15]);
-
-			currentId = highestID;
-
-		}
-		catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-	}
-
-	public static void createSummaryScreen() throws SQLException {
-
-		newEntry = new JButton("New Entry Mode");
-		newEntry.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-
-				frameSummary.dispose();
-				try {
-					new StolleDataEntryScreen(2, -1);
-				}
-				catch (SQLException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-
-			}
-		});
-		refresh = new JButton("Refresh");
-		refresh.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-
-				frameSummary.dispose();
-				try {
-					StolleDataEntryScreen.createSummaryScreen();
-				}
-				catch (SQLException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-
-			}
-		});
-		               
-                JButton print = new JButton("Print Report");
-                
-                exportToExcel = new JButton("Export To Excel");
-                exportToExcel.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                                         
-                    OptimeDataEntryScreen.exportToExcel();
-                    
+    static JButton add, find, next, previous, update, addNew, search, newEntry, refresh, exportToExcel, summary, delete;
+    static JLabel dateLabel, shiftLabel, crewLabel, operatorLabel, optimeNumberLabel, pressLabel, pressSpeedLabel, shellTypeLabel, productionLabel,
+            commentsLabel, packerLabel, qcInspectorLabel, stolleProductionLabel, packedEndsLabel, HFICreatedLabel, HFIRecoveredLabel,
+            HFIScrappedLabel, sacobaDowntimeLabel;
+    static JTextField dateTextField, pressSpeedTextField, productionTextField, stolleProductionTextField, packedEndsTextField, HFICreatedTextField,
+            HFIRecoveredTextField, HFIScrappedTextField, sacobaDowntimeTextField;
+    static JTextArea commentsTextArea;
+    static int view, currentId;
+    static Date selectedDate;
+    static JComboBox operatorCombo, shiftCombo, crewCombo, pressCombo, packerCombo, qcCombo, optimeNumberCombo, shellTypeCombo;
+    static JFrame frameSummary;
+
+    static UtilDateModel model;
+    JDatePanelImpl datePanel;
+    JDatePickerImpl datePicker;
+
+    public static void main(String[] args) throws SQLException {
+
+        new StolleDataEntryScreen(1, -1);
+
+    }
+
+    public StolleDataEntryScreen(int idIn, int view) throws SQLException {
+
+        try {
+            for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    UIManager.setLookAndFeel(info.getClassName());
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            // If Nimbus is not available, you can set the GUI to another look
+            // and feel.
+        }
+
+        // Fill Combos From Database
+        shiftCombo = new JComboBox();
+        crewCombo = new JComboBox();
+        optimeNumberCombo = new JComboBox();
+        shellTypeCombo = new JComboBox();
+        operatorCombo = new JComboBox();
+        packerCombo = new JComboBox();
+        qcCombo = new JComboBox();
+        pressCombo = new JComboBox();
+        fillCombos();
+        // ////////////////////////////
+
+        JFrame frame5 = new JFrame();
+        // frame5.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+
+        JPanel outerPanel = new JPanel();
+        outerPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
+
+        frame5.setTitle("Stolle Data Entry");
+        frame5.setSize(360, 700);
+        frame5.setLocationRelativeTo(null);
+        outerPanel.setLayout(new BorderLayout());
+
+        // Create Buttons , Labels, Checkboxes etc...
+        Date date = new Date();
+        String modifiedDate = new SimpleDateFormat("yyyy-MM-dd").format(date);
+        String year = modifiedDate.substring(0, 4);
+        int yearInt = Integer.parseInt(year);
+        String month = modifiedDate.substring(5, 7);
+        int monthInt = Integer.parseInt(month) - 1;
+        String day = modifiedDate.substring(8, 10);
+        int dayInt = Integer.parseInt(day);
+        model = new UtilDateModel();
+        model.setDate(yearInt, monthInt, dayInt);
+        model.setSelected(true);
+        datePanel = new JDatePanelImpl(model);
+        datePicker = new JDatePickerImpl(datePanel);
+
+        summary = new JButton("Summary");
+        summary.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                // TODO Auto-generated method stub
+                try {
+                    frame5.dispose();
+                    createSummaryScreen();
+                } catch (SQLException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
+
+            }
+        });
+
+        delete = new JButton("Delete");
+        delete.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                JDialog.setDefaultLookAndFeelDecorated(true);
+                int response = JOptionPane.showConfirmDialog(null, "Are you sure you want to delete?", "Confirm",
+                        JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                if (response == JOptionPane.NO_OPTION) {
+                    System.out.println("No button clicked");
+                } else if (response == JOptionPane.YES_OPTION) {
+                    try {
+                        // Delete CurrentID
+                        SQLiteConnection.StolleDelete(currentId);
+
+                        // Create Summary Screen
+                        frameSummary.dispose();
+                        frame5.dispose();
+
+                        createSummaryScreen();
+                    } catch (SQLException ex) {
+                        Logger.getLogger(LinerDataEntryScreen.class.getName()).log(Level.SEVERE, null, ex);
                     }
-                });
+                } else if (response == JOptionPane.CLOSED_OPTION) {
+                    System.out.println("JOptionPane closed");
+                }
 
-		// Outer Frame
-		frameSummary = new JFrame("Stolle Production Report");
-		frameSummary.setSize(1366, 768);
-		frameSummary.setLocationRelativeTo(null);
+            }
+        });
 
-		// JPanel
-		JPanel outerPanel = new JPanel(new BorderLayout());
-		outerPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
+        add = new JButton("Save Record");
+        add.addActionListener(new ActionListener() {
 
-		JPanel optionsPanel2 = new JPanel(new FlowLayout());
+            @Override
+            public void actionPerformed(ActionEvent e) {
 
-		// if (view == 2) {
-		optionsPanel2.add(newEntry);
-		optionsPanel2.add(refresh);
-		optionsPanel2.add(print);
-                optionsPanel2.add(exportToExcel);
-		// }
+                try {
+                    selectedDate = (Date) datePicker.getModel().getValue();
+                    String date = new SimpleDateFormat("yyyy-MM-dd").format(selectedDate);
+                    String year = new SimpleDateFormat("yyyy").format(selectedDate);
+                    String month = new SimpleDateFormat("MM").format(selectedDate);
+                    String day = new SimpleDateFormat("dd").format(selectedDate);
 
-		JPanel summaryPanel = SQLiteConnection.StolleSummaryTable(1);
-		print.addActionListener(new ActionListener() {
+                    if (SQLiteConnection.StolleExists(year, month, day, (String) pressCombo.getSelectedItem(), (String) shiftCombo.getSelectedItem())) {
 
-			@Override
-			public void actionPerformed(ActionEvent e) {
+                        try {
+                            SQLiteConnection.StolleUpdate(
+                                    date, Integer.parseInt((String) shiftCombo.getSelectedItem()), (String) crewCombo.getSelectedItem(),
+                                    (String) pressCombo.getSelectedItem(), (String) operatorCombo.getSelectedItem(), (String) packerCombo.getSelectedItem(),
+                                    (String) qcCombo.getSelectedItem(), Integer.parseInt(pressSpeedTextField.getText()),
+                                    Integer.parseInt(stolleProductionTextField.getText()), Integer.parseInt(packedEndsTextField.getText()),
+                                    Integer.parseInt(HFICreatedTextField.getText()), Integer.parseInt(HFIRecoveredTextField.getText()),
+                                    Integer.parseInt(HFIScrappedTextField.getText()), Integer.parseInt(sacobaDowntimeTextField.getText()),
+                                    commentsTextArea.getText(), currentId
+                            );
 
-				getDate("Stolle Production Report", 1);
+                            frame5.dispose();
+                            createSummaryScreen();
 
-			}
-		});
+                        } catch (SQLException e1) {
+                            // TODO Auto-generated catch block
+                            e1.printStackTrace();
+                        }
 
-		optionsPanel2.setBackground(Color.GRAY);
+                    } else {
 
-		outerPanel.add(summaryPanel, BorderLayout.CENTER);
-		outerPanel.add(optionsPanel2, BorderLayout.SOUTH);
-		frameSummary.add(outerPanel);
-		frameSummary.setVisible(true);
+                        try {
+                            SQLiteConnection.StolleInsert(
+                                    // int idIn, String dateIn, int shiftIn,
+                                    // String crewIn, String pressIn, String operatorIn,
+                                    // String packerIn, String QCInspectorIn,
+                                    // int stolleProductionIn, int packedEndsIn, int
+                                    // HFICreatedIn, int HFIRecoveredIn,
+                                    // int HFIScrappedIn, int SacobaDowntime
 
-	}
+                                    SQLiteConnection.StolleGetHighestID() + 1,
+                                    date,
+                                    Integer.parseInt((String) shiftCombo.getSelectedItem()),
+                                    (String) crewCombo.getSelectedItem(),
+                                    (String) pressCombo.getSelectedItem(),
+                                    (String) operatorCombo.getSelectedItem(),
+                                    (String) packerCombo.getSelectedItem(),
+                                    (String) qcCombo.getSelectedItem(),
+                                    Integer.parseInt(pressSpeedTextField.getText()),
+                                    Integer.parseInt(stolleProductionTextField.getText()),
+                                    Integer.parseInt(packedEndsTextField.getText()),
+                                    Integer.parseInt(HFICreatedTextField.getText()),
+                                    Integer.parseInt(HFIRecoveredTextField.getText()),
+                                    Integer.parseInt(HFIScrappedTextField.getText()),
+                                    Integer.parseInt(sacobaDowntimeTextField.getText()),
+                                    commentsTextArea.getText()
+                            );
 
-	public static void createGroupSummaryScreen() throws SQLException {
+                            frame5.dispose();
+                            createSummaryScreen();
 
-		newEntry = new JButton("New Entry Mode");
-		newEntry.addActionListener(new ActionListener() {
+                        } catch (SQLException e1) {
+                            // TODO Auto-generated catch block
+                            e1.printStackTrace();
+                        }
 
-			@Override
-			public void actionPerformed(ActionEvent e) {
-
-				frameSummary.dispose();
-				try {
-					new StolleDataEntryScreen(1, 1);
-				}
-				catch (SQLException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-
-			}
-		});
-		refresh = new JButton("Refresh");
-		refresh.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-
-				frameSummary.dispose();
-				try {
-					StolleDataEntryScreen.createGroupSummaryScreen();
-				}
-				catch (SQLException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-
-			}
-		});
-
-                exportToExcel = new JButton("Export To Excel");
-                exportToExcel.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                                         
-                    OptimeDataEntryScreen.exportToExcel();
-                    
                     }
-                });
-                
-		JButton printGroup = new JButton("Print Group Report");
 
-		// Outer Frame
-		frameSummary = new JFrame("Stolle Group Report");
-		frameSummary.setSize(1366, 768);
-		frameSummary.setLocationRelativeTo(null);
+                    // TODO Auto-generated method stub
+                } catch (SQLException ex) {
+                    Logger.getLogger(StolleDataEntryScreen.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        });
 
-		// JPanel
-		JPanel outerPanel = new JPanel(new BorderLayout());
-		outerPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
+        search = new JButton("Search Mode");
+        search.addActionListener(new ActionListener() {
 
-		JPanel optionsPanel2 = new JPanel(new FlowLayout());
+            @Override
+            public void actionPerformed(ActionEvent e) {
 
-		// if (view == 2) {
-		optionsPanel2.add(newEntry);
-		optionsPanel2.add(refresh);
-		optionsPanel2.add(printGroup);
-                optionsPanel2.add(exportToExcel);
+                // TODO Auto-generated method stub
+                try {
+                    createSummaryScreen();
+                } catch (SQLException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
+                frame5.dispose();
 
-		// }
+            }
+        });
 
-		JPanel summaryPanel = SQLiteConnection.StolleSummaryGroupTable(1);
-		printGroup.addActionListener(new ActionListener() {
+        addNew = new JButton("New Entry Mode");
+        addNew.addActionListener(new ActionListener() {
 
-			@Override
-			public void actionPerformed(ActionEvent e) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
 
-				getDate("Stolle Group Report", 2);
+                // TODO Auto-generated method stub
+                try {
+                    new StolleDataEntryScreen(1, -1);
+                } catch (SQLException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
+                frame5.dispose();
 
-			}
-		});
+            }
+        });
 
-		optionsPanel2.setBackground(Color.GRAY);
+        update = new JButton("Update Record");
+        update.addActionListener(new ActionListener() {
 
-		outerPanel.add(summaryPanel, BorderLayout.CENTER);
-		outerPanel.add(optionsPanel2, BorderLayout.SOUTH);
-		frameSummary.add(outerPanel);
-		frameSummary.setVisible(true);
+            @Override
+            public void actionPerformed(ActionEvent e) {
 
-	}
-	
-	public static void createCommentsSummaryScreen() throws SQLException {
+                selectedDate = (Date) datePicker.getModel().getValue();
+                String date = new SimpleDateFormat("yyyy-MM-dd").format(selectedDate);
 
-		newEntry = new JButton("New Entry Mode");
-		newEntry.addActionListener(new ActionListener() {
+                try {
+                    SQLiteConnection.StolleUpdate(
+                            date, Integer.parseInt((String) shiftCombo.getSelectedItem()), (String) crewCombo.getSelectedItem(),
+                            (String) pressCombo.getSelectedItem(), (String) operatorCombo.getSelectedItem(), (String) packerCombo.getSelectedItem(),
+                            (String) qcCombo.getSelectedItem(), Integer.parseInt(pressSpeedTextField.getText()),
+                            Integer.parseInt(stolleProductionTextField.getText()), Integer.parseInt(packedEndsTextField.getText()),
+                            Integer.parseInt(HFICreatedTextField.getText()), Integer.parseInt(HFIRecoveredTextField.getText()),
+                            Integer.parseInt(HFIScrappedTextField.getText()), Integer.parseInt(sacobaDowntimeTextField.getText()),
+                            commentsTextArea.getText(), currentId
+                    );
 
-			@Override
-			public void actionPerformed(ActionEvent e) {
+                    frame5.dispose();
+                    frameSummary.dispose();
+                    createSummaryScreen();
 
-				frameSummary.dispose();
-				try {
-					new StolleDataEntryScreen(1, 1);
-				}
-				catch (SQLException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
+                } catch (SQLException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
 
-			}
-		});
-		refresh = new JButton("Refresh");
-		refresh.addActionListener(new ActionListener() {
+                // TODO Auto-generated method stub
+            }
+        });
 
-			@Override
-			public void actionPerformed(ActionEvent e) {
+        find = new JButton("Find Record");
+        find.addActionListener(new ActionListener() {
 
-				frameSummary.dispose();
-				try {
-					StolleDataEntryScreen.createCommentsSummaryScreen();
-				}
-				catch (SQLException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
+            @Override
+            public void actionPerformed(ActionEvent e) {
 
-			}
-		});
+                // TODO Auto-generated method stub
+                // Set ID
+                try {
+                    selectedDate = (Date) datePicker.getModel().getValue();
 
-		JButton printComments = new JButton("Print Comments Report");
+                    Object[] array = new Object[16];
+                    array = SQLiteConnection.StolleReturnEntryByDate(selectedDate);
 
-                exportToExcel = new JButton("Export To Excel");
-                exportToExcel.addActionListener(new ActionListener() {
+                    // String date = (String) array[1];
+                    // need to do
+                    if (array[1] == null) {
 
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                                         
-                    OptimeDataEntryScreen.exportToExcel();
-                    
+                        SQLiteConnection.infoBox("No Result. Have you selected a date?", "");
+
+                    } else {
+
+                        currentId = (int) array[0];
+
+                        shiftCombo.setSelectedItem(array[2]);
+                        crewCombo.setSelectedItem(array[3]);
+                        pressCombo.setSelectedItem(array[4]);
+                        operatorCombo.setSelectedItem(array[5]);
+                        packerCombo.setSelectedItem(array[6]);
+                        qcCombo.setSelectedItem(array[7]);
+
+                        pressSpeedTextField.setText((String) array[8]);
+                        stolleProductionTextField.setText((String) array[9]);
+                        packedEndsTextField.setText((String) array[10]);
+                        HFICreatedTextField.setText((String) array[11]);
+                        HFIRecoveredTextField.setText((String) array[12]);
+                        HFIScrappedTextField.setText((String) array[13]);
+                        sacobaDowntimeTextField.setText((String) array[14]);
+
+                        commentsTextArea.setText((String) array[15]);
+
                     }
-                });
-                
-		// Outer Frame
-		frameSummary = new JFrame("Stolle Comments Report");
-		frameSummary.setSize(1366, 768);
-		frameSummary.setLocationRelativeTo(null);
 
-		// JPanel
-		JPanel outerPanel = new JPanel(new BorderLayout());
-		outerPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
+                    System.out.println("CurrentID " + currentId);
 
-		JPanel optionsPanel2 = new JPanel(new FlowLayout());
+                } catch (Exception e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
+                // currentId = (int)array[0];
+                // Set Date
+                // Send in
 
-		// if (view == 2) {
-		optionsPanel2.add(newEntry);
-		optionsPanel2.add(refresh);
-		optionsPanel2.add(printComments);
-                optionsPanel2.add(exportToExcel);
+            }
+        });
 
-		// }
+        next = new JButton("Next Record");
+        next.addActionListener(new ActionListener() {
 
-		JPanel summaryPanel = SQLiteConnection.StolleSummaryCommentsTable();
-		printComments.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
 
-			@Override
-			public void actionPerformed(ActionEvent e) {
+                // TODO Auto-generated method stub
+                // Set ID
+                try {
 
-				getCommentsDate("Stolle Comments Report", 3);
+                    Object[] array = SQLiteConnection.StolleGetNextEntryById(currentId);
 
-			}
-		});
+                    if (array[0] == null) {
 
-		optionsPanel2.setBackground(Color.GRAY);
+                        SQLiteConnection.infoBox("No Next Result.", "");
 
-		outerPanel.add(summaryPanel, BorderLayout.CENTER);
-		outerPanel.add(optionsPanel2, BorderLayout.SOUTH);
-		frameSummary.add(outerPanel);
-		frameSummary.setVisible(true);
+                    } else {
 
-	}
+                        currentId = currentId + 1;
 
-	public static void createEndsByMonthSummaryScreen() throws SQLException {
+                        System.out.println("Array[1]" + array[1]);
 
-		newEntry = new JButton("New Entry Mode");
-		newEntry.addActionListener(new ActionListener() {
+                        String dateFormatted = (String) array[1];
+                        System.out.println("Date Formatted : " + dateFormatted);
+                        int year = Integer.parseInt(dateFormatted.substring(0, 4)); // Correct
+                        int month = Integer.parseInt(dateFormatted.substring(5, 7)) - 1; // Correct
+                        int day = Integer.parseInt(dateFormatted.substring(8, 10)); // Correct
 
-			@Override
-			public void actionPerformed(ActionEvent e) {
+                        model.setDate(year, month, day);
+                        model.setSelected(true);
 
-				frameSummary.dispose();
-				try {
-					new StolleDataEntryScreen(1, -1);
-				}
-				catch (SQLException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
+                        shiftCombo.setSelectedItem(array[2]);
+                        crewCombo.setSelectedItem(array[3]);
+                        pressCombo.setSelectedItem(array[4]);
+                        operatorCombo.setSelectedItem(array[5]);
+                        packerCombo.setSelectedItem(array[6]);
+                        qcCombo.setSelectedItem(array[7]);
 
-			}
-		});
-		refresh = new JButton("Refresh");
-		refresh.addActionListener(new ActionListener() {
+                        pressSpeedTextField.setText((String) array[8]);
+                        stolleProductionTextField.setText((String) array[9]);
+                        packedEndsTextField.setText((String) array[10]);
+                        HFICreatedTextField.setText((String) array[11]);
+                        HFIRecoveredTextField.setText((String) array[12]);
+                        HFIScrappedTextField.setText((String) array[13]);
+                        sacobaDowntimeTextField.setText((String) array[14]);
 
-			@Override
-			public void actionPerformed(ActionEvent e) {
+                        commentsTextArea.setText((String) array[15]);
 
-				frameSummary.dispose();
-				try {
-					StolleDataEntryScreen.createEndsByMonthSummaryScreen();
-				}
-				catch (SQLException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-
-			}
-		});
-
-                exportToExcel = new JButton("Export To Excel");
-                exportToExcel.addActionListener(new ActionListener() {
-
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                                         
-                    OptimeDataEntryScreen.exportToExcel();
-                    
                     }
-                });
-                
-		JButton printComments = new JButton("Print Shells By Month Report");
-
-		// Outer Frame
-		frameSummary = new JFrame("Stolle Ends By Month Report");
-		frameSummary.setSize(1366, 768);
-		frameSummary.setLocationRelativeTo(null);
-
-		// JPanel
-		JPanel outerPanel = new JPanel(new BorderLayout());
-		outerPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
-
-		JPanel optionsPanel2 = new JPanel(new FlowLayout());
-
-		// if (view == 2) {
-		optionsPanel2.add(newEntry);
-		optionsPanel2.add(refresh);
-		optionsPanel2.add(printComments);
-                optionsPanel2.add(exportToExcel);
 
-		// }
-
-		JPanel summaryPanel = SQLiteConnection.StolleEndsByMonthTable();
-		printComments.addActionListener(new ActionListener() {
+                    System.out.println("CurrentID " + currentId);
+
+                    // Fill Boxes with results
+                    // model.setDate(year2, month2, day2);
+                    model.setSelected(true);
+
+                } catch (Exception e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
+                // currentId = (int)array[0];
+                // Set Date
+                // Send in
+
+            }
+        });
+
+        previous = new JButton("Previous Record");
+        previous.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                // TODO Auto-generated method stub
+                // Set ID
+                try {
+
+                    Object[] array = SQLiteConnection.StolleGetPreviousEntryById(currentId);
+
+                    if (array[0] == null) {
+
+                        SQLiteConnection.infoBox("No Previous Result.", "");
+
+                    } else {
+
+                        currentId = currentId - 1;
+
+                        System.out.println("Array[1]" + array[1]);
+
+                        String dateFormatted = (String) array[1];
+                        System.out.println("Date Formatted : " + dateFormatted);
+                        int year = Integer.parseInt(dateFormatted.substring(0, 4)); // Correct
+                        int month = Integer.parseInt(dateFormatted.substring(5, 7)) - 1; // Correct
+                        int day = Integer.parseInt(dateFormatted.substring(8, 10)); // Correct
+
+                        model.setDate(year, month, day);
+                        model.setSelected(true);
+
+                        shiftCombo.setSelectedItem(array[2]);
+                        crewCombo.setSelectedItem(array[3]);
+                        pressCombo.setSelectedItem(array[4]);
+                        operatorCombo.setSelectedItem(array[5]);
+                        packerCombo.setSelectedItem(array[6]);
+                        qcCombo.setSelectedItem(array[7]);
+
+                        pressSpeedTextField.setText((String) array[8]);
+                        stolleProductionTextField.setText((String) array[9]);
+                        packedEndsTextField.setText((String) array[10]);
+                        HFICreatedTextField.setText((String) array[11]);
+                        HFIRecoveredTextField.setText((String) array[12]);
+                        HFIScrappedTextField.setText((String) array[13]);
+                        sacobaDowntimeTextField.setText((String) array[14]);
+
+                        commentsTextArea.setText((String) array[15]);
+
+                    }
+
+                    System.out.println(currentId);
+
+                    // Fill Boxes with results
+                } catch (Exception e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
+                // currentId = (int)array[0];
+                // Set Date
+                // Send in
 
-			@Override
-			public void actionPerformed(ActionEvent e) {
+            }
+        });
 
-				getShellsByMonthDate("Stolle EndsByMonth Report");
+        dateLabel = new JLabel("Date : ", SwingConstants.CENTER);
+        shiftLabel = new JLabel("Shift : ", SwingConstants.CENTER);
+        crewLabel = new JLabel("Crew : ", SwingConstants.CENTER);
+        packerLabel = new JLabel("Packer : ", SwingConstants.CENTER);
+        pressLabel = new JLabel("Press : ", SwingConstants.CENTER);
+        operatorLabel = new JLabel("Operator : ", SwingConstants.CENTER);
+        qcInspectorLabel = new JLabel("QC Inspector : ", SwingConstants.CENTER);
+        optimeNumberLabel = new JLabel("Optime Number : ", SwingConstants.CENTER);
+        pressSpeedLabel = new JLabel("Press Speed : ", SwingConstants.CENTER);
+        stolleProductionLabel = new JLabel("Stolle Production : ", SwingConstants.CENTER);
+        packedEndsLabel = new JLabel("Packed Ends : ", SwingConstants.CENTER);
+        HFICreatedLabel = new JLabel("HFI Created : ", SwingConstants.CENTER);
+        HFIRecoveredLabel = new JLabel("HFI Recovered : ", SwingConstants.CENTER);
+        HFIScrappedLabel = new JLabel("HFI Scrapped : ", SwingConstants.CENTER);
+        sacobaDowntimeLabel = new JLabel("Sacoba Downtime : ", SwingConstants.CENTER);
+        shellTypeLabel = new JLabel("Shell Type : ", SwingConstants.CENTER);
+        productionLabel = new JLabel("Production : ", SwingConstants.CENTER);
+        commentsLabel = new JLabel("Comments : ", SwingConstants.CENTER);
 
-			}
-		});
+        // Buttons Top Panel
+        // JPanel buttonsPanel = new JPanel(new GridLayout(1, 4));
+        JPanel buttonsPanel = new JPanel(new FlowLayout());
+        // buttonsPanel.setBackground(Color.GRAY);
 
-		optionsPanel2.setBackground(Color.GRAY);
+        //buttonsPanel.add(find);
+        buttonsPanel.add(previous);
+        buttonsPanel.add(next);
+        buttonsPanel.add(delete);
 
-		outerPanel.add(summaryPanel, BorderLayout.CENTER);
-		outerPanel.add(optionsPanel2, BorderLayout.SOUTH);
-		frameSummary.add(outerPanel);
-		frameSummary.setVisible(true);
+        outerPanel.add(buttonsPanel, BorderLayout.NORTH);
 
-	}
-	
-	public static void getDate(String titleIn, int reportType) {
+        // Options Panel 1
+        dateTextField = new JTextField();
 
-		Date todaysDate = new Date();
-		String year = new SimpleDateFormat("yyyy").format(todaysDate);
-		String month = new SimpleDateFormat("MM").format(todaysDate);
-		String day = new SimpleDateFormat("dd").format(todaysDate);
+        pressSpeedTextField = new JTextField("0");
+        PlainDocument doc1 = (PlainDocument) pressSpeedTextField.getDocument();
+        doc1.setDocumentFilter(new MyIntFilter());
 
-		String[] date = new String[2];
-		Date[] dateArray = new Date[2];
-		JButton printOptimeReportButton = new JButton("Stolle Report");
-		JButton printOptimeGroupReportButton = new JButton("Stolle Group Report");
-		JFrame frame = new JFrame(titleIn);
-		frame.setSize(700, 90);
-		frame.setLocationRelativeTo(null);
-		JPanel panel = new JPanel(new FlowLayout());
+        stolleProductionTextField = new JTextField("0");
+//        PlainDocument doc2 = (PlainDocument) stolleProductionTextField.getDocument();
+//        doc2.setDocumentFilter(new MyIntFilter());
 
-		UtilDateModel model1 = new UtilDateModel();
-		JDatePanelImpl datePanel1 = new JDatePanelImpl(model1);
-		JDatePickerImpl datePicker1 = new JDatePickerImpl(datePanel1);
-		model1.setDate(Integer.valueOf(year), Integer.valueOf(month) - 1, Integer.valueOf(day) - 1);
-		model1.setSelected(true);
+        packedEndsTextField = new JTextField("0");
+//        PlainDocument doc3 = (PlainDocument) packedEndsTextField.getDocument();
+//        doc3.setDocumentFilter(new MyIntFilter());
 
-		UtilDateModel model2 = new UtilDateModel();
-		JDatePanelImpl datePanel2 = new JDatePanelImpl(model2);
-		JDatePickerImpl datePicker2 = new JDatePickerImpl(datePanel2);
-		model2.setDate(Integer.valueOf(year), Integer.valueOf(month) - 1, Integer.valueOf(day));
-		model2.setSelected(true);
+        HFICreatedTextField = new JTextField("0");
+        PlainDocument doc4 = (PlainDocument) HFICreatedTextField.getDocument();
+        doc4.setDocumentFilter(new MyIntFilter());
 
-		panel.add(new JLabel("Start Date : "));
-		panel.add(datePicker1);
-		panel.add(new JLabel("End Date : "));
-		panel.add(datePicker2);
-		panel.add(printOptimeReportButton);
+        HFIRecoveredTextField = new JTextField("0");
+        PlainDocument doc5 = (PlainDocument) HFIRecoveredTextField.getDocument();
+        doc5.setDocumentFilter(new MyIntFilter());
 
-		frame.add(panel);
-		frame.setVisible(true);
+        HFIScrappedTextField = new JTextField("0");
+        PlainDocument doc6 = (PlainDocument) HFIScrappedTextField.getDocument();
+        doc6.setDocumentFilter(new MyIntFilter());
 
-		printOptimeReportButton.addActionListener(new ActionListener() {
+        sacobaDowntimeTextField = new JTextField("0");
+        PlainDocument doc7 = (PlainDocument) sacobaDowntimeTextField.getDocument();
+        doc7.setDocumentFilter(new MyIntFilter());
 
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				// TODO Auto-generated method stub
+        // dateLabel, shiftLabel, crewLabel, operatorLabel, optimeNumberLabel,
+        // pressSpeedLabel, shellTypeLabel,
+        // productionLabel, commentsLabel;
+        JPanel optionPanel1 = new JPanel(new GridLayout(14, 2));
+        // optionPanel1.setBackground(Color.GRAY);
 
-				dateArray[0] = (Date) datePicker1.getModel().getValue();
-				dateArray[1] = (Date) datePicker2.getModel().getValue();
+        optionPanel1.add(dateLabel);
+        optionPanel1.add(datePicker);
 
-				String modifiedDate1 = new SimpleDateFormat("yyyy-MM-dd").format(dateArray[0]);
-				String modifiedDate2 = new SimpleDateFormat("yyyy-MM-dd").format(dateArray[1]);
+        optionPanel1.add(shiftLabel);
+        optionPanel1.add(shiftCombo);
 
-				try {
+        optionPanel1.add(crewLabel);
+        optionPanel1.add(crewCombo);
 
-					if (reportType == 1) {
-						createReport(modifiedDate1, modifiedDate2);
-						System.out.println("Clicked Report 1.");
-					}
-					else if (reportType == 2) {
-						createGroupReport(modifiedDate1, modifiedDate2);
-						System.out.println("Clicked Report 2.");
-					}
+        optionPanel1.add(pressLabel);
+        optionPanel1.add(pressCombo);
 
-				}
-				catch (JRException | IOException | PrinterException | SQLException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
+        optionPanel1.add(operatorLabel);
+        optionPanel1.add(operatorCombo);
 
-			}
-		});
+        optionPanel1.add(packerLabel);
+        optionPanel1.add(qcCombo);
 
-	}
+        optionPanel1.add(qcInspectorLabel);
+        optionPanel1.add(packerCombo);
 
-	public static void createReport(String date1, String date2) throws JRException, IOException, PrinterException, SQLException {
+        optionPanel1.add(pressSpeedLabel);
+        optionPanel1.add(pressSpeedTextField);
 
-		Connection conn = SQLiteConnection.Connect();
+        optionPanel1.add(stolleProductionLabel);
+        optionPanel1.add(stolleProductionTextField);
 
-		File file = new File("C:/Users/Chris/Documents/SPRING/Rexam4/src/com/productiontrackingscreens/rexam/StolleProductionReport.jrxml");
-		InputStream stream = new FileInputStream(file);
-		JasperDesign design = JRXmlLoader.load(stream);
-		JasperReport report = JasperCompileManager.compileReport(design);
+        optionPanel1.add(packedEndsLabel);
+        optionPanel1.add(packedEndsTextField);
 
-		Map<String, Object> params = new HashMap<String, Object>();
+        optionPanel1.add(HFICreatedLabel);
+        optionPanel1.add(HFICreatedTextField);
 
-		params.put("Date1", date1); // note here you can add parameters which
-									// would be utilized by the report
-		params.put("Date2", date2);
+        optionPanel1.add(HFIRecoveredLabel);
+        optionPanel1.add(HFIRecoveredTextField);
 
-		JasperPrint print = JasperFillManager.fillReport(report, params, conn);
-		JasperExportManager.exportReportToPdfFile(print, "StolleReport" + date1 + "-" + date2 + ".pdf");
+        optionPanel1.add(HFIScrappedLabel);
+        optionPanel1.add(HFIScrappedTextField);
 
-		PDDocument pdf = PDDocument.load("StolleReport" + date1 + "-" + date2 + ".pdf");
-		pdf.print();
-		pdf.close();
+        optionPanel1.add(sacobaDowntimeLabel);
+        optionPanel1.add(sacobaDowntimeTextField);
 
-		conn.close();
+        // Adding
+        if (view == -1) {
 
-		// use JasperExportManager to export report to your desired requirement
+            find.setVisible(false);
+            previous.setVisible(false);
+            next.setVisible(false);
+            addNew.setVisible(false);
+            update.setVisible(false);
+            summary.setVisible(false);
+            delete.setVisible(false);
 
-	}
+        } // Searching
+        else {
 
-	public static void createShellsByMonthReport(String date1) throws JRException, IOException, PrinterException, SQLException {
+            //   currentId = SQLiteConnection.StolleGetHighestID() + 1;
+            buttonsPanel.setBackground(Color.GRAY);
+            search.setVisible(false);
+            model.setDate(yearInt, monthInt, dayInt);
+            model.setSelected(true);
+            add.setVisible(false);
 
-		Connection conn = SQLiteConnection.Connect();
+        }
 
-		File file = new File("C:/Users/Chris/Documents/SPRING/Rexam4/src/com/productiontrackingscreens/rexam/StolleShellsByMonth.jrxml");
-		InputStream stream = new FileInputStream(file);
-		JasperDesign design = JRXmlLoader.load(stream);
-		JasperReport report = JasperCompileManager.compileReport(design);
+        JPanel commentsPanel = new JPanel();
 
-		Map<String, Object> params = new HashMap<String, Object>();
+        commentsTextArea = new JTextArea(7, 28);
+        commentsTextArea.setText("NA");
+        commentsTextArea.setLineWrap(true);
+        commentsTextArea.setWrapStyleWord(true);
 
-		params.put("Date1", date1); // note here you can add parameters which
-									// would be utilized by the report
+        commentsPanel.add(commentsLabel);
+        commentsPanel.add(commentsTextArea);
 
-		JasperPrint print = JasperFillManager.fillReport(report, params, conn);
-		JasperExportManager.exportReportToPdfFile(print, "StolleShellsByMonthReport" + date1 + "" + "" + ".pdf");
+        // optionPanel1.add(productionLabel);
+        // optionPanel1.add(productionTextField);
+        outerPanel.add(optionPanel1, BorderLayout.CENTER);
 
-		PDDocument pdf = PDDocument.load("StolleShellsByMonthReport" + date1 + "" + "" + ".pdf");
-		pdf.print();
-		pdf.close();
+        // Options Panel 2
+        JPanel optionsPanel2 = new JPanel(new FlowLayout());
+        optionsPanel2.add(summary);
 
-		conn.close();
+        optionsPanel2.add(search);
+        optionsPanel2.add(update);
+        optionsPanel2.add(add);
+        optionsPanel2.setBackground(Color.GRAY);
+
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+
+        bottomPanel.add(commentsPanel, BorderLayout.NORTH);
+        bottomPanel.add(optionsPanel2, BorderLayout.SOUTH);
+        outerPanel.add(bottomPanel, BorderLayout.SOUTH);
+
+        // JLabel dateLabel, shiftLabel, crewLabel, operatorLabel,
+        // optimeNumberLabel, pressSpeedLabel, shellTypeLabel,
+        // productionLabel, commentsLabel;
+        outerPanel.repaint();
+        frame5.add(outerPanel);
+
+        frame5.setVisible(true);
+
+        SQLiteConnection.AnalyticsUpdate("StolleDataEntryScreen");
+
+    }
+
+    private void setLastEntry() {
+
+        try {
+
+            int highestID = SQLiteConnection.StolleGetHighestID();
+            System.out.println("Highest ID : " + highestID);
+            Object[] result = new Object[16];
+            result = SQLiteConnection.StolleReturnEntryByID(highestID);
+
+            System.out.println("Date " + result[1]);
+
+            // Date
+            String dateFormatted = (String) result[1];
+            System.out.println("Date Formatted : " + dateFormatted);
+            int day = Integer.parseInt(dateFormatted.substring(8, 10)); // Correct
+            int month = Integer.parseInt(dateFormatted.substring(5, 7)) - 1; // Correct
+            int year = Integer.parseInt(dateFormatted.substring(0, 4)); // Correct
+            model.setDate(year, month, day);
+            model.setSelected(true);
+
+            // Shift, Crew, Module, Operator, Liner, LinerInfeed, ShellsSpoiled,
+            // CalculatedSpoilage
+            shiftCombo.setSelectedItem(result[2]);
+            crewCombo.setSelectedItem(result[3]);
+            pressCombo.setSelectedItem(result[4]);
+            operatorCombo.setSelectedItem(result[5]);
+            packerCombo.setSelectedItem(result[6]);
+            qcCombo.setSelectedItem(result[7]);
+            pressSpeedTextField.setText((String) result[8]);
+            stolleProductionTextField.setText((String) result[9]);
+            packedEndsTextField.setText((String) result[10]);
+            HFICreatedTextField.setText((String) result[11]);
+            HFIRecoveredTextField.setText((String) result[12]);
+            HFIScrappedTextField.setText((String) result[13]);
+            sacobaDowntimeTextField.setText((String) result[14]);
+            commentsTextArea.setText((String) result[15]);
+
+            currentId = highestID;
+
+        } catch (SQLException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+    }
+
+    public void setStolleDataEntry(int idIn) {
+
+        try {
 
-		// use JasperExportManager to export report to your desired requirement
+            int highestID = SQLiteConnection.StolleGetHighestID();
+            System.out.println("Highest ID : " + highestID);
+            Object[] result = new Object[16];
+            result = SQLiteConnection.StolleReturnEntryByID(idIn);
+
+            System.out.println("Date " + result[1]);
+
+            // Date
+            String dateFormatted = (String) result[1];
+            System.out.println("Date Formatted : " + dateFormatted);
+            int day = Integer.parseInt(dateFormatted.substring(8, 10)); // Correct
+            int month = Integer.parseInt(dateFormatted.substring(5, 7)) - 1; // Correct
+            int year = Integer.parseInt(dateFormatted.substring(0, 4)); // Correct
+            model.setDate(year, month, day);
+            model.setSelected(true);
+
+            // Shift, Crew, Module, Operator, Liner, LinerInfeed, ShellsSpoiled,
+            // CalculatedSpoilage
+            shiftCombo.setSelectedItem(result[2]);
+            crewCombo.setSelectedItem(result[3]);
+            pressCombo.setSelectedItem(result[4]);
+            operatorCombo.setSelectedItem(result[5]);
+            packerCombo.setSelectedItem(result[6]);
+            qcCombo.setSelectedItem(result[7]);
+            pressSpeedTextField.setText((String) result[8]);
+            stolleProductionTextField.setText((String) result[9]);
+            packedEndsTextField.setText((String) result[10]);
+            HFICreatedTextField.setText((String) result[11]);
+            HFIRecoveredTextField.setText((String) result[12]);
+            HFIScrappedTextField.setText((String) result[13]);
+            sacobaDowntimeTextField.setText((String) result[14]);
+            commentsTextArea.setText((String) result[15]);
+            currentId = Integer.parseInt((result[0] + ""));
+
+        } catch (SQLException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+    }
 
-	}
+    public static void createSummaryScreen() throws SQLException {
+
+        newEntry = new JButton("New Entry Mode");
+        newEntry.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
 
-	public static void createGroupReport(String date1, String date2) throws JRException, IOException, PrinterException, SQLException {
+                frameSummary.dispose();
+                try {
+                    new StolleDataEntryScreen(2, -1);
+                } catch (SQLException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
 
-		Connection conn = SQLiteConnection.Connect();
+            }
+        });
+        refresh = new JButton("Refresh");
+        refresh.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
 
-		File file = new File("C:/Users/Chris/Documents/SPRING/Rexam4/src/com/productiontrackingscreens/rexam/StolleGroup.jrxml");
-		InputStream stream = new FileInputStream(file);
-		JasperDesign design = JRXmlLoader.load(stream);
-		JasperReport report = JasperCompileManager.compileReport(design);
+                frameSummary.dispose();
+                try {
+                    StolleDataEntryScreen.createSummaryScreen();
+                } catch (SQLException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
 
-		Map<String, Object> params = new HashMap<String, Object>();
+            }
+        });
+
+        JButton print = new JButton("Print Report");
+
+        exportToExcel = new JButton("Export To Excel");
+        exportToExcel.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                OptimeDataEntryScreen.exportToExcel();
+
+            }
+        });
 
-		params.put("Date1", date1); // note here you can add parameters which
-									// would be utilized by the report
-		params.put("Date2", date2);
+        JButton importFromViscan = new JButton("Import from Viscan");
 
-		JasperPrint print = JasperFillManager.fillReport(report, params, conn);
-		JasperExportManager.exportReportToPdfFile(print, "StolleGroupReport" + date1 + "-" + date2 + ".pdf");
+        importFromViscan.addActionListener(new ActionListener() {
 
-		PDDocument pdf = PDDocument.load("StolleGroupReport" + date1 + "-" + date2 + ".pdf");
-		pdf.print();
-		pdf.close();
+            @Override
+            public void actionPerformed(ActionEvent e) {
 
-		conn.close();
+                try {
+                    frameSummary.dispose();
+                    LinerDataEntryScreen.importFromExcel();
+                } catch (IOException ex) {
+                    Logger.getLogger(LinerUsageEntryScreen.class.getName()).log(Level.SEVERE, null, ex);
+                }
 
-		// use JasperExportManager to export report to your desired requirement
+            }
+        });
 
-	}
+        // Outer Frame
+        frameSummary = new JFrame("Stolle Production Report");
+        frameSummary.toFront();
+        frameSummary.setSize(1366, 768);
+        frameSummary.setLocationRelativeTo(null);
 
-	public static void createCommentsReport(String date1, String shiftIn) throws JRException, IOException, PrinterException, SQLException {
+        // JPanel
+        JPanel outerPanel = new JPanel(new BorderLayout());
+        outerPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
-		Connection conn = SQLiteConnection.Connect();
+        JPanel optionsPanel2 = new JPanel(new FlowLayout());
 
-		File file = new File("C:/Users/Chris/Documents/SPRING/Rexam4/src/com/productiontrackingscreens/rexam/StolleCommentsReport.jrxml");
-		InputStream stream = new FileInputStream(file);
-		JasperDesign design = JRXmlLoader.load(stream);
-		JasperReport report = JasperCompileManager.compileReport(design);
+        // if (view == 2) {
+        optionsPanel2.add(newEntry);
+        optionsPanel2.add(refresh);
+        optionsPanel2.add(print);
+        optionsPanel2.add(exportToExcel);
+        optionsPanel2.add(importFromViscan);
+        // }
 
-		Map<String, Object> params = new HashMap<String, Object>();
+        JPanel summaryPanel = SQLiteConnection.StolleSummaryTable(1);
+        JScrollPane scrollPane = new JScrollPane(summaryPanel);
+        print.addActionListener(new ActionListener() {
 
-		params.put("Date1", date1); // note here you can add parameters which
-									// would be utilized by the report
-		params.put("Shift", shiftIn);
+            @Override
+            public void actionPerformed(ActionEvent e) {
 
-		JasperPrint print = JasperFillManager.fillReport(report, params, conn);
-		JasperExportManager.exportReportToPdfFile(print, "StolleCommentsReport" + date1 + "-" + shiftIn + ".pdf");
+                getDate("Stolle Production Report", 1);
 
-		PDDocument pdf = PDDocument.load("StolleCommentsReport" + date1 + "-" + shiftIn + ".pdf");
-		pdf.print();
-		pdf.close();
+            }
+        });
 
-		conn.close();
+        optionsPanel2.setBackground(Color.GRAY);
 
-		// use JasperExportManager to export report to your desired requirement
+        outerPanel.add(scrollPane, BorderLayout.CENTER);
+        outerPanel.add(optionsPanel2, BorderLayout.SOUTH);
+        frameSummary.add(outerPanel);
+        frameSummary.setVisible(true);
 
-	}
+    }
 
-	public static void getCommentsDate(String titleIn, int reportType) {
+    public static void createGroupSummaryScreen() throws SQLException {
 
-		Date todaysDate = new Date();
-		String year = new SimpleDateFormat("yyyy").format(todaysDate);
-		String month = new SimpleDateFormat("MM").format(todaysDate);
-		String day = new SimpleDateFormat("dd").format(todaysDate);
+        newEntry = new JButton("New Entry Mode");
+        newEntry.addActionListener(new ActionListener() {
 
-		String[] crews = { "1", "2" };
-		JComboBox crewsCombo = new JComboBox(crews);
+            @Override
+            public void actionPerformed(ActionEvent e) {
 
-		String[] date = new String[2];
-		Date[] dateArray = new Date[2];
-		JButton printOptimeReportButton = new JButton("Stolle Report");
-		JButton printOptimeGroupReportButton = new JButton("Stolle Group Report");
-		JButton printOptimeCommentsReportButton = new JButton("Print Comments Report");
-		JFrame frame = new JFrame(titleIn);
-		frame.setSize(700, 90);
-		frame.setLocationRelativeTo(null);
-		JPanel panel = new JPanel(new FlowLayout());
+                frameSummary.dispose();
+                try {
+                    new StolleDataEntryScreen(1, 1);
+                } catch (SQLException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
 
-		UtilDateModel model1 = new UtilDateModel();
-		JDatePanelImpl datePanel1 = new JDatePanelImpl(model1);
-		JDatePickerImpl datePicker1 = new JDatePickerImpl(datePanel1);
-		model1.setDate(Integer.valueOf(year), Integer.valueOf(month) - 1, Integer.valueOf(day) - 1);
-		model1.setSelected(true);
+            }
+        });
+        refresh = new JButton("Refresh");
+        refresh.addActionListener(new ActionListener() {
 
-		panel.add(new JLabel("Date : "));
-		panel.add(datePicker1);
-		panel.add(new JLabel("Shift: "));
-		panel.add(crewsCombo);
-		panel.add(printOptimeCommentsReportButton);
+            @Override
+            public void actionPerformed(ActionEvent e) {
 
-		frame.add(panel);
-		frame.setVisible(true);
+                frameSummary.dispose();
+                try {
+                    StolleDataEntryScreen.createGroupSummaryScreen();
+                } catch (SQLException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
 
-		printOptimeCommentsReportButton.addActionListener(new ActionListener() {
+            }
+        });
 
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				// TODO Auto-generated method stub
+        exportToExcel = new JButton("Export To Excel");
+        exportToExcel.addActionListener(new ActionListener() {
 
-				dateArray[0] = (Date) datePicker1.getModel().getValue();
-				String crewString = crewsCombo.getSelectedObjects() + "";
+            @Override
+            public void actionPerformed(ActionEvent e) {
 
-				String modifiedDate1 = new SimpleDateFormat("yyyy-MM-dd").format(dateArray[0]);
+                OptimeDataEntryScreen.exportToExcel();
 
-				try {
-					createCommentsReport(modifiedDate1, crewString);
-				}
-				catch (JRException | IOException | PrinterException | SQLException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-				System.out.println("Clicked Report Comemnts.");
+            }
+        });
 
-			}
-		});
+        JButton printGroup = new JButton("Print Group Report");
 
-	}
+        // Outer Frame
+        frameSummary = new JFrame("Stolle Group Report");
+        frameSummary.setSize(1366, 768);
+        frameSummary.setLocationRelativeTo(null);
 
-	public static void getShellsByMonthDate(String titleIn) {
+        // JPanel
+        JPanel outerPanel = new JPanel(new BorderLayout());
+        outerPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
-		Date todaysDate = new Date();
-		String year = new SimpleDateFormat("yyyy").format(todaysDate);
-		String month = new SimpleDateFormat("MM").format(todaysDate);
-		String day = new SimpleDateFormat("dd").format(todaysDate);
+        JPanel optionsPanel2 = new JPanel(new FlowLayout());
 
-		String[] months = { "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12" };
-		JComboBox monthsCombo = new JComboBox(months);
+        // if (view == 2) {
+        optionsPanel2.add(newEntry);
+        optionsPanel2.add(refresh);
+        optionsPanel2.add(printGroup);
+        optionsPanel2.add(exportToExcel);
 
-		String[] years = { "2013", "2014", "2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025", "2026", "2027",
-				"2028", "2029", "2030" };
-		JComboBox yearsCombo = new JComboBox(years);
+        // }
+        JPanel summaryPanel = SQLiteConnection.StolleSummaryGroupTable(1);
+        printGroup.addActionListener(new ActionListener() {
 
-		JButton printShellsByMonthReport = new JButton("Print Comments Report");
-		JFrame frame = new JFrame(titleIn);
-		frame.setSize(700, 90);
-		frame.setLocationRelativeTo(null);
-		JPanel panel = new JPanel(new FlowLayout());
+            @Override
+            public void actionPerformed(ActionEvent e) {
 
-		UtilDateModel model1 = new UtilDateModel();
-		JDatePanelImpl datePanel1 = new JDatePanelImpl(model1);
-		JDatePickerImpl datePicker1 = new JDatePickerImpl(datePanel1);
-		model1.setDate(Integer.valueOf(year), Integer.valueOf(month) - 1, Integer.valueOf(day) - 1);
-		model1.setSelected(true);
+                getDate("Stolle Group Report", 2);
 
-		panel.add(new JLabel("Date : "));
-		panel.add(monthsCombo);
-		panel.add(yearsCombo);
-		panel.add(printShellsByMonthReport);
+            }
+        });
 
-		frame.add(panel);
-		frame.setVisible(true);
+        optionsPanel2.setBackground(Color.GRAY);
 
-		printShellsByMonthReport.addActionListener(new ActionListener() {
+        outerPanel.add(summaryPanel, BorderLayout.CENTER);
+        outerPanel.add(optionsPanel2, BorderLayout.SOUTH);
+        frameSummary.add(outerPanel);
+        frameSummary.setVisible(true);
 
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				// TODO Auto-generated method stub
+    }
 
-				String monthString = ((monthsCombo.getSelectedItem())) + "";
-				String yearString = ((yearsCombo.getSelectedItem())) + "";
+    public static void createCommentsSummaryScreen() throws SQLException {
 
-				String modifiedDate1 = yearString + "-" + monthString;
+        newEntry = new JButton("New Entry Mode");
+        newEntry.addActionListener(new ActionListener() {
 
-				System.out.println("Modidied Date : " + modifiedDate1);
+            @Override
+            public void actionPerformed(ActionEvent e) {
 
-				try {
-					createShellsByMonthReport(modifiedDate1);
-				}
-				catch (JRException | IOException | PrinterException | SQLException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-				System.out.println("Clicked Report Comemnts.");
+                frameSummary.dispose();
+                try {
+                    new StolleDataEntryScreen(1, 1);
+                } catch (SQLException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
 
-			}
-		});
+            }
+        });
+        refresh = new JButton("Refresh");
+        refresh.addActionListener(new ActionListener() {
 
-	}
+            @Override
+            public void actionPerformed(ActionEvent e) {
 
-	private void fillCombos() {
+                frameSummary.dispose();
+                try {
+                    StolleDataEntryScreen.createCommentsSummaryScreen();
+                } catch (SQLException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
 
-		// Names
+            }
+        });
 
-		try {
+        JButton printComments = new JButton("Print Comments Report");
 
-			String sql = "select Employees.Name from Employees ORDER BY Name ASC";
-			Connection conn = SQLiteConnection.Connect();
-			PreparedStatement pst = conn.prepareStatement(sql);
-			pst.setQueryTimeout(5);
-			ResultSet rs = pst.executeQuery();
+        exportToExcel = new JButton("Export To Excel");
+        exportToExcel.addActionListener(new ActionListener() {
 
-			while (rs.next()) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
 
-				String name = rs.getString("Name");
-				operatorCombo.addItem(name);
-				packerCombo.addItem(name);
-				qcCombo.addItem(name);
-			}
+                OptimeDataEntryScreen.exportToExcel();
 
-		}
-		catch (Exception e) {
+            }
+        });
 
-		}
+        // Outer Frame
+        frameSummary = new JFrame("Stolle Comments Report");
+        frameSummary.setSize(1366, 768);
+        frameSummary.setLocationRelativeTo(null);
 
-		// Packers
+        // JPanel
+        JPanel outerPanel = new JPanel(new BorderLayout());
+        outerPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
-		try {
+        JPanel optionsPanel2 = new JPanel(new FlowLayout());
 
-			String sql = "SELECT Press.PressName FROM Press ORDER BY PressName ASC";
-			Connection conn = SQLiteConnection.Connect();
-			PreparedStatement pst = conn.prepareStatement(sql);
-			pst.setQueryTimeout(5);
-			ResultSet rs = pst.executeQuery();
+        // if (view == 2) {
+        optionsPanel2.add(newEntry);
+        optionsPanel2.add(refresh);
+        optionsPanel2.add(printComments);
+        optionsPanel2.add(exportToExcel);
 
-			while (rs.next()) {
+        // }
+        JPanel summaryPanel = SQLiteConnection.StolleSummaryCommentsTable();
+        printComments.addActionListener(new ActionListener() {
 
-				String pressName = rs.getString("PressName");
-				pressCombo.addItem(pressName);
-			}
+            @Override
+            public void actionPerformed(ActionEvent e) {
 
-		}
-		catch (Exception e) {
+                getCommentsDate("Stolle Comments Report", 3);
 
-		}
+            }
+        });
 
-		// Crew
-		try {
+        optionsPanel2.setBackground(Color.GRAY);
 
-			String sql = "SELECT Crew.CrewName FROM Crew ORDER BY CrewName ASC";
-			Connection conn = SQLiteConnection.Connect();
-			PreparedStatement pst = conn.prepareStatement(sql);
-			pst.setQueryTimeout(5);
-			ResultSet rs = pst.executeQuery();
+        outerPanel.add(summaryPanel, BorderLayout.CENTER);
+        outerPanel.add(optionsPanel2, BorderLayout.SOUTH);
+        frameSummary.add(outerPanel);
+        frameSummary.setVisible(true);
 
-			while (rs.next()) {
+    }
 
-				String crewName = rs.getString("CrewName");
-				crewCombo.addItem(crewName);
-			}
+    public static void createEndsByMonthSummaryScreen() throws SQLException {
 
-		}
-		catch (Exception e) {
+        newEntry = new JButton("New Entry Mode");
+        newEntry.addActionListener(new ActionListener() {
 
-		}
+            @Override
+            public void actionPerformed(ActionEvent e) {
 
-		// Shift
-		try {
+                frameSummary.dispose();
+                try {
+                    new StolleDataEntryScreen(1, -1);
+                } catch (SQLException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
 
-			String sql = "SELECT Shift.ShiftName FROM Shift ORDER BY ShiftName ASC";
-			Connection conn = SQLiteConnection.Connect();
-			PreparedStatement pst = conn.prepareStatement(sql);
-			pst.setQueryTimeout(5);
-			ResultSet rs = pst.executeQuery();
+            }
+        });
+        refresh = new JButton("Refresh");
+        refresh.addActionListener(new ActionListener() {
 
-			while (rs.next()) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
 
-				String shiftName = rs.getString("ShiftName");
-				shiftCombo.addItem(shiftName);
-			}
+                frameSummary.dispose();
+                try {
+                    StolleDataEntryScreen.createEndsByMonthSummaryScreen();
+                } catch (SQLException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
 
-		}
-		catch (Exception e) {
+            }
+        });
 
-		}
+        exportToExcel = new JButton("Export To Excel");
+        exportToExcel.addActionListener(new ActionListener() {
 
-	}
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                OptimeDataEntryScreen.exportToExcel();
+
+            }
+        });
+
+        JButton printComments = new JButton("Print Shells By Month Report");
+
+        // Outer Frame
+        frameSummary = new JFrame("Stolle Ends By Month Report");
+        frameSummary.setSize(1366, 768);
+        frameSummary.setLocationRelativeTo(null);
+
+        // JPanel
+        JPanel outerPanel = new JPanel(new BorderLayout());
+        outerPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
+
+        JPanel optionsPanel2 = new JPanel(new FlowLayout());
+
+        // if (view == 2) {
+        optionsPanel2.add(newEntry);
+        optionsPanel2.add(refresh);
+        optionsPanel2.add(printComments);
+        optionsPanel2.add(exportToExcel);
+
+        // }
+        JPanel summaryPanel = SQLiteConnection.StolleEndsByMonthTable();
+        printComments.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                getShellsByMonthDate("Stolle EndsByMonth Report");
+
+            }
+        });
+
+        optionsPanel2.setBackground(Color.GRAY);
+
+        outerPanel.add(summaryPanel, BorderLayout.CENTER);
+        outerPanel.add(optionsPanel2, BorderLayout.SOUTH);
+        frameSummary.add(outerPanel);
+        frameSummary.setVisible(true);
+
+    }
+
+    public static void getDate(String titleIn, int reportType) {
+
+        Date todaysDate = new Date();
+        String year = new SimpleDateFormat("yyyy").format(todaysDate);
+        String month = new SimpleDateFormat("MM").format(todaysDate);
+        String day = new SimpleDateFormat("dd").format(todaysDate);
+
+        String[] date = new String[2];
+        Date[] dateArray = new Date[2];
+        JButton printOptimeReportButton = new JButton("Stolle Report");
+        JButton printOptimeGroupReportButton = new JButton("Stolle Group Report");
+        JFrame frame = new JFrame(titleIn);
+        frame.setSize(700, 90);
+        frame.setLocationRelativeTo(null);
+        JPanel panel = new JPanel(new FlowLayout());
+
+        UtilDateModel model1 = new UtilDateModel();
+        JDatePanelImpl datePanel1 = new JDatePanelImpl(model1);
+        JDatePickerImpl datePicker1 = new JDatePickerImpl(datePanel1);
+        model1.setDate(Integer.valueOf(year), Integer.valueOf(month) - 1, Integer.valueOf(day) - 1);
+        model1.setSelected(true);
+
+        UtilDateModel model2 = new UtilDateModel();
+        JDatePanelImpl datePanel2 = new JDatePanelImpl(model2);
+        JDatePickerImpl datePicker2 = new JDatePickerImpl(datePanel2);
+        model2.setDate(Integer.valueOf(year), Integer.valueOf(month) - 1, Integer.valueOf(day));
+        model2.setSelected(true);
+
+        panel.add(new JLabel("Start Date : "));
+        panel.add(datePicker1);
+        panel.add(new JLabel("End Date : "));
+        panel.add(datePicker2);
+        panel.add(printOptimeReportButton);
+
+        frame.add(panel);
+        frame.setVisible(true);
+
+        printOptimeReportButton.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // TODO Auto-generated method stub
+
+                dateArray[0] = (Date) datePicker1.getModel().getValue();
+                dateArray[1] = (Date) datePicker2.getModel().getValue();
+
+                String modifiedDate1 = new SimpleDateFormat("yyyy-MM-dd").format(dateArray[0]);
+                String modifiedDate2 = new SimpleDateFormat("yyyy-MM-dd").format(dateArray[1]);
+
+                try {
+
+                    if (reportType == 1) {
+                        createReport(modifiedDate1, modifiedDate2);
+                        System.out.println("Clicked Report 1.");
+                    } else if (reportType == 2) {
+                        createGroupReport(modifiedDate1, modifiedDate2);
+                        System.out.println("Clicked Report 2.");
+                    }
+
+                } catch (JRException | IOException | PrinterException | SQLException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
+
+            }
+        });
+
+    }
+
+    public static void createReport(String date1, String date2) throws JRException, IOException, PrinterException, SQLException {
+
+        Connection conn = SQLiteConnection.Connect();
+
+        File file = new File("Reports/StolleProductionReport.jrxml");
+        InputStream stream = new FileInputStream(file);
+        JasperDesign design = JRXmlLoader.load(stream);
+        JasperReport report = JasperCompileManager.compileReport(design);
+
+        Map<String, Object> params = new HashMap<String, Object>();
+
+        params.put("Date1", date1); // note here you can add parameters which
+        // would be utilized by the report
+        params.put("Date2", date2);
+
+        InputStream inputStream = new FileInputStream("Reports/StolleProductionReport.jrxml");
+        JasperCompileManager.compileReportToFile("Reports/StolleProductionReport.jrxml");
+        JasperDesign jasperDesign = JRXmlLoader.load(inputStream);
+        JasperReport jasperReport = JasperCompileManager.compileReport(jasperDesign);
+        JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, params, conn);
+        JasperViewer view = new net.sf.jasperreports.view.JasperViewer(jasperPrint, false);
+        view.setVisible(true);
+        view.toFront();
+
+        conn.close();
+
+        // use JasperExportManager to export report to your desired requirement
+    }
+
+    public static void createShellsByMonthReport(String date1) throws JRException, IOException, PrinterException, SQLException {
+
+        Connection conn = SQLiteConnection.Connect();
+
+        File file = new File("Reports/StolleShellsByMonth.jrxml");
+        InputStream stream = new FileInputStream(file);
+        JasperDesign design = JRXmlLoader.load(stream);
+        JasperReport report = JasperCompileManager.compileReport(design);
+
+        Map<String, Object> params = new HashMap<String, Object>();
+
+        params.put("Date1", date1); // note here you can add parameters which
+        // would be utilized by the report
+
+        InputStream inputStream = new FileInputStream("Reports/StolleShellsByMonth.jrxml");
+        JasperCompileManager.compileReportToFile("Reports/StolleShellsByMonth.jrxml");
+        JasperDesign jasperDesign = JRXmlLoader.load(inputStream);
+        JasperReport jasperReport = JasperCompileManager.compileReport(jasperDesign);
+        JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, params, conn);
+        JasperViewer view = new net.sf.jasperreports.view.JasperViewer(jasperPrint, false);
+        view.setVisible(true);
+        view.toFront();
+
+        conn.close();
+
+        // use JasperExportManager to export report to your desired requirement
+    }
+
+    public static void createGroupReport(String date1, String date2) throws JRException, IOException, PrinterException, SQLException {
+
+        Connection conn = SQLiteConnection.Connect();
+
+        File file = new File("Reports/StolleGroup.jrxml");
+        InputStream stream = new FileInputStream(file);
+        JasperDesign design = JRXmlLoader.load(stream);
+        JasperReport report = JasperCompileManager.compileReport(design);
+
+        Map<String, Object> params = new HashMap<String, Object>();
+
+        params.put("Date1", date1); // note here you can add parameters which
+        // would be utilized by the report
+        params.put("Date2", date2);
+
+        InputStream inputStream = new FileInputStream("Reports/StolleGroup.jrxml");
+        JasperCompileManager.compileReportToFile("Reports/StolleGroup.jrxml");
+        JasperDesign jasperDesign = JRXmlLoader.load(inputStream);
+        JasperReport jasperReport = JasperCompileManager.compileReport(jasperDesign);
+        JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, params, conn);
+        JasperViewer view = new net.sf.jasperreports.view.JasperViewer(jasperPrint, false);
+        view.setVisible(true);
+        view.toFront();
+
+        conn.close();
+
+        // use JasperExportManager to export report to your desired requirement
+    }
+
+    public static void createCommentsReport(String date1, String shiftIn) throws JRException, IOException, PrinterException, SQLException {
+
+        Connection conn = SQLiteConnection.Connect();
+
+        File file = new File("Reports/StolleCommentsReport.jrxml");
+        InputStream stream = new FileInputStream(file);
+        JasperDesign design = JRXmlLoader.load(stream);
+        JasperReport report = JasperCompileManager.compileReport(design);
+
+        Map<String, Object> params = new HashMap<String, Object>();
+
+        params.put("Date1", date1); // note here you can add parameters which
+        // would be utilized by the report
+        params.put("Shift", shiftIn);
+
+        InputStream inputStream = new FileInputStream("Reports/StolleCommentsReport.jrxml");
+        JasperCompileManager.compileReportToFile("Reports/StolleCommentsReport.jrxml");
+        JasperDesign jasperDesign = JRXmlLoader.load(inputStream);
+        JasperReport jasperReport = JasperCompileManager.compileReport(jasperDesign);
+        JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, params, conn);
+        JasperViewer view = new net.sf.jasperreports.view.JasperViewer(jasperPrint, false);
+        view.setVisible(true);
+        view.toFront();
+
+        conn.close();
+
+        // use JasperExportManager to export report to your desired requirement
+    }
+
+    public static void getCommentsDate(String titleIn, int reportType) {
+
+        Date todaysDate = new Date();
+        String year = new SimpleDateFormat("yyyy").format(todaysDate);
+        String month = new SimpleDateFormat("MM").format(todaysDate);
+        String day = new SimpleDateFormat("dd").format(todaysDate);
+
+        String[] crews = {"1", "2"};
+        JComboBox crewsCombo = new JComboBox(crews);
+
+        String[] date = new String[2];
+        Date[] dateArray = new Date[2];
+        JButton printOptimeReportButton = new JButton("Stolle Report");
+        JButton printOptimeGroupReportButton = new JButton("Stolle Group Report");
+        JButton printOptimeCommentsReportButton = new JButton("Print Comments Report");
+        JFrame frame = new JFrame(titleIn);
+        frame.setSize(700, 90);
+        frame.setLocationRelativeTo(null);
+        JPanel panel = new JPanel(new FlowLayout());
+
+        UtilDateModel model1 = new UtilDateModel();
+        JDatePanelImpl datePanel1 = new JDatePanelImpl(model1);
+        JDatePickerImpl datePicker1 = new JDatePickerImpl(datePanel1);
+        model1.setDate(Integer.valueOf(year), Integer.valueOf(month) - 1, Integer.valueOf(day) - 1);
+        model1.setSelected(true);
+
+        panel.add(new JLabel("Date : "));
+        panel.add(datePicker1);
+        panel.add(new JLabel("Shift: "));
+        panel.add(crewsCombo);
+        panel.add(printOptimeCommentsReportButton);
+
+        frame.add(panel);
+        frame.setVisible(true);
+
+        printOptimeCommentsReportButton.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // TODO Auto-generated method stub
+
+                dateArray[0] = (Date) datePicker1.getModel().getValue();
+                String crewString = crewsCombo.getSelectedObjects() + "";
+
+                String modifiedDate1 = new SimpleDateFormat("yyyy-MM-dd").format(dateArray[0]);
+
+                try {
+                    createCommentsReport(modifiedDate1, crewString);
+                } catch (JRException | IOException | PrinterException | SQLException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
+                System.out.println("Clicked Report Comemnts.");
+
+            }
+        });
+
+    }
+
+    public static void getShellsByMonthDate(String titleIn) {
+
+        Date todaysDate = new Date();
+        String year = new SimpleDateFormat("yyyy").format(todaysDate);
+        String month = new SimpleDateFormat("MM").format(todaysDate);
+        String day = new SimpleDateFormat("dd").format(todaysDate);
+
+        String[] months = {"01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"};
+        JComboBox monthsCombo = new JComboBox(months);
+
+        String[] years = {"2013", "2014", "2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025", "2026", "2027",
+            "2028", "2029", "2030"};
+        JComboBox yearsCombo = new JComboBox(years);
+
+        JButton printShellsByMonthReport = new JButton("Print Comments Report");
+        JFrame frame = new JFrame(titleIn);
+        frame.setSize(700, 90);
+        frame.setLocationRelativeTo(null);
+        JPanel panel = new JPanel(new FlowLayout());
+
+        UtilDateModel model1 = new UtilDateModel();
+        JDatePanelImpl datePanel1 = new JDatePanelImpl(model1);
+        JDatePickerImpl datePicker1 = new JDatePickerImpl(datePanel1);
+        model1.setDate(Integer.valueOf(year), Integer.valueOf(month) - 1, Integer.valueOf(day) - 1);
+        model1.setSelected(true);
+
+        panel.add(new JLabel("Date : "));
+        panel.add(monthsCombo);
+        panel.add(yearsCombo);
+        panel.add(printShellsByMonthReport);
+
+        frame.add(panel);
+        frame.setVisible(true);
+
+        printShellsByMonthReport.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // TODO Auto-generated method stub
+
+                String monthString = ((monthsCombo.getSelectedItem())) + "";
+                String yearString = ((yearsCombo.getSelectedItem())) + "";
+
+                String modifiedDate1 = yearString + "-" + monthString;
+
+                System.out.println("Modidied Date : " + modifiedDate1);
+
+                try {
+                    createShellsByMonthReport(modifiedDate1);
+                } catch (JRException | IOException | PrinterException | SQLException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
+                System.out.println("Clicked Report Comemnts.");
+
+            }
+        });
+
+    }
+
+    public void fillCombos() {
+
+        // Operator
+        try {
+
+            String sql = "select Employees.Name from Employees ORDER BY Name ASC";
+            Connection conn = SQLiteConnection.Connect();
+            PreparedStatement pst = conn.prepareStatement(sql);
+            pst.setQueryTimeout(5);
+            ResultSet rs = pst.executeQuery();
+
+            operatorCombo.addItem("NA");
+            packerCombo.addItem("NA");
+            qcCombo.addItem("NA");
+
+            while (rs.next()) {
+
+                String name = rs.getString("Name");
+                operatorCombo.addItem(name);
+                packerCombo.addItem(name);
+                qcCombo.addItem(name);
+            }
+
+        } catch (Exception e) {
+
+        }
+
+        // Press
+        try {
+
+            String sql = "SELECT Press.PressName FROM Press ORDER BY PressName ASC";
+            Connection conn = SQLiteConnection.Connect();
+            PreparedStatement pst = conn.prepareStatement(sql);
+            pst.setQueryTimeout(5);
+            ResultSet rs = pst.executeQuery();
+
+            while (rs.next()) {
+
+                String pressName = rs.getString("PressName");
+                pressCombo.addItem(pressName);
+            }
+
+        } catch (Exception e) {
+
+        }
+
+        // Crew
+        try {
+
+            String sql = "SELECT Crew.CrewName FROM Crew ORDER BY CrewName ASC";
+            Connection conn = SQLiteConnection.Connect();
+            PreparedStatement pst = conn.prepareStatement(sql);
+            pst.setQueryTimeout(5);
+            ResultSet rs = pst.executeQuery();
+
+            while (rs.next()) {
+
+                String crewName = rs.getString("CrewName");
+                crewCombo.addItem(crewName);
+            }
+
+        } catch (Exception e) {
+
+        }
+
+        // Shift
+        try {
+
+            String sql = "SELECT Shift.ShiftName FROM Shift ORDER BY ShiftName ASC";
+            Connection conn = SQLiteConnection.Connect();
+            PreparedStatement pst = conn.prepareStatement(sql);
+            pst.setQueryTimeout(5);
+            ResultSet rs = pst.executeQuery();
+
+            while (rs.next()) {
+
+                String shiftName = rs.getString("ShiftName");
+                shiftCombo.addItem(shiftName);
+            }
+
+        } catch (Exception e) {
+
+        }
+
+    }
+
+    public static void setModel(String yearIn, String monthIn, String dayIn) {
+
+        // Date
+        int yearInt = Integer.parseInt(yearIn);
+        int monthInt = Integer.parseInt(monthIn) - 1;
+        int dayInt = Integer.parseInt(dayIn);
+
+        StolleDataEntryScreen.model.setDate(yearInt, monthInt, dayInt);
+    }
+
+    public static void setShiftCombo(String shiftIn) {
+        StolleDataEntryScreen.shiftCombo.setSelectedItem(shiftIn);
+    }
+
+    public static void setCrewCombo(String crewIn) {
+        StolleDataEntryScreen.crewCombo.setSelectedItem(crewIn);
+    }
+
+    public static void setStolleProductionTextField(String stolleProductionIn) {
+
+        int intValue = Integer.parseInt(stolleProductionIn);
+
+        StolleDataEntryScreen.stolleProductionTextField.setText(intValue + "");
+
+    }
+
+    public static void setPackedEndsTextField(String packedEnds) {
+
+        int intValue = Integer.parseInt(packedEnds);
+
+        StolleDataEntryScreen.packedEndsTextField.setText(intValue + "");
+    }
+
+    public static void setOperatorCombo(String nameIn) {
+        StolleDataEntryScreen.operatorCombo.setSelectedItem(nameIn);
+    }
+
+    public static void setCrewCombo(int indexIn) {
+        StolleDataEntryScreen.crewCombo.setSelectedIndex(indexIn);
+    }
+
+    public static void setPressCombo(String selectedIn) {
+
+        StolleDataEntryScreen.pressCombo.setSelectedItem(selectedIn);
+    }
+
+    public static void setPackerCombo(String nameIn) {
+        StolleDataEntryScreen.packerCombo.setSelectedItem(nameIn);
+    }
+
+    public static void setQcCombo(String nameIn) {
+        StolleDataEntryScreen.qcCombo.setSelectedItem(nameIn);
+    }
+
+    public static void setModel(int yearIn, int monthIn, int dayIn) {
+        StolleDataEntryScreen.model.setDate(yearIn, monthIn, dayIn);
+    }
+
+    public static void setCrewCombo(JComboBox crewCombo) {
+        StolleDataEntryScreen.crewCombo = crewCombo;
+    }
+
+    public static void setOptimeNumberCombo(String optimeNumber) {
+        StolleDataEntryScreen.optimeNumberCombo.setSelectedItem(optimeNumber);
+    }
 
 }
