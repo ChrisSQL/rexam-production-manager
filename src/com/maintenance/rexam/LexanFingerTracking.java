@@ -36,6 +36,7 @@ import java.io.FileOutputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JCheckBox;
+import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.TableModel;
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
@@ -68,14 +69,6 @@ public class LexanFingerTracking {
 
     public LexanFingerTracking(int idIn, int view) throws SQLException {
 
-        // Add a view to analytics.
-        try {
-            SQLiteConnection.incrementViewsAnalytics(0, 0, 0, 0, 0, 0, 0, 0, 1);
-        } catch (SQLException e2) {
-            // TODO Auto-generated catch block
-            e2.printStackTrace();
-        }
-
         try {
             for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
@@ -95,7 +88,7 @@ public class LexanFingerTracking {
         JPanel innerPanel1 = new JPanel(new BorderLayout());
         outerPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        frame15.setTitle("Shell Press");
+        frame15.setTitle("Lexan Tracking");
         frame15.setSize(360, 230);
         frame15.setLocationRelativeTo(null);
         outerPanel.setLayout(new BorderLayout());
@@ -367,6 +360,8 @@ public class LexanFingerTracking {
         frame15.add(outerPanel);
 
         frame15.setVisible(true);
+        
+        SQLiteConnection.AnalyticsUpdate("LexanFingerTracking");
 
     }
 
@@ -434,10 +429,11 @@ public class LexanFingerTracking {
         optionsPanel2.add(ExportToExcel);
 
         JPanel summaryPanel = SQLiteConnection.MaintenanceLexanFingerTrackingSummaryTable(1);
+        JScrollPane scrollPane = new JScrollPane(summaryPanel);
 
         optionsPanel2.setBackground(Color.GRAY);
 
-        outerPanel.add(summaryPanel, BorderLayout.CENTER);
+        outerPanel.add(scrollPane, BorderLayout.CENTER);
         outerPanel.add(optionsPanel2, BorderLayout.SOUTH);
         summary.setVisible(false);
         frameSummary.add(outerPanel);
@@ -619,11 +615,11 @@ public class LexanFingerTracking {
         }
 
         try {
-            FileOutputStream output = new FileOutputStream("MaintenanceExcel.xls");
+            FileOutputStream output = new FileOutputStream("ExcelFiles/MaintenanceExcel.xls");
             workBook.write(output);
 
             Desktop dt = Desktop.getDesktop();
-            dt.open(new File("MaintenanceExcel.xls"));
+            dt.open(new File("ExcelFiles/MaintenanceExcel.xls"));
 
             output.close();
         } catch (Exception e) {

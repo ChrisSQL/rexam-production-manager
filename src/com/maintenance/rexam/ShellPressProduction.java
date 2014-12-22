@@ -31,6 +31,7 @@ import net.sourceforge.jdatepicker.impl.UtilDateModel;
 
 import com.database.rexam.SQLiteConnection;
 import java.awt.Desktop;
+import java.awt.Frame;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -77,6 +78,14 @@ public class ShellPressProduction {
 
     public static void main(String[] args) throws SQLException {
 
+//        try {
+//            importdata();
+//            
+//        
+//        } catch (IOException ex) {
+//            Logger.getLogger(ShellPressProduction.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+        
         new ShellPressProduction(1, -1);
 
     }
@@ -317,6 +326,8 @@ public class ShellPressProduction {
             @Override
             public void actionPerformed(ActionEvent e) {
 
+                frame15.dispose();
+
                 // TODO Auto-generated method stub
                 try {
                     new ShellPressProduction(1, -1);
@@ -324,7 +335,6 @@ public class ShellPressProduction {
                     // TODO Auto-generated catch block
                     e1.printStackTrace();
                 }
-                frame15.dispose();
 
             }
         });
@@ -450,9 +460,8 @@ public class ShellPressProduction {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                
+
                 frame15.dispose();
-                
 
                 // TODO Auto-generated method stub
                 try {
@@ -461,7 +470,6 @@ public class ShellPressProduction {
                     // TODO Auto-generated catch block
                     e1.printStackTrace();
                 }
-                
 
             }
         });
@@ -626,22 +634,20 @@ public class ShellPressProduction {
                     System.out.println("No button clicked");
                 } else if (response == JOptionPane.YES_OPTION) {
                     try {
-                    // Delete CurrentID
-                    SQLiteConnection.MaintenanceShellPressDelete(currentId);
+                        // Delete CurrentID
+                        SQLiteConnection.MaintenanceShellPressDelete(currentId);
 
-                    // Create Summary Screen
-                    frameSummary.dispose();
-                    frame15.dispose();
+                        // Create Summary Screen
+                        frameSummary.dispose();
+                        frame15.dispose();
 
-                    createSummaryScreen();
-                } catch (SQLException ex) {
-                    Logger.getLogger(ShellPressProduction.class.getName()).log(Level.SEVERE, null, ex);
-                }
+                        createSummaryScreen();
+                    } catch (SQLException ex) {
+                        Logger.getLogger(ShellPressProduction.class.getName()).log(Level.SEVERE, null, ex);
+                    }
                 } else if (response == JOptionPane.CLOSED_OPTION) {
                     System.out.println("JOptionPane closed");
                 }
-
-                
 
             }
         });
@@ -1013,6 +1019,7 @@ public class ShellPressProduction {
         // Outer Frame
         frameSummary = new JFrame("Shell Production Report");
         frameSummary.setSize(1300, 700);
+        frameSummary.setExtendedState(Frame.MAXIMIZED_BOTH);
         frameSummary.setLocationRelativeTo(null);
 
         // JPanel
@@ -1565,11 +1572,11 @@ public class ShellPressProduction {
                     new ShellPressProduction(1, -1);
 
                     SP01JTextfield.setText("0");
-                    Optime2JTextfield.setText("0");
+                    Optime2JTextfield.setText((int) shellPress21Infeed + "");
                     Optime3JTextfield.setText((int) shellPress31Infeed + "");
-                    FMI41JTextfield.setText("0");
+                    FMI41JTextfield.setText((int) shellPress41Infeed + "");
                     FMI42JTextfield.setText("0");
-                    Formatec04JTextfield.setText((int) shellPress31Infeed + "");
+                    Formatec04JTextfield.setText("0");
 
                     model.setDate(yearInt, monthInt, dayInt);
 
@@ -1756,6 +1763,108 @@ public class ShellPressProduction {
 
     }
 
+    public static void importdata() throws FileNotFoundException, IOException {
+
+        fileChooser = new JFileChooser();
+        fileChooser.setAcceptAllFileFilterUsed(false);
+        fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Excel Documents", "xls"));
+
+        int result = fileChooser.showOpenDialog(frameSummary);
+        if (result == JFileChooser.APPROVE_OPTION) {
+
+            File selectedFile = fileChooser.getSelectedFile();
+            System.out.println("Selected file: " + selectedFile.getAbsolutePath());
+
+            ////////////////
+            FileInputStream excelFile = new FileInputStream(selectedFile);
+            HSSFWorkbook workbook = new HSSFWorkbook(excelFile);
+
+            // Create 31 Arrays [31][8] // Each Array has A2, B2, C2, D2, E2, F2, G2, H2, I2 
+            HSSFRow[] rows = new HSSFRow[32];
+            HSSFSheet worksheet = workbook.getSheet("ShellPressProduction5");
+
+            int[][] ints = new int[31][6];
+
+            for (int i = 0; i < 32; i++) {
+
+                rows[i] = worksheet.getRow(i);
+
+            }
+
+            HSSFCell[] cells = new HSSFCell[31];
+
+            // get CellA1 to A31 and Assign to int
+            for (int i = 0; i < 31; i++) {
+
+                ints[i][0] = (int) rows[i].getCell((int) 0).getNumericCellValue();
+                System.out.println("DAY : " + ints[i][0]);
+
+                ints[i][1] = (int) rows[i].getCell((int) 1).getNumericCellValue();
+                System.out.println("Column B : " + ints[i][1]);
+
+                ints[i][2] = (int) rows[i].getCell((int) 2).getNumericCellValue();
+                System.out.println("Column C : " + ints[i][2]);
+
+                ints[i][3] = (int) rows[i].getCell((int) 3).getNumericCellValue();
+                System.out.println("Column D : " + ints[i][3]);
+
+                ints[i][4] = (int) rows[i].getCell((int) 4).getNumericCellValue();
+                System.out.println("Column E : " + ints[i][4]);
+
+                ints[i][5] = (int) rows[i].getCell((int) 5).getNumericCellValue();
+                System.out.println("Column F : " + ints[i][5]);
+
+//                ints[i][6] = (int) rows[i].getCell((int) 6).getNumericCellValue();
+//                System.out.println("Column G : " + ints[i][6]);
+//
+//                ints[i][7] = (int) rows[i].getCell((int) 7).getNumericCellValue();
+//                System.out.println("Column H : " + ints[i][7]);
+//
+//                ints[i][8] = (int) rows[i].getCell((int) 8).getNumericCellValue();
+//                System.out.println("Column I : " + ints[i][8]);
+
+            }
+
+            for (int i = 0; i < 31; i++) {
+
+                try {
+
+                    ShellPressProduction linerDefects = new ShellPressProduction(1, -1);
+
+                    // Set Date to 2014-01-i
+                    int day = ints[i][0];
+
+                    model.setDate(2014, 04, day);                  
+                    
+                //    linerDefects.setSP01JTextfield(ints[i][1] + "");
+                    linerDefects.setOptime2JTextfield(ints[i][1] + "");
+                    linerDefects.setOptime3JTextfield(ints[i][2] + "");
+                    linerDefects.setFMI41JTextfield(ints[i][3] + "");
+                    linerDefects.setFMI42JTextfield(ints[i][4] + "");
+                    linerDefects.setFormatec04JTextfield(ints[i][5] + "");
+                    
+                    
+
+                    add.doClick();
+
+                } catch (SQLException ex) {
+                    Logger.getLogger(LinerAndShellsEntry.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
+                try {
+                    createSummaryScreen();
+                } catch (SQLException ex) {
+                    Logger.getLogger(LinerAndShellsEntry.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
+            }
+
+        }
+
+        // Import into Database with matching dates if it doesnt exist for LinersAndShells, LinerDefects, EndCounts
+        // If exist skip that individual section
+    }
+
     public static void generateExcelFile(String type, String query) {
 
         // Create A JFrame to Query
@@ -1808,11 +1917,11 @@ public class ShellPressProduction {
         }
 
         try {
-            FileOutputStream output = new FileOutputStream("MaintenanceExcel.xls");
+            FileOutputStream output = new FileOutputStream("ExcelFiles/MaintenanceExcel.xls");
             workBook.write(output);
 
             Desktop dt = Desktop.getDesktop();
-            dt.open(new File("MaintenanceExcel.xls"));
+            dt.open(new File("ExcelFiles/MaintenanceExcel.xls"));
 
             output.close();
         } catch (Exception e) {
@@ -1821,4 +1930,31 @@ public class ShellPressProduction {
 
     }
 
+    
+    public static void setSP01JTextfield(String SP01JTextfield) {
+        ShellPressProduction.SP01JTextfield.setText(SP01JTextfield);
+    }
+
+    public static void setOptime2JTextfield(String Optime2JTextfield) {
+        ShellPressProduction.Optime2JTextfield.setText(Optime2JTextfield);
+    }
+
+    public static void setOptime3JTextfield(String Optime3JTextfield) {
+        ShellPressProduction.Optime3JTextfield.setText(Optime3JTextfield);
+    }
+
+    public static void setFMI41JTextfield(String FMI41JTextfield) {
+        ShellPressProduction.FMI41JTextfield.setText(FMI41JTextfield);
+    }
+
+    public static void setFMI42JTextfield(String FMI42JTextfield) {
+        ShellPressProduction.FMI42JTextfield.setText(FMI42JTextfield);
+    }
+
+    public static void setFormatec04JTextfield(String Formatec04JTextfield) {
+        ShellPressProduction.Formatec04JTextfield.setText(Formatec04JTextfield);
+    }
+
+    
+    
 }

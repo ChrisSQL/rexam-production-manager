@@ -39,7 +39,6 @@ import javax.swing.border.EmptyBorder;
 
 import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JasperCompileManager;
-import net.sf.jasperreports.engine.JasperExportManager;
 import net.sf.jasperreports.engine.JasperFillManager;
 import net.sf.jasperreports.engine.JasperPrint;
 import net.sf.jasperreports.engine.JasperReport;
@@ -49,16 +48,18 @@ import net.sourceforge.jdatepicker.impl.JDatePanelImpl;
 import net.sourceforge.jdatepicker.impl.JDatePickerImpl;
 import net.sourceforge.jdatepicker.impl.UtilDateModel;
 
-import org.apache.pdfbox.pdmodel.PDDocument;
-
 import com.database.rexam.SQLiteConnection;
 import java.awt.Desktop;
 import java.io.FileOutputStream;
-import java.time.Clock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JFileChooser;
 import javax.swing.JTable;
 import javax.swing.table.TableModel;
+import net.sf.jasperreports.engine.JRExporter;
+import net.sf.jasperreports.engine.JRExporterParameter;
+import net.sf.jasperreports.engine.export.JRPdfExporter;
+import net.sf.jasperreports.view.JasperViewer;
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFFont;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
@@ -68,7 +69,7 @@ import org.apache.poi.ss.usermodel.Row;
 
 public class ParEntry {
 
-    JFrame frame;
+    public static JFrame frame;
     static JLabel formLabel, dateLabel, crewLabel, codeLabel, machineCodeLabel, shiftManagerLabel, technicianLabel, MachineOperatorLabel,
             engineerLabel, blankLabel1, blankLabel2;
     static JTextField formJTextField;
@@ -78,7 +79,7 @@ public class ParEntry {
     static JLabel timeStartedLabel, timeInToolRoomLabel, timeFinishedLabel, signedLabel, datelabel, statusLabel, blankLabel3, blankLabel4,
             blankLabel5, blankLabel6, blankLabel7, blankLabel8, blankLabel9, blankLabel10;
     static JTextField timeStartedJTextField, timeInToolRoomJTextField, timeFinishedJTextField;
-    static String[] signedArray = {"Henry O'Sullivan", "Marc Mahon"};
+    static String[] signedArray = {"NA", "Henry O'Sullivan", "Marc Mahon"};
     static JComboBox signedCombo = new JComboBox(signedArray);
     static JCheckBox statusCheckBox;
 
@@ -86,7 +87,7 @@ public class ParEntry {
     static JButton save, searchMode, newRecordMode, updateRecord, printReport, summaryMode, refresh, exportToExcel;
 
     // TOP OPTIONS BAR
-    static JButton find, previous, next;
+    static JButton find, previous, next, delete;
 
     // LEFT SIDE PANEL
     static JLabel linersLabel, head1Label, head2Label, head3Label, head4Label, head5Label, head6Label, head7Label, head8Label;
@@ -112,6 +113,7 @@ public class ParEntry {
     static String query, item;
 
     int currentForm;
+    static JFileChooser fileChooser;
 
     public static void main(String[] args) {
 
@@ -132,7 +134,7 @@ public class ParEntry {
                 }
             }
         } catch (Exception e) {
-			// If Nimbus is not available, you can set the GUI to another look
+            // If Nimbus is not available, you can set the GUI to another look
             // and feel.
         }
 
@@ -194,11 +196,10 @@ public class ParEntry {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-                new ParEntry(2, "1", "August", "2014");
-                setParToHighestForm();
-                formJTextField.setBackground(new Color(255, 255, 123));
                 frame.dispose();
+                new ParEntry(3, "1", "August", "2014");
 
+                //    frame.dispose();
             }
         });
         printReport.addActionListener(new ActionListener() {
@@ -206,7 +207,7 @@ public class ParEntry {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-				// TODO Auto-generated method stub
+                // TODO Auto-generated method stub
                 try {
                     createReport(Integer.valueOf(formJTextField.getText()));
                     System.out.println("Reference Number " + formJTextField.getText());
@@ -224,7 +225,7 @@ public class ParEntry {
                     e1.printStackTrace();
                 }
 
-				// SQLConnection.ParGenerateReport(formJTextField.getText());
+                // SQLConnection.ParGenerateReport(formJTextField.getText());
             }
         });
         newRecordMode.addActionListener(new ActionListener() {
@@ -232,29 +233,29 @@ public class ParEntry {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-                new ParEntry(1, "1", "August", "2014");
                 frame.dispose();
+                new ParEntry(1, "1", "August", "2014");
 
             }
         });
         save.addActionListener(new ActionListener() {
 
-            Date selectedDate = (Date) datePicker.getModel().getValue();
-            String date = new SimpleDateFormat("yyyy-MM-dd").format(selectedDate);
-
-            Date selectedDate2 = (Date) datePicker2.getModel().getValue();
-            String date2 = new SimpleDateFormat("yyyy-MM-dd").format(selectedDate2);
-
             @Override
             public void actionPerformed(ActionEvent e) {
 
+                Date selectedDate = (Date) datePicker.getModel().getValue();
+                String date99 = new SimpleDateFormat("yyyy-MM-dd").format(selectedDate);
+
+                Date selectedDate2 = (Date) datePicker2.getModel().getValue();
+                String date2 = new SimpleDateFormat("yyyy-MM-dd").format(selectedDate2);
+
                 try {
 
-                    System.out.println("Date : " + date);
+                    System.out.println("Date : " + date99);
                     System.out.println("Date2 : " + date2);
 
                     SQLiteConnection.ParDatabaseInsert(
-                            date,
+                            date99,
                             SQLiteConnection.ParDatabaseGetHighestForm() + 1,
                             (String) crewCombo.getSelectedItem(),
                             (String) codeCombo.getSelectedItem(),
@@ -296,7 +297,7 @@ public class ParEntry {
 
                 } catch (NumberFormatException e1) {
 
-					// TODO Auto-generated catch block
+                    // TODO Auto-generated catch block
                     JOptionPane.showMessageDialog(null, "Invalid Score Readings Entered. Numbers Only.", "Error", JOptionPane.ERROR_MESSAGE);
 
                     e1.printStackTrace();
@@ -393,6 +394,8 @@ public class ParEntry {
             }
         });
 
+        SQLiteConnection.AnalyticsUpdate("ParEntry");
+
     }
 
     public static JPanel createTopPanel(int viewIn, String dayIn, String monthIn, String yearIn) {
@@ -425,7 +428,7 @@ public class ParEntry {
         blankLabel1 = new JLabel("", SwingConstants.CENTER);
         blankLabel2 = new JLabel("", SwingConstants.CENTER);
 
-		// formJTextField = new JTextField("");
+        // formJTextField = new JTextField("");
         if (viewIn == 1) {
             try {
                 formJTextField.setText(SQLiteConnection.ParDatabaseGetHighestForm() + 1 + "");
@@ -570,17 +573,24 @@ public class ParEntry {
         // Machine Operator
         try {
 
-            String sql = "SELECT Employees.Name FROM Employees ORDER BY Name Asc";
+            String sql = "select Employees.Name from Employees ORDER BY Name ASC";
             Connection conn = SQLiteConnection.Connect();
             PreparedStatement pst = conn.prepareStatement(sql);
             pst.setQueryTimeout(5);
             ResultSet rs = pst.executeQuery();
 
+            MachineOperatorCombo.addItem("NA");
+            shiftManagerCombo.addItem("NA");
+            technicianCombo.addItem("NA");
+            engineerCombo.addItem("NA");
+
             while (rs.next()) {
 
                 String employeeName = rs.getString("Name");
+
                 MachineOperatorCombo.addItem(employeeName);
                 shiftManagerCombo.addItem(employeeName);
+                signedCombo.addItem(employeeName);
                 technicianCombo.addItem(employeeName);
                 engineerCombo.addItem(employeeName);
             }
@@ -689,7 +699,7 @@ public class ParEntry {
                     if (Integer.valueOf(formJTextField.getText() + "") == SQLiteConnection.ParDatabaseGetHighestForm()) {
 
                         setParToForm(SQLiteConnection.ParDatabaseGetHighestForm());
-                        System.out.print("Next - Highest Form" + SQLiteConnection.ParDatabaseGetHighestForm()+"");
+                        System.out.print("Next - Highest Form" + SQLiteConnection.ParDatabaseGetHighestForm() + "");
 
                     } else {
 
@@ -706,10 +716,28 @@ public class ParEntry {
 
             }
         });
+        delete = new JButton("Delete This Record");
+        delete.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                frame.dispose();
+                try {
+                    SQLiteConnection.ParDatabaseDelete(formJTextField.getText() + "");
+                } catch (SQLException ex) {
+                    Logger.getLogger(ParEntry.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                frame.dispose();
+                new ParEntry(3, "1", "August", "2014");
+
+            }
+        });
 
         panel.add(find);
         panel.add(previous);
         panel.add(next);
+        panel.add(delete);
 
         return panel;
 
@@ -794,7 +822,7 @@ public class ParEntry {
         JPanel northPanel1 = new JPanel(new GridLayout(2, 8));
 		// northPanel1.setBackground(new Color(255, 255, 255));
 
-		// northPanel.add(linersLabel);
+        // northPanel.add(linersLabel);
         northPanel0.add(linersLabel);
 
         northPanel1.add(head1Label);
@@ -937,10 +965,10 @@ public class ParEntry {
 
         centerPanel2.add(new JLabel("    24"));
         centerPanel2.add(number24Check);
-        
+
         centerPanel2.add(new JLabel("    25"));
         centerPanel2.add(number25Check);
-        
+
         centerPanel2.add(new JLabel("    26"));
         centerPanel2.add(number26Check);
 
@@ -1193,7 +1221,7 @@ public class ParEntry {
         // middlePanel.setBackground(Color.WHITE);
 
         JLabel label = new JLabel("", SwingConstants.CENTER);
-        ImageIcon image = new ImageIcon("images/ring.jpg");
+        ImageIcon image = new ImageIcon("Images/ring.jpg");
         label.setIcon(image);
         middlePanel.add(label, BorderLayout.CENTER);
 
@@ -1319,7 +1347,7 @@ public class ParEntry {
         rightPanel.add(score3CJTextField);
         rightPanel.add(score3DLabel);
         rightPanel.add(score3DJTextField);
-		// rightPanel.add(new JLabel(""));
+        // rightPanel.add(new JLabel(""));
         // rightPanel.add(new JLabel(""));
         // rightPanel.add(new JLabel(""));
         // rightPanel.add(new JLabel(""));
@@ -1489,6 +1517,16 @@ public class ParEntry {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+        
+        String modifiedDateXXX = result[0] + "";
+        String yearXXX = modifiedDateXXX.substring(0, 4);
+        int yearIntAAA = Integer.parseInt(yearXXX);
+        String monthXXX = modifiedDateXXX.substring(5, 7);
+        int monthIntAAA = Integer.parseInt(monthXXX) - 1;
+        String dayXXX = modifiedDateXXX.substring(8, 10);
+        int dayIntAAA = Integer.parseInt(dayXXX);
+
+        model.setDate(yearIntAAA, monthIntAAA, dayIntAAA);
 
         // Set date to result[0]
         formJTextField.setText(result[1] + "");
@@ -1594,7 +1632,7 @@ public class ParEntry {
 
         Connection conn = SQLiteConnection.Connect();
 
-        File file = new File("C:/Users/Chris/Documents/SPRING/Rexam3/src/com/par/rexam/ParReport.jrxml");
+        File file = new File("Reports/ParReport.jrxml");
         InputStream stream = new FileInputStream(file);
         JasperDesign design = JRXmlLoader.load(stream);
         JasperReport report = JasperCompileManager.compileReport(design);
@@ -1605,16 +1643,18 @@ public class ParEntry {
         // would be utilized by
         // the report
 
-        JasperPrint print = JasperFillManager.fillReport(report, params, conn);
-        JasperExportManager.exportReportToPdfFile(print, "report" + referenceNumber + ".pdf");
-
-        PDDocument pdf = PDDocument.load("report" + referenceNumber + ".pdf");
-        pdf.print();
-        pdf.close();
+        InputStream inputStream = new FileInputStream("Reports/ParReport.jrxml");
+        JasperCompileManager.compileReportToFile("Reports/ParReport.jrxml");
+        JasperDesign jasperDesign = JRXmlLoader.load(inputStream);
+        JasperReport jasperReport = JasperCompileManager.compileReport(jasperDesign);
+        JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, params, conn);
+        JasperViewer view = new net.sf.jasperreports.view.JasperViewer(jasperPrint, false);
+        view.setVisible(true);
+        view.toFront();
 
         conn.close();
 
-		// use JasperExportManager to export report to your desired requirement
+        // use JasperExportManager to export report to your desired requirement
     }
 
     private static JPanel createSummaryPanel() {
@@ -1673,6 +1713,10 @@ public class ParEntry {
                 String modifiedDate1 = new SimpleDateFormat("yyyy-MM-dd").format((Date) excelPicker1.getModel().getValue());
                 String modifiedDate2 = new SimpleDateFormat("yyyy-MM-dd").format((Date) excelPicker2.getModel().getValue());
                 item = typeCombo.getSelectedItem() + "";
+
+                System.out.println("Modified Date 1 : " + modifiedDate1);
+                System.out.println("Modified Date 2 : " + modifiedDate2);
+                System.out.println("Item : " + item);
 
                 query = "SELECT * FROM ParEntry WHERE DateString BETWEEN \'" + modifiedDate1 + "\' AND \'" + modifiedDate2 + "\' ORDER BY " + sortTypesCombo.getSelectedItem() + ";";
 
@@ -1761,11 +1805,11 @@ public class ParEntry {
         }
 
         try {
-            FileOutputStream output = new FileOutputStream("ParExcel.xls");
+            FileOutputStream output = new FileOutputStream("ExcelFiles/ParExcel.xls");
             workBook.write(output);
 
             Desktop dt = Desktop.getDesktop();
-            dt.open(new File("ParExcel.xls"));
+            dt.open(new File("ExcelFiles/ParExcel.xls"));
 
             output.close();
         } catch (Exception e) {

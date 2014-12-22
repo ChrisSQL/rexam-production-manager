@@ -31,6 +31,7 @@ import net.sourceforge.jdatepicker.impl.JDatePanelImpl;
 import net.sourceforge.jdatepicker.impl.JDatePickerImpl;
 import net.sourceforge.jdatepicker.impl.UtilDateModel;
 import com.database.rexam.SQLiteConnection;
+import java.awt.Frame;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -762,6 +763,7 @@ public class LinerUsageEntryScreen {
         // Outer Frame
         frameSummary = new JFrame("Liner Data Report");
         frameSummary.setSize(1366, 768);
+        frameSummary.setExtendedState(Frame.MAXIMIZED_BOTH);
         frameSummary.setLocationRelativeTo(null);
 
         // JPanel

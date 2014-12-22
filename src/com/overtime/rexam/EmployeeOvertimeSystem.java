@@ -26,6 +26,7 @@ import javax.swing.border.EmptyBorder;
 
 import com.database.rexam.SQLiteConnection;
 import java.awt.Color;
+import java.awt.Frame;
 import java.awt.print.PrinterException;
 import java.io.File;
 import java.io.FileInputStream;
@@ -38,32 +39,33 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.table.JTableHeader;
 import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JasperCompileManager;
-import net.sf.jasperreports.engine.JasperExportManager;
 import net.sf.jasperreports.engine.JasperFillManager;
 import net.sf.jasperreports.engine.JasperPrint;
 import net.sf.jasperreports.engine.JasperReport;
 import net.sf.jasperreports.engine.design.JasperDesign;
 import net.sf.jasperreports.engine.xml.JRXmlLoader;
+import net.sf.jasperreports.view.JasperViewer;
 import net.sourceforge.jdatepicker.impl.JDatePanelImpl;
 import net.sourceforge.jdatepicker.impl.JDatePickerImpl;
 import net.sourceforge.jdatepicker.impl.UtilDateModel;
-import org.apache.pdfbox.pdmodel.PDDocument;
 
 public class EmployeeOvertimeSystem {
 
-    static JButton save, delete, home, reset, reset2, addNew, confirmDelete, update, confirmUpdate, go, go2, summary, summaryGrouped, moveMarkerUpButton, moveMarkerDownButton, moveQueuePositionDown, moveQueuePositionUp, changeEmployeePosition, manualEditEntry, goSort, crewDisplayButton, print, previousEntries;
+    static JButton save, delete, home, reset, reset2, addNew, confirmDelete, update, confirmUpdate, go, go2, summary, summaryGrouped, moveEmployeeUp, moveEmployeeDown, shiftAllEmployees, sortQueue, moveQueuePositionDown, moveQueuePositionUp, changeEmployeePosition, manualEditEntry, goSort, crewDisplayButton, print, previousEntries;
     static JLabel employeeId, name, address, crew, departmentHead, processLeader, shiftManager, technician, leadHand, operator, engineer, forkliftDriver, toolmaker, fitter, electrician, packer, qcInspector, phoneNumber,
-            mobileNumber, nameLabel1, crewLabel1, nameLabel2, dateLabel2, statusLabel, currentTableLabel, selectTableLabel, currentPersonLabel, currentCrew, sortBy, displayCrew;
+            mobileNumber, nameLabel1, crewLabel1, nameLabel2, dateLabel2, statusLabel, employeeShiftLabel, currentTableLabel, selectTableLabel, currentPersonLabel, currentCrew, sortBy, displayCrew;
     static JTextField employeeIdText, nametext, addressText, phoneNumberText, mobileNumberText;
     static JTextField nameEditJTextField, absentJTextField, acceptedJTextField, dontCountJTextField, refusedJTextField, missATurnJTextField, setUpJTextField;
 
     static JCheckBox departmentHeadJCheckBox, shiftManagerJCheckBox, technicianJCheckBox, leadHandJCheckBox, operatorJCheckBox, engineerJCheckBox, packerJCheckBox,
             qcInspectorJCheckBox, forkliftDriverJCheckBox, processLeaderJCheckBox, toolmakerJCheckBox, fitterJCheckBox, electricianJCheckBox;
-    static JComboBox crewCombo, nameAndId, nameCombo, crewSelectCombo, jobSelectCombo, statusCombo, currentJobCombo, currentCrewCombo, currentName, currentCrewCombo2, positionCombo, sortByCombo, crewOnlyCombo;
+    static JComboBox crewCombo, nameAndId, nameCombo, crewSelectCombo, jobSelectCombo, statusCombo, jobCombo, employeeShiftCombo, currentCrewCombo, currentName, currentCrewCombo2, positionCombo, sortByCombo, crewOnlyCombo;
     static int currentId;
     static JFrame frame9, frame10, frame11;
     static UtilDateModel model, model2;
@@ -71,9 +73,11 @@ public class EmployeeOvertimeSystem {
     static JDatePickerImpl datePicker, datePicker2;
 
     public static String selectedName;
+    static JFileChooser fileChooser;
 
     public static void main(String args[]) {
 
+        //  sortQueue("Machine Operator", "B");
         new EmployeeOvertimeSystem("Machine Operator", "A", "", "All");
     }
 
@@ -125,9 +129,10 @@ public class EmployeeOvertimeSystem {
         currentCrewCombo2 = new JComboBox();
         currentCrewCombo.addItem(crewIn);
         currentCrewCombo2.addItem(crewIn);
-        currentJobCombo = new JComboBox();
-        currentJobCombo.addItem(typeIn);
+        jobCombo = new JComboBox();
+        jobCombo.addItem(typeIn);
         currentName = new JComboBox();
+        employeeShiftCombo = new JComboBox();
 
         go = new JButton("Go");
         go.addActionListener(new ActionListener() {
@@ -151,6 +156,7 @@ public class EmployeeOvertimeSystem {
 
                 try {
                     insertEmployeeOvertime();
+
                 } catch (SQLException ex) {
                     Logger.getLogger(EmployeeOvertimeSystem.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -201,6 +207,7 @@ public class EmployeeOvertimeSystem {
         frame9 = new JFrame("Employee Overtime System");
         // frame9.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame9.setSize(1500, 768);
+        frame9.setExtendedState(Frame.MAXIMIZED_BOTH);
         frame9.setLocationRelativeTo(null);
         // frame9.setResizable(false);
 
@@ -225,8 +232,10 @@ public class EmployeeOvertimeSystem {
         goSort.setVisible(false);
 
         if (typeIn.equals("Previous Entries")) {
-            moveMarkerDownButton.setVisible(false);
-            moveMarkerUpButton.setVisible(false);
+            moveEmployeeDown.setVisible(false);
+            moveEmployeeUp.setVisible(false);
+            shiftAllEmployees.setVisible(false);
+            sortQueue.setVisible(false);
             changeEmployeePosition.setVisible(false);
         }
 
@@ -236,8 +245,12 @@ public class EmployeeOvertimeSystem {
 
             fillCrewCombos(typeIn, crewIn);
         } else {
-            moveMarkerDownButton.setVisible(false);
-            moveMarkerUpButton.setVisible(false);
+            moveEmployeeDown.setVisible(false);
+            moveEmployeeUp.setVisible(false);
+            shiftAllEmployees.setVisible(false);
+            sortQueue.setVisible(false);
+            employeeShiftCombo.setVisible(false);
+            employeeShiftLabel.setVisible(false);
             summary.setVisible(false);
             manualEditEntry.setVisible(true);
             displayCrew.setVisible(true);
@@ -287,6 +300,17 @@ public class EmployeeOvertimeSystem {
         fitter = new JLabel("Fitter", SwingConstants.CENTER);
         electrician = new JLabel("Electrician", SwingConstants.CENTER);
 
+        sortQueue = new JButton("Sort Queue");
+        sortQueue.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                sortQueue(jobSelectCombo.getSelectedItem() + "", crewSelectCombo.getSelectedItem() + "");
+
+            }
+        });
+
         employeeIdText = new JTextField();
         nametext = new JTextField();
         addressText = new JTextField();
@@ -320,6 +344,8 @@ public class EmployeeOvertimeSystem {
         leftPanel.add(crewLabel1);
         leftPanel.add(crewSelectCombo);
         leftPanel.add(go);
+        
+        
         leftPanel.add(sortBy);
         leftPanel.add(sortByCombo);
         leftPanel.add(goSort);
@@ -428,30 +454,43 @@ public class EmployeeOvertimeSystem {
             }
         });
 
-        moveMarkerUpButton = new JButton("Move Marker Up");
-        moveMarkerUpButton.addActionListener(new ActionListener() {
+        moveEmployeeUp = new JButton("Move Employee Up");
+        moveEmployeeUp.addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
 
-                moveMarkerUp(currentJobCombo.getSelectedItem() + "", currentCrewCombo.getSelectedItem() + "");
+                moveEmployeeUp(jobCombo.getSelectedItem() + "", currentCrewCombo.getSelectedItem() + "", employeeShiftCombo.getSelectedItem() + "");
                 frame9.dispose();
-                new EmployeeOvertimeSystem(currentJobCombo.getSelectedItem() + "", currentCrewCombo.getSelectedItem() + "", "", crewOnlyCombo.getSelectedItem() + "");
+                new EmployeeOvertimeSystem(jobCombo.getSelectedItem() + "", currentCrewCombo.getSelectedItem() + "", "", crewOnlyCombo.getSelectedItem() + "");
 
             }
         });
-        moveMarkerDownButton = new JButton("Move Marker Down");
-        moveMarkerDownButton.addActionListener(new ActionListener() {
+        moveEmployeeDown = new JButton("Move Employee Down");
+        moveEmployeeDown.addActionListener(new ActionListener() {
 
             @Override
             public void actionPerformed(ActionEvent e) {
 
-                moveMarkerDown(currentJobCombo.getSelectedItem() + "", currentCrewCombo.getSelectedItem() + "");
+                moveEmployeeDown(jobCombo.getSelectedItem() + "", currentCrewCombo.getSelectedItem() + "", employeeShiftCombo.getSelectedItem() + "");
                 frame9.dispose();
-                new EmployeeOvertimeSystem(currentJobCombo.getSelectedItem() + "", currentCrewCombo.getSelectedItem() + "", "", crewOnlyCombo.getSelectedItem() + "");
+                new EmployeeOvertimeSystem(jobCombo.getSelectedItem() + "", currentCrewCombo.getSelectedItem() + "", "", crewOnlyCombo.getSelectedItem() + "");
 
             }
         });
+
+        shiftAllEmployees = new JButton("Shift All Employees");
+        shiftAllEmployees.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                shiftListOfEmployees(jobSelectCombo.getSelectedItem() + "", crewSelectCombo.getSelectedItem() + "");
+
+            }
+        });
+
+        employeeShiftLabel = new JLabel("Employee : ");
 
         JPanel outerPanel = new JPanel(new GridLayout(1, 2));
         outerPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -459,11 +498,15 @@ public class EmployeeOvertimeSystem {
         JPanel leftPanel = new JPanel(new GridLayout(1, 1));
 
         JPanel leftTopPanel = new JPanel(new FlowLayout());
-//        leftTopPanel.add(currentTableLabel);
-//        leftTopPanel.add(currentJobCombo);
-//        leftTopPanel.add(currentCrewCombo);
-//        leftTopPanel.add(moveMarkerDownButton);
-//        leftTopPanel.add(moveMarkerUpButton);
+        //    leftTopPanel.add(new JLabel("Employee : "));
+        leftTopPanel.add(employeeShiftLabel);
+        leftTopPanel.add(employeeShiftCombo);
+        leftTopPanel.add(moveEmployeeDown);
+        leftTopPanel.add(moveEmployeeUp);
+        leftTopPanel.add(new JLabel(" | "));
+        leftTopPanel.add(shiftAllEmployees);
+        leftTopPanel.add(sortQueue);
+        
 
         JPanel rightpanel = new JPanel(new FlowLayout());
 
@@ -525,15 +568,17 @@ public class EmployeeOvertimeSystem {
                 go2.setVisible(false);
 
                 currentCrewCombo.setVisible(false);
-                currentJobCombo.setVisible(false);
+                jobCombo.setVisible(false);
                 currentTableLabel.setVisible(false);
                 selectTableLabel.setVisible(false);
 
                 changeEmployeePosition.setVisible(false);
                 manualEditEntry.setVisible(false);
 
-                moveMarkerDownButton.setVisible(false);
-                moveMarkerUpButton.setVisible(false);
+                moveEmployeeDown.setVisible(false);
+                moveEmployeeUp.setVisible(false);
+                shiftAllEmployees.setVisible(false);
+                sortQueue.setVisible(false);
 
                 home.setVisible(true);
 
@@ -555,7 +600,7 @@ public class EmployeeOvertimeSystem {
                 statusLabel.setVisible(false);
 
                 currentCrewCombo.setVisible(false);
-                currentJobCombo.setVisible(false);
+                jobCombo.setVisible(false);
                 currentTableLabel.setVisible(false);
                 selectTableLabel.setVisible(false);
                 summary.setVisible(false);
@@ -572,8 +617,10 @@ public class EmployeeOvertimeSystem {
 
                 tablePanel = SQLiteConnection.EmployeeOvertimeSummaryEntries(sortByIn, crewOnlyCombo.getSelectedItem() + "");
 
-                moveMarkerDownButton.setText("");
-                moveMarkerUpButton.setText("");
+                moveEmployeeDown.setText("");
+                moveEmployeeUp.setText("");
+                shiftAllEmployees.setText("");
+                sortQueue.setText("");
             }
 
         } catch (SQLException e) {
@@ -612,6 +659,7 @@ public class EmployeeOvertimeSystem {
 
                 String name = rs.getString("Name");
                 nameCombo.addItem(name);
+                employeeShiftCombo.addItem(name);
             }
 
             pst1.close();
@@ -672,6 +720,7 @@ public class EmployeeOvertimeSystem {
 
                 String name = rs.getString("Name");
                 nameCombo.addItem(name);
+
             }
 
             pst1.close();
@@ -708,7 +757,7 @@ public class EmployeeOvertimeSystem {
 
             // Update
             SQLiteConnection.EmployeeOvertimeIncrement(nameCombo.getSelectedItem() + "", statusCombo.getSelectedItem() + "");
-            moveMarkerDown(currentJobCombo.getSelectedItem() + "", currentCrewCombo.getSelectedItem() + "");
+            //    moveMarkerDown(jobCombo.getSelectedItem() + "", currentCrewCombo.getSelectedItem() + "");
 
         } else {
 
@@ -725,6 +774,7 @@ public class EmployeeOvertimeSystem {
 
         // Insert into Entries Screen
         SQLiteConnection.EmployeeOvertimeInsert(name, job, crew, date, status);
+        shiftListOfEmployees(jobSelectCombo.getSelectedItem() + "", crewSelectCombo.getSelectedItem() + "");
 
     }
 
@@ -778,67 +828,97 @@ public class EmployeeOvertimeSystem {
         fillCrewCombos(typeIn, crewIn);
     }
 
-    public static void shiftListOfEmployees(String typeIn, String crewIn) {
-
-        // Get Amount of People in Department
-        int amountInDepartmentAndCrew = 0;
+    private static void sortQueue(String typeIn, String crewIn) {
 
         try {
-            amountInDepartmentAndCrew = SQLiteConnection.EmployeeOverTimeGetQueueLength(typeIn, crewIn);
-            System.out.println("Amount In Department And Crew " + amountInDepartmentAndCrew);
+            // get an array of Names of people in the Job, Crew
+            String[] names = SQLiteConnection.EmployeeOvertimeArrayOFNamesInCrewAndJob(crewIn, typeIn);
+
+            for (int i = 1; i < names.length; i++) {
+
+                SQLiteConnection.EmployeeOvertimeSetQueuePosition(names[i], typeIn, crewIn, i);
+
+            }
+        } catch (SQLException ex) {
+
+        }
+
+        frame9.dispose();
+        new EmployeeOvertimeSystem(jobSelectCombo.getSelectedItem() + "", crewSelectCombo.getSelectedItem() + "", "", "All");
+
+    }
+
+    public static void shiftListOfEmployees(String typeIn, String crewIn) {
+
+        try {
+            // get an array of Names of people in the Job, Crew
+            String[] names = SQLiteConnection.EmployeeOvertimeArrayOFNamesInCrewAndJob(crewIn, typeIn);
+            // Shift QueuePostion++ where Name = names[i] + JobsTitle = typeIn + crew = crewIn
+
+            for (int i = 0; i < names.length; i++) {
+                moveEmployeeUp(typeIn, crewIn, names[i]);
+            }
+
+        } catch (SQLException ex) {
+        }
+
+        frame9.dispose();
+        new EmployeeOvertimeSystem(jobSelectCombo.getSelectedItem() + "", crewSelectCombo.getSelectedItem() + "", "", "All");
+
+    }
+
+    public static void moveEmployeeDown(String typeIn, String crewIn, String employeeIn) {
+
+        try {
+            // Get Queue Position
+            int crewCount = SQLiteConnection.EmployeeOvertimeGetCrewCount(typeIn, crewIn);
+            int queuePosition = SQLiteConnection.EmployeeOvertimeGetQueuePositionByName(employeeIn, crewIn);
+            if (queuePosition <= crewCount) {
+
+                System.out.println("Clicked!!!! : ");
+                SQLiteConnection.EmployeeOvertimeSetQueuePosition(employeeIn, typeIn, crewIn, queuePosition + 2);
+
+            }
+
+//            System.out.println("Type : " + crewCount);
+//            System.out.println("Type : " + typeIn);
+//            System.out.println("Type : " + crewIn);
+//            System.out.println("Type : " + employeeIn);
+//            System.out.println("Type : " + queuePosition);
         } catch (SQLException ex) {
             Logger.getLogger(EmployeeOvertimeSystem.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        // 
-        for (int i = 1; i < amountInDepartmentAndCrew; i++) {
+    }
 
-            System.out.println("Number " + i);
+    public static void moveEmployeeUp(String typeIn, String crewIn, String employeeIn) {
 
-            // UPDATE Employee.PositionInQueue FROM Employee WHERE positionInQueue = i, Job = jobIn and Crew = crewIn
-            // position i = position i + 1;
-            // position(amountInDepartmentAndCrew) = 1
+        try {
+            // Get Queue Position
+            int crewCount = SQLiteConnection.EmployeeOvertimeGetCrewCount(typeIn, crewIn);
+            int queuePosition = SQLiteConnection.EmployeeOvertimeGetQueuePositionByName(employeeIn, crewIn);
+            if (queuePosition >= 1) {
+
+                //    System.out.println("Clicked!!!! : ");
+                SQLiteConnection.EmployeeOvertimeSetQueuePosition(employeeIn, typeIn, crewIn, queuePosition);
+
+            } else {
+
+                SQLiteConnection.EmployeeOvertimeSetQueuePosition(employeeIn, typeIn, crewIn, crewCount);
+
+            }
+
+//            System.out.println("CrewCount : " + crewCount);
+//            System.out.println("Job : " + typeIn);
+//            System.out.println("Crew : " + crewIn);
+//            System.out.println("Employee : " + employeeIn);
+//            System.out.println("QueuePosition : " + queuePosition);
+        } catch (SQLException ex) {
+            Logger.getLogger(EmployeeOvertimeSystem.class.getName()).log(Level.SEVERE, null, ex);
         }
-
-        // Refresh Summary Screen with Selected Job and Crew
     }
 
-    public static void moveMarkerDown(String typeIn, String crewIn) {
-
-//        System.out.println("TypeIn 99 : " + typeIn);
-//        System.out.println("crewIn 99 : " + crewIn);
-//
-//        try {
-//
-//            int crewCount = SQLiteConnection.EmployeeOvertimeGetCrewCount(typeIn, crewIn);
-//            System.out.println("Count " + crewCount);
-//
-//            if (SQLiteConnection.EmployeeOvertimeGetQueuePosition(typeIn, crewIn) == crewCount - 1) {
-//                SQLiteConnection.EmployeeOvertimeSetMarkerPosition(typeIn, crewIn, 1);
-//            } else {
-//                SQLiteConnection.EmployeeOvertimeSetQueuePositionUp(typeIn, crewIn);
-//            }
-//        } catch (SQLException ex) {
-//            Logger.getLogger(EmployeeOvertimeSystem.class.getName()).log(Level.SEVERE, null, ex);
-//        }
-
-    }
-
-    public static void moveMarkerUp(String typeIn, String crewIn) {
-
-//        try {
-//            int crewCount = SQLiteConnection.EmployeeOvertimeGetCrewCount(typeIn, crewIn);
-//
-//            if (SQLiteConnection.EmployeeOvertimeGetQueuePosition(typeIn, crewIn) == 0) {
-//                int position = SQLiteConnection.EmployeeOvertimeGetCrewCount(typeIn, crewIn);
-//                System.out.println("New Count " + position);
-//                SQLiteConnection.EmployeeOvertimeSetMarkerPosition(typeIn, crewIn, crewCount);
-//            } else {
-//                SQLiteConnection.EmployeeOvertimeSetQueuePositionDown(typeIn, crewIn);
-//            }
-//        } catch (SQLException ex) {
-//            Logger.getLogger(EmployeeOvertimeSystem.class.getName()).log(Level.SEVERE, null, ex);
-//        }
+    public static void shiftEmployees() {
 
     }
 
@@ -942,6 +1022,28 @@ public class EmployeeOvertimeSystem {
         });
         cancelEdit = new JButton("Cancel");
         saveEdit = new JButton("Save");
+        saveEdit.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                
+           frame9.dispose();
+              
+                
+           SQLiteConnection.EmployeeOvertimeUpdateEmployeeOvertime2(
+                   nameCombo.getSelectedItem()+"", 
+                   Integer.parseInt(absentJTextField.getText()), 
+                   Integer.parseInt(acceptedJTextField.getText()), 
+                   Integer.parseInt(dontCountJTextField.getText()),
+                   Integer.parseInt(refusedJTextField.getText()), 
+                   Integer.parseInt(missATurnJTextField.getText()), 
+                   Integer.parseInt(setUpJTextField.getText())
+           );
+           
+           new EmployeeOvertimeSystem("All", "0", sortByCombo.getSelectedItem() + "", crewOnlyCombo.getSelectedItem() + ""); 
+                
+            }
+        });
 
         JFrame manualEditFrame = new JFrame("Manual Edit ");
         manualEditFrame.setSize(300, 300);
@@ -1031,12 +1133,17 @@ public class EmployeeOvertimeSystem {
                 try {
                     printOvertimeLists(crewComboPrint.getSelectedItem() + "");
                 } catch (JRException ex) {
+                    JOptionPane.showMessageDialog(null, ex.getStackTrace());
+                    JOptionPane.showMessageDialog(null, ex.getMessage());
                     Logger.getLogger(EmployeeOvertimeSystem.class.getName()).log(Level.SEVERE, null, ex);
                 } catch (IOException ex) {
+                    JOptionPane.showMessageDialog(null, ex);
                     Logger.getLogger(EmployeeOvertimeSystem.class.getName()).log(Level.SEVERE, null, ex);
                 } catch (PrinterException ex) {
+                    JOptionPane.showMessageDialog(null, ex);
                     Logger.getLogger(EmployeeOvertimeSystem.class.getName()).log(Level.SEVERE, null, ex);
                 } catch (SQLException ex) {
+                    JOptionPane.showMessageDialog(null, ex);
                     Logger.getLogger(EmployeeOvertimeSystem.class.getName()).log(Level.SEVERE, null, ex);
                 }
 
@@ -1067,10 +1174,12 @@ public class EmployeeOvertimeSystem {
     public static void printOvertimeLists(String crewIn) throws FileNotFoundException, JRException, IOException, PrinterException, SQLException {
 
         Connection conn = SQLiteConnection.Connect();
-        
+
         System.out.println("Printing Overtime List for Crew : " + crewIn);
 
-        File file = new File("C:/Users/Chris/Documents/SPRING/Rexam4/src/com/overtime/rexam/OvertimeLists2.jrxml");
+        File file = new File("Reports/Overtime3.jrxml");
+        //    JOptionPane.showMessageDialog(null, file.exists());
+
         InputStream stream = new FileInputStream(file);
         JasperDesign design = JRXmlLoader.load(stream);
         JasperReport report = JasperCompileManager.compileReport(design);
@@ -1080,13 +1189,24 @@ public class EmployeeOvertimeSystem {
         params.put("Crew", crewIn); // note here you can add parameters which
         // would be utilized by the report
 
-        JasperPrint print = JasperFillManager.fillReport(report, params, conn);
-        JasperExportManager.exportReportToPdfFile(print, "OvertimeList" + crewIn + ".pdf");
+        //  JasperPrint print = JasperFillManager.fillReport(report, params, conn);
+        //    JasperExportManager.exportReportToPdfFile(print, "Reports/OvertimeList" + crewIn + ".pdf");
+        InputStream inputStream = new FileInputStream("Reports/Overtime3.jrxml");
+        JasperCompileManager.compileReportToFile("Reports/Overtime3.jrxml");
+        JasperDesign jasperDesign = JRXmlLoader.load(inputStream);
+        JasperReport jasperReport = JasperCompileManager.compileReport(jasperDesign);
+        JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, params, conn);
+        JasperViewer view = new net.sf.jasperreports.view.JasperViewer(jasperPrint, false);
+        view.setVisible(true);
+        view.toFront();
 
-        PDDocument pdf = PDDocument.load("OvertimeList" + crewIn + ".pdf");
-        pdf.print();
-        pdf.close();
-
+        //    JasperExportManager.exportReportToPdfFile(jasperPrint, "Reports/OvertimeList\" + crewIn + \".pdf");
+        //    JasperViewer view = new net.sf.jasperreports.view.JasperViewer(print, false);
+        //    view.setVisible(true);
+        //    view.toFront();
+        //   PDDocument pdf = PDDocument.load("Reports/OvertimeList" + crewIn + ".pdf");
+        //   pdf.print();
+        //   pdf.close();
         conn.close();
 
     }

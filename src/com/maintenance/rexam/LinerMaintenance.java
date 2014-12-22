@@ -10,8 +10,8 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.SQLException;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -93,6 +93,8 @@ public class LinerMaintenance {
 
         frame.add(outerPanel);
         frame.setVisible(true);
+        
+        SQLiteConnection.AnalyticsUpdate("LinerMaintenance");
 
     }
 
@@ -335,6 +337,7 @@ public class LinerMaintenance {
                 }
                 
                 setToMachineCode(currentId);
+                updateDates();
                 
 
             }
@@ -550,6 +553,144 @@ public class LinerMaintenance {
 
     }
 
+    private static void updateDates() {
+        
+        Long daysRemaining1Int, daysRemaining2Int, daysRemaining5Int;
+
+        daysRemaining1Int = (Long.valueOf(PlusMinusJTexField1.getText()) / 1728000L);
+        daysRemaining2Int = (Long.valueOf(PlusMinusJTexField2.getText()) / 1728000L);      
+        daysRemaining5Int = (Long.valueOf(PlusMinusJTexFieldTotal.getText()) / 1728000L);
+        
+        DaysRemainingJTexField1.setText(daysRemaining1Int + "");
+        DaysRemainingJTexField2.setText(daysRemaining2Int + "");
+        DaysRemainingJTexFieldTotal.setText(daysRemaining5Int + "");
+        
+        DaysRemainingJTexField1.setEditable(false);
+        DaysRemainingJTexField2.setEditable(false);
+        DaysRemainingJTexFieldTotal.setEditable(false);
+        
+        int days1, days2, days5;
+
+        days1 = Integer.valueOf(DaysRemainingJTexField1.getText());
+        days2 = Integer.valueOf(DaysRemainingJTexField2.getText());
+        days5 = Integer.valueOf(DaysRemainingJTexFieldTotal.getText());
+        
+        Date date1 = LastMaintenanceModel1.getValue();
+        Date date2 = LastMaintenanceModel2.getValue();
+        Date date5 = LastMaintenanceModel7.getValue();
+        
+        SimpleDateFormat sdf1 = new SimpleDateFormat("dd");
+        SimpleDateFormat sdf2 = new SimpleDateFormat("MM");
+        SimpleDateFormat sdf3 = new SimpleDateFormat("yyyy");
+        
+        Calendar c1 = Calendar.getInstance();
+        c1.setTime(date1); // Now use today date.
+        c1.add(Calendar.DATE, days1); // Adding 5 days
+        String output1 = sdf1.format(c1.getTime());
+        String output2 = sdf2.format(c1.getTime());
+        String output3 = sdf3.format(c1.getTime());
+        MaintenanceDue1.setDate(Integer.valueOf(output3), Integer.valueOf(output2) - 1, Integer.valueOf(output1));
+        
+        Calendar c2 = Calendar.getInstance();
+        c2.setTime(date2); // Now use today date.
+        c2.add(Calendar.DATE, days2); // Adding 5 days
+        output1 = sdf1.format(c2.getTime());
+        output2 = sdf2.format(c2.getTime());
+        output3 = sdf3.format(c2.getTime());
+        MaintenanceDue2.setDate(Integer.valueOf(output3), Integer.valueOf(output2) - 1, Integer.valueOf(output1));
+
+        Calendar c5 = Calendar.getInstance();
+        c5.setTime(date5); // Now use today date.
+        c5.add(Calendar.DATE, days5); // Adding 5 days
+        output1 = sdf1.format(c5.getTime());
+        output2 = sdf2.format(c5.getTime());
+        output3 = sdf3.format(c5.getTime());
+        MaintenanceDue7.setDate(Integer.valueOf(output3), Integer.valueOf(output2) - 1, Integer.valueOf(output1));
+
+    }
+    
+    private static void updateDatesToBal1A() {
+        
+        Long daysRemaining1Int, daysRemaining2Int, daysRemaining3Int, daysRemaining4Int, daysRemaining5Int;
+
+        daysRemaining1Int = (Long.valueOf(PlusMinusJTexField1.getText()) / 4147200L);
+        daysRemaining2Int = (Long.valueOf(PlusMinusJTexField2.getText()) / 4147200L);
+        daysRemaining3Int = (Long.valueOf(PlusMinusJTexField3.getText()) / 4147200L);
+        daysRemaining4Int = (Long.valueOf(PlusMinusJTexField4.getText()) / 4147200L);
+        daysRemaining5Int = (Long.valueOf(PlusMinusJTexFieldTotal.getText()) / 4147200L);
+        
+        DaysRemainingJTexField1.setText(daysRemaining1Int + "");
+        DaysRemainingJTexField2.setText(daysRemaining2Int + "");
+        DaysRemainingJTexField3.setText(daysRemaining3Int + "");
+        DaysRemainingJTexField4.setText(daysRemaining4Int + "");
+        DaysRemainingJTexFieldTotal.setText(daysRemaining5Int + "");
+        
+        DaysRemainingJTexField1.setEditable(false);
+        DaysRemainingJTexField2.setEditable(false);
+        DaysRemainingJTexField3.setEditable(false);
+        DaysRemainingJTexField4.setEditable(false);
+        DaysRemainingJTexFieldTotal.setEditable(false);
+        
+        int days1, days2, days3, days4, days5;
+
+        days1 = Integer.valueOf(DaysRemainingJTexField1.getText());
+        days2 = Integer.valueOf(DaysRemainingJTexField2.getText());
+        days3 = Integer.valueOf(DaysRemainingJTexField3.getText());
+        days4 = Integer.valueOf(DaysRemainingJTexField4.getText());
+        days5 = Integer.valueOf(DaysRemainingJTexFieldTotal.getText());
+        
+        Date date1 = LastMaintenanceModel1.getValue();
+        Date date2 = LastMaintenanceModel2.getValue();
+        Date date3 = LastMaintenanceModel3.getValue();
+        Date date4 = LastMaintenanceModel4.getValue();
+        Date date5 = LastMaintenanceModel7.getValue();
+        
+        SimpleDateFormat sdf1 = new SimpleDateFormat("dd");
+        SimpleDateFormat sdf2 = new SimpleDateFormat("MM");
+        SimpleDateFormat sdf3 = new SimpleDateFormat("yyyy");
+        
+        Calendar c1 = Calendar.getInstance();
+        c1.setTime(date1); // Now use today date.
+        c1.add(Calendar.DATE, days1); // Adding 5 days
+        String output1 = sdf1.format(c1.getTime());
+        String output2 = sdf2.format(c1.getTime());
+        String output3 = sdf3.format(c1.getTime());
+        MaintenanceDue1.setDate(Integer.valueOf(output3), Integer.valueOf(output2) - 1, Integer.valueOf(output1));
+        
+        Calendar c2 = Calendar.getInstance();
+        c2.setTime(date2); // Now use today date.
+        c2.add(Calendar.DATE, days2); // Adding 5 days
+        output1 = sdf1.format(c2.getTime());
+        output2 = sdf2.format(c2.getTime());
+        output3 = sdf3.format(c2.getTime());
+        MaintenanceDue2.setDate(Integer.valueOf(output3), Integer.valueOf(output2) - 1, Integer.valueOf(output1));
+
+        Calendar c3 = Calendar.getInstance();
+        c3.setTime(date3); // Now use today date.
+        c3.add(Calendar.DATE, days3); // Adding 5 days
+        output1 = sdf1.format(c3.getTime());
+        output2 = sdf2.format(c3.getTime());
+        output3 = sdf3.format(c3.getTime());
+        MaintenanceDue3.setDate(Integer.valueOf(output3), Integer.valueOf(output2) - 1, Integer.valueOf(output1));
+        
+        Calendar c4 = Calendar.getInstance();
+        c4.setTime(date4); // Now use today date.
+        c4.add(Calendar.DATE, days4); // Adding 5 days
+        output1 = sdf1.format(c4.getTime());
+        output2 = sdf2.format(c4.getTime());
+        output3 = sdf3.format(c4.getTime());
+        MaintenanceDue4.setDate(Integer.valueOf(output3), Integer.valueOf(output2) - 1, Integer.valueOf(output1));
+
+        Calendar c5 = Calendar.getInstance();
+        c5.setTime(date5); // Now use today date.
+        c5.add(Calendar.DATE, days5); // Adding 5 days
+        output1 = sdf1.format(c5.getTime());
+        output2 = sdf2.format(c5.getTime());
+        output3 = sdf3.format(c5.getTime());
+        MaintenanceDue7.setDate(Integer.valueOf(output3), Integer.valueOf(output2) - 1, Integer.valueOf(output1));
+
+    }
+    
     private static void updateEntry(int machineCodeIn) {
 
         Date LastMaintenanceDate1 = (Date) LastMaintenanceDatePicker1.getModel().getValue();
@@ -576,17 +717,17 @@ public class LinerMaintenance {
                     date2,
                     date7,
                     
-                    Integer.valueOf(TargetProductionJTexField1.getText()),
-                    Integer.valueOf(TargetProductionJTexField2.getText()),
-                    Integer.valueOf(TargetProductionJTexFieldTotal.getText()),
+                    Long.valueOf(TargetProductionJTexField1.getText()),
+                    Long.valueOf(TargetProductionJTexField2.getText()),
+                    Long.valueOf(TargetProductionJTexFieldTotal.getText()),
                     
-                    Integer.valueOf(ProductionJTexField1.getText()),
-                    Integer.valueOf(ProductionJTexField2.getText()),
-                    Integer.valueOf(ProductionJTexFieldTotal.getText()),
+                    Long.valueOf(ProductionJTexField1.getText()),
+                    Long.valueOf(ProductionJTexField2.getText()),
+                    Long.valueOf(ProductionJTexFieldTotal.getText()),
                     
-                    Integer.valueOf(PlusMinusJTexField1.getText()),
-                    Integer.valueOf(PlusMinusJTexField2.getText()),
-                    Integer.valueOf(PlusMinusJTexFieldTotal.getText()),
+                    Long.valueOf(PlusMinusJTexField1.getText()),
+                    Long.valueOf(PlusMinusJTexField2.getText()),
+                    Long.valueOf(PlusMinusJTexFieldTotal.getText()),
                     
                     date8,
                     date9,
@@ -601,6 +742,8 @@ public class LinerMaintenance {
         } catch (SQLException ex) {
             Logger.getLogger(LinerMaintenance.class.getName()).log(Level.SEVERE, null, ex);
         }
+        
+        updateDates();
 
     }
 }

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?> 
+<jnlp spec="1.0+" codebase="http://chrismaher.info/rexam/" href="RexamSoftware.jnlp">
+	<information>
+		<title>Rexam Software</title>
+		<vendor>Chris Maher</vendor>
+		<homepage href="http://chrismaher.info/rexam/" />
+		<description>Rexam Software Updates</description>
+	</information>
+	<security>
+		<all-permissions/>
+	</security>
+	<resources>
+		<j2se version="1.6+" />
+		<jar href="RexamSoftware.jar" />
+	</resources>
+	<application-desc main-class="com.gui.rexam.RexamSoftware" />
+</jnlp>

@@ -27,17 +27,17 @@ import net.sourceforge.jdatepicker.impl.JDatePickerImpl;
 import net.sourceforge.jdatepicker.impl.UtilDateModel;
 
 import com.database.rexam.SQLiteConnection;
-import static com.maintenance.rexam.LinerProduction.Liner34MonthlyJTextField;
-import static com.maintenance.rexam.LinerProduction.Liner41MonthlyJTextField;
-import static com.maintenance.rexam.LinerProduction.Liner42MonthlyJTextField;
-import static com.maintenance.rexam.LinerProduction.Liner43MonthlyJTextField;
-import static com.maintenance.rexam.LinerProduction.Liner44MonthlyJTextField;
+import static com.maintenance.rexam.ShellPressProduction.calculateTotals;
 import java.awt.Desktop;
+import java.awt.Frame;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JCheckBox;
+import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.TableModel;
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
@@ -72,13 +72,7 @@ public class LineBalance {
 
     public LineBalance(int idIn, int view) throws SQLException {
 
-        // Add a view to analytics.
-        try {
-            SQLiteConnection.incrementViewsAnalytics(0, 0, 0, 0, 0, 0, 0, 0, 1);
-        } catch (SQLException e2) {
-            // TODO Auto-generated catch block
-            e2.printStackTrace();
-        }
+        
 
         try {
             for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
@@ -101,6 +95,7 @@ public class LineBalance {
 
         frame15.setTitle("Liner Balance");
         frame15.setSize(360, 650);
+        
         frame15.setLocationRelativeTo(null);
         outerPanel.setLayout(new BorderLayout());
 
@@ -172,26 +167,106 @@ public class LineBalance {
         Mod123UnlinedJTextfield.setText("0");
         PlainDocument doc5A = (PlainDocument) Mod123UnlinedJTextfield.getDocument();
         doc5A.setDocumentFilter(new MyIntFilter());
+        Mod123UnlinedJTextfield.addFocusListener(new FocusListener() {
+
+            @Override
+            public void focusLost(FocusEvent e) {
+
+                // TODO Auto-generated method stub
+                LineBalance.calculateTotals();
+            }
+
+            @Override
+            public void focusGained(FocusEvent e) {
+
+                LineBalance.calculateTotals();
+
+            }
+        });
 
         Mod123linedJTextfield = new JTextField();
         Mod123linedJTextfield.setText("0");
         PlainDocument doc5B = (PlainDocument) Mod123linedJTextfield.getDocument();
         doc5B.setDocumentFilter(new MyIntFilter());
+        Mod123linedJTextfield.addFocusListener(new FocusListener() {
+
+            @Override
+            public void focusLost(FocusEvent e) {
+
+                // TODO Auto-generated method stub
+                LineBalance.calculateTotals();
+            }
+
+            @Override
+            public void focusGained(FocusEvent e) {
+
+                LineBalance.calculateTotals();
+
+            }
+        });
 
         Mod4UnlinedJTextfield = new JTextField();
         Mod4UnlinedJTextfield.setText("0");
         PlainDocument doc5C = (PlainDocument) Mod4UnlinedJTextfield.getDocument();
         doc5C.setDocumentFilter(new MyIntFilter());
+        Mod4UnlinedJTextfield.addFocusListener(new FocusListener() {
+
+            @Override
+            public void focusLost(FocusEvent e) {
+
+                // TODO Auto-generated method stub
+                LineBalance.calculateTotals();
+            }
+
+            @Override
+            public void focusGained(FocusEvent e) {
+
+                LineBalance.calculateTotals();
+
+            }
+        });
 
         Mod4linedJTextfield = new JTextField();
         Mod4linedJTextfield.setText("0");
         PlainDocument doc5D = (PlainDocument) Mod4linedJTextfield.getDocument();
         doc5D.setDocumentFilter(new MyIntFilter());
+        Mod4linedJTextfield.addFocusListener(new FocusListener() {
+
+            @Override
+            public void focusLost(FocusEvent e) {
+
+                // TODO Auto-generated method stub
+                LineBalance.calculateTotals();
+            }
+
+            @Override
+            public void focusGained(FocusEvent e) {
+
+                LineBalance.calculateTotals();
+
+            }
+        });
 
         totalJTextField = new JTextField();
         totalJTextField.setText("0");
         PlainDocument doc5E = (PlainDocument) totalJTextField.getDocument();
         doc5E.setDocumentFilter(new MyIntFilter());
+        totalJTextField.addFocusListener(new FocusListener() {
+
+            @Override
+            public void focusLost(FocusEvent e) {
+
+                // TODO Auto-generated method stub
+                LineBalance.calculateTotals();
+            }
+
+            @Override
+            public void focusGained(FocusEvent e) {
+
+                LineBalance.calculateTotals();
+
+            }
+        });
 
         Mod123ShellPressMonthly = new JTextField();
         PlainDocument doc02 = (PlainDocument) Mod123ShellPressMonthly.getDocument();
@@ -228,7 +303,7 @@ public class LineBalance {
         totalMonthly = new JTextField();
         PlainDocument doc17F = (PlainDocument) totalMonthly.getDocument();
         doc17F.setDocumentFilter(new MyIntFilter());
-        
+
         setMod1234ToDate(modifiedDate);
 
         go = new JButton("Go");
@@ -237,37 +312,7 @@ public class LineBalance {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-                String month = monthCombo.getSelectedItem().toString();
-                String year = yearCombo.getSelectedItem().toString();
-
-                System.out.print("Month : " + month);
-                System.out.print("Year : " + year);
-
-                try {
-                    Object[] total = SQLiteConnection.MaintenanceLineBalanceCalculateTotalsByMonth(month, year);
-                    System.out.println("Total0 " + total[0]);
-
-                    Mod123ShellPressMonthly.setText(String.valueOf(total[0]));
-                    Mod123LinersMonthly.setText(String.valueOf(total[1]));
-                    Mod123ConversionMonthly.setText(String.valueOf(total[2]));
-                    Mod4ShellPressMonthly.setText(String.valueOf(total[3]));
-                    Mod4LinersMonthly.setText(String.valueOf(total[4]));
-                    Mod4ConversionMonthly.setText(String.valueOf(total[5]));
-                    Mod123UnlinedMonthly.setText(String.valueOf(total[6]));
-                    Mod123linedMonthly.setText(String.valueOf(total[7]));
-                    Mod4UnlinedMonthly.setText(String.valueOf(total[8]));
-                    Mod4linedMonthly.setText(String.valueOf(total[9]));
-                    totalMonthly.setText(String.valueOf(total[10]));
-                    Liner34MonthlyJTextField.setText(String.valueOf(total[11]));
-                    Liner41MonthlyJTextField.setText(String.valueOf(total[12]));
-                    Liner42MonthlyJTextField.setText(String.valueOf(total[13]));
-                    Liner43MonthlyJTextField.setText(String.valueOf(total[14]));
-                    Liner44MonthlyJTextField.setText(String.valueOf(total[15]));
-
-                } catch (SQLException e1) {
-                    // TODO Auto-generated catch block
-                    e1.printStackTrace();
-                }
+                setMod1234ToMonth();
 
             }
         });
@@ -295,6 +340,8 @@ public class LineBalance {
 
             @Override
             public void actionPerformed(ActionEvent e) {
+                
+                calculateTotals();
 
                 selectedDate = (Date) datePicker.getModel().getValue();
                 String date = new SimpleDateFormat("yyyy-MM-dd").format(selectedDate);
@@ -352,11 +399,9 @@ public class LineBalance {
 
                 // TODO Auto-generated method stub
                 try {
-                    new LineBalance(1, -2);
-                    setLastEntry();
-                } catch (SQLException e1) {
-                    // TODO Auto-generated catch block
-                    e1.printStackTrace();
+                    LineBalance.createSummaryScreen();
+                } catch (SQLException ex) {
+                    Logger.getLogger(LineBalance.class.getName()).log(Level.SEVERE, null, ex);
                 }
                 frame15.dispose();
 
@@ -466,7 +511,7 @@ public class LineBalance {
 
                         int totalField = Integer.parseInt(String.valueOf(total[2])) + Integer.parseInt(String.valueOf(total[3])) + Integer.parseInt(String.valueOf(total[4])) + Integer.parseInt(String.valueOf(total[5]));
                         totalJTextField.setText(totalField + "");
-                        
+
                         setMod1234ToDate(dateFormatted);
 
                     }
@@ -524,7 +569,7 @@ public class LineBalance {
 
                         int totalField = Integer.parseInt(String.valueOf(total[2])) + Integer.parseInt(String.valueOf(total[3])) + Integer.parseInt(String.valueOf(total[4])) + Integer.parseInt(String.valueOf(total[5]));
                         totalJTextField.setText(totalField + "");
-                        
+
                         setMod1234ToDate(dateFormatted);
 
                     }
@@ -689,7 +734,7 @@ public class LineBalance {
 
             outerPanel.add(comboPanel, BorderLayout.NORTH);
             comboPanel.setBackground(Color.GRAY);
-            
+
             optionPanel1.add(new JLabel(" ", SwingConstants.CENTER));
             optionPanel1.add(new JLabel("Mod 1-2-3", SwingConstants.CENTER));
 
@@ -701,7 +746,7 @@ public class LineBalance {
 
             optionPanel1.add(new JLabel("Conversion", SwingConstants.CENTER));
             optionPanel1.add(Mod123ConversionMonthly);
-            
+
             optionPanel1.add(new JLabel("", SwingConstants.CENTER));
             optionPanel1.add(new JLabel(" Mod 4 ", SwingConstants.CENTER));
 
@@ -713,7 +758,7 @@ public class LineBalance {
 
             optionPanel1.add(new JLabel("Conversion", SwingConstants.CENTER));
             optionPanel1.add(Mod4ConversionMonthly);
-            
+
             optionPanel1.add(new JLabel("", SwingConstants.CENTER));
             optionPanel1.add(new JLabel(" Mod 1-2-3 ", SwingConstants.CENTER));
 
@@ -722,10 +767,10 @@ public class LineBalance {
 
             optionPanel1.add(new JLabel("Lined", SwingConstants.CENTER));
             optionPanel1.add(Mod123linedMonthly);
-            
+
             optionPanel1.add(new JLabel("", SwingConstants.CENTER));
             optionPanel1.add(new JLabel(" Mod 4 ", SwingConstants.CENTER));
-            
+
             optionPanel1.add(new JLabel("UnLined", SwingConstants.CENTER));
             optionPanel1.add(Mod4UnlinedMonthly);
 
@@ -771,6 +816,8 @@ public class LineBalance {
         frame15.add(outerPanel);
 
         frame15.setVisible(true);
+        
+        SQLiteConnection.AnalyticsUpdate("LineBalance");
 
     }
 
@@ -832,6 +879,17 @@ public class LineBalance {
 
     }
 
+    private static void calculateTotals() {
+
+        int total = Integer.parseInt(Mod123UnlinedJTextfield.getText())
+                  + Integer.parseInt(Mod123linedJTextfield.getText())
+                  + Integer.parseInt(Mod4UnlinedJTextfield.getText())
+                  + Integer.parseInt(Mod4linedJTextfield.getText());
+
+        totalJTextField.setText(total+"");
+
+    }
+
     public static void createSummaryScreen() throws SQLException {
 
         addNew = new JButton("New Entry Mode");
@@ -882,6 +940,7 @@ public class LineBalance {
         // Outer Frame
         frameSummary = new JFrame("Liner Balance");
         frameSummary.setSize(1300, 700);
+        frameSummary.setExtendedState(Frame.MAXIMIZED_BOTH);
         frameSummary.setLocationRelativeTo(null);
 
         // JPanel
@@ -897,9 +956,10 @@ public class LineBalance {
         optionsPanel2.add(ExportToExcel);
 
         JPanel summaryPanel = SQLiteConnection.MaintenanceLineBalanceSummaryTable(1);
+        JScrollPane scrollPane = new JScrollPane(summaryPanel);
         optionsPanel2.setBackground(Color.GRAY);
 
-        outerPanel.add(summaryPanel, BorderLayout.CENTER);
+        outerPanel.add(scrollPane, BorderLayout.CENTER);
         outerPanel.add(optionsPanel2, BorderLayout.SOUTH);
         summary.setVisible(false);
         frameSummary.add(outerPanel);
@@ -941,6 +1001,8 @@ public class LineBalance {
 
                 totalJTextField.setText(totalField + "");
 
+                setMod1234ToDate(dateFormatted);
+
             }
 
             System.out.println("CurrentID " + currentId);
@@ -962,7 +1024,7 @@ public class LineBalance {
     }
 
     public void setMod1234ToDate(String dateIn) {
-        
+
         System.out.println("Date In : " + dateIn);
 
         try {
@@ -974,26 +1036,21 @@ public class LineBalance {
 //             //   SQLiteConnection.infoBox("No Next Result.", "");
 //
 //            } else {
+            Mod123ShellPressJTextfield.setText(String.valueOf(total[10]));
+            Mod123LinersJTextfield.setText(String.valueOf(total[39]));
+            Mod123ConversionJTextfield.setText(String.valueOf(total[22]));
+            Mod4ShellPressJTextfield.setText(String.valueOf(total[14]));
+            Mod4LinersJTextfield.setText(String.valueOf(total[43]));
+            Mod4ConversionJTextfield.setText(String.valueOf(total[27]));
 
-                Mod123ShellPressJTextfield.setText(String.valueOf(total[10]));
-                Mod123LinersJTextfield.setText(String.valueOf(total[39]));
-                Mod123ConversionJTextfield.setText(String.valueOf(total[22]));
-                Mod4ShellPressJTextfield.setText(String.valueOf(total[14]));
-                Mod4LinersJTextfield.setText(String.valueOf(total[43]));
-                Mod4ConversionJTextfield.setText(String.valueOf(total[27]));
-
-
-
- //           }
-
+            //           }
             System.out.println("CurrentID " + currentId);
 
             // Fill Boxes with results
             // model.setDate(year2, month2, day2);
             model.setSelected(true);
 
-         //   currentId = highestID;
-
+            //   currentId = highestID;
         } catch (SQLException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -1003,40 +1060,34 @@ public class LineBalance {
         }
 
     }
-    
-    public void setMod1234ToMonth(String dateIn) {
-        
-        System.out.println("Date In : " + dateIn);
+
+    public void setMod1234ToMonth() {
 
         try {
 
-            Object[] total = SQLiteConnection.MaintenanceLineBalanceReturnEntryByDate2(dateIn);
+            Object[] total = SQLiteConnection.MaintenanceLineBalanceCalculateTotalsByMonth(monthCombo.getSelectedItem() + "", yearCombo.getSelectedItem() + "");
 
-//            if (total[0] == null) {
-//
-//             //   SQLiteConnection.infoBox("No Next Result.", "");
-//
-//            } else {
+            Mod123ShellPressMonthly.setText(String.valueOf(total[38]));
+            Mod123LinersMonthly.setText(String.valueOf(total[40]));
+            Mod123ConversionMonthly.setText(String.valueOf(total[42]));
+            Mod4ShellPressMonthly.setText(String.valueOf(total[39]));
+            Mod4LinersMonthly.setText(String.valueOf(total[41]));
+            Mod4ConversionMonthly.setText(String.valueOf(total[43]));
 
-                Mod123ShellPressJTextfield.setText(String.valueOf(total[10]));
-                Mod123LinersJTextfield.setText(String.valueOf(total[39]));
-                Mod123ConversionJTextfield.setText(String.valueOf(total[22]));
-                Mod4ShellPressJTextfield.setText(String.valueOf(total[14]));
-                Mod4LinersJTextfield.setText(String.valueOf(total[43]));
-                Mod4ConversionJTextfield.setText(String.valueOf(total[27]));
+            Mod123UnlinedMonthly.setText(String.valueOf(total[0]));
+            Mod123linedMonthly.setText(String.valueOf(total[2]));
+            Mod4UnlinedMonthly.setText(String.valueOf(total[1]));
+            Mod4linedMonthly.setText(String.valueOf(total[3]));
+            totalMonthly.setText(String.valueOf(total[44]));
 
-
-
- //           }
-
+            //           }
             System.out.println("CurrentID " + currentId);
 
             // Fill Boxes with results
             // model.setDate(year2, month2, day2);
             model.setSelected(true);
 
-         //   currentId = highestID;
-
+            //   currentId = highestID;
         } catch (SQLException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -1049,7 +1100,7 @@ public class LineBalance {
 
     public static void exportToExcel() {
 
-        String[] typesArray = {"Liner B"};
+        String[] typesArray = {"Line Balance"};
         JComboBox typeCombo = new JComboBox(typesArray);
         JCheckBox datesCheck = new JCheckBox();
 
@@ -1173,11 +1224,11 @@ public class LineBalance {
         }
 
         try {
-            FileOutputStream output = new FileOutputStream("MaintenanceExcel.xls");
+            FileOutputStream output = new FileOutputStream("ExcelFiles/MaintenanceExcel.xls");
             workBook.write(output);
 
             Desktop dt = Desktop.getDesktop();
-            dt.open(new File("MaintenanceExcel.xls"));
+            dt.open(new File("ExcelFiles/MaintenanceExcel.xls"));
 
             output.close();
         } catch (Exception e) {

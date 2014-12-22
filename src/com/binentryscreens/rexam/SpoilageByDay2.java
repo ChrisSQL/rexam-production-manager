@@ -43,7 +43,7 @@ public class SpoilageByDay2 {
             stolle31TextField, stolle32TextField, m2BBalTextField, m2ABalTextField, m3LinersTextField, m3QcAreaTextField, stolle42TextField, m4B2BalTextField, m4LinersTextField,
             qCMod1TextField, stolle41TextField, stolle43TextField, stolle44TextField, balancer4BTextField, balancer4ATextField, formatecTextField, blankTextField;
     static int currentID;
-    static  JFrame frame, frameTrend;
+    static JFrame frame, frameTrend;
     static JPanel outerPanel, innerPanel, leftPanel, rightPanel;
     static int currentId;
 
@@ -109,15 +109,14 @@ public class SpoilageByDay2 {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                
+
                 frame.dispose();
-                
+
                 monthly.setVisible(false);
                 update.setVisible(false);
                 exportToExcel.setVisible(true);
                 back.setVisible(true);
                 save.setVisible(false);
-                
 
                 Date date = new Date();
                 String monthString = "January";
@@ -128,7 +127,7 @@ public class SpoilageByDay2 {
                 String year = modifiedDate.substring(0, 4);
                 int yearInt = Integer.parseInt(year);
                 String month = modifiedDate.substring(5, 7);
-                int monthInt = Integer.parseInt(month)-1;
+                int monthInt = Integer.parseInt(month) - 1;
                 String day = modifiedDate.substring(8, 10);
                 int dayInt = Integer.parseInt(day);
 
@@ -173,10 +172,10 @@ public class SpoilageByDay2 {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                
+
                 frameTrend.dispose();
                 new SpoilageByDay2();
-                
+
             }
         });
         exportToExcel = new JButton("Export To Excel");
@@ -287,6 +286,9 @@ public class SpoilageByDay2 {
         doc35.setDocumentFilter(new MyIntFilter());
 
         SpoilageByDayGUI();
+
+        // Add a view to analytics.
+        SQLiteConnection.AnalyticsUpdate("SpoilageByDay");
 
     }
 
@@ -540,9 +542,9 @@ public class SpoilageByDay2 {
                 formatecTextField.setText("0");
             }
         } catch (SQLException ex) {
-            Logger.getLogger(SpoilageByDay.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(SpoilageByDay2.class.getName()).log(Level.SEVERE, null, ex);
         } catch (Exception ex) {
-            Logger.getLogger(SpoilageByDay.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(SpoilageByDay2.class.getName()).log(Level.SEVERE, null, ex);
         }
         ;
 
@@ -610,6 +612,59 @@ public class SpoilageByDay2 {
 
         // TODO Auto-generated method stub
         frame.dispose();
+
+        monthly.setVisible(false);
+        update.setVisible(false);
+        exportToExcel.setVisible(true);
+        back.setVisible(true);
+        save.setVisible(false);
+
+        Date date2 = new Date();
+        String monthString = "January";
+        String modifiedDate = new SimpleDateFormat("yyyy-MM-dd").format(date2);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        modifiedDate = sdf.format(date2);
+
+        String year = modifiedDate.substring(0, 4);
+        int yearInt = Integer.parseInt(year);
+        String month = modifiedDate.substring(5, 7);
+        int monthInt = Integer.parseInt(month) - 1;
+        String day = modifiedDate.substring(8, 10);
+        int dayInt = Integer.parseInt(day);
+
+        if (monthInt == 0) {
+            monthString = "January";
+        } else if (monthInt == 1) {
+            monthString = "February";
+        } else if (monthInt == 2) {
+            monthString = "March";
+        } else if (monthInt == 3) {
+            monthString = "April";
+        } else if (monthInt == 4) {
+            monthString = "May";
+        } else if (monthInt == 5) {
+            monthString = "June";
+        } else if (monthInt == 6) {
+            monthString = "July";
+        } else if (monthInt == 7) {
+            monthString = "August";
+        } else if (monthInt == 8) {
+            monthString = "September";
+        } else if (monthInt == 9) {
+            monthString = "October";
+        } else if (monthInt == 10) {
+            monthString = "November";
+        } else if (monthInt == 11) {
+            monthString = "December";
+        }
+
+        System.out.println("YearInt " + yearInt);
+
+        try {
+            createTrendFrame(monthString, yearInt + "");
+        } catch (SQLException ex) {
+            Logger.getLogger(SpoilageByDay2.class.getName()).log(Level.SEVERE, null, ex);
+        }
 
     }
 
@@ -682,7 +737,7 @@ public class SpoilageByDay2 {
 
             @Override
             public void actionPerformed(ActionEvent e) {
-                
+
                 frameTrend.dispose();
 
                 // TODO Auto-generated method stub
@@ -692,7 +747,6 @@ public class SpoilageByDay2 {
                     // TODO Auto-generated catch block
                     e1.printStackTrace();
                 }
-               
 
             }
         });
@@ -983,7 +1037,11 @@ public class SpoilageByDay2 {
             int[] values;
             try {
                 values = SQLiteConnection.SpoilageByDayGetMonthsTotal(month, year);
-                trendTableRight.getModel().setValueAt(values[i], 2 + i, 0);
+
+                int q1 = values[i];
+                String q2 = String.format("%,d", q1);
+
+                trendTableRight.getModel().setValueAt(q2, 2 + i, 0);
             } catch (Exception e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
@@ -1021,11 +1079,15 @@ public class SpoilageByDay2 {
 
             total = Integer.valueOf(KGs[i]) * values[i];
             total2 = total2 + total;
-            trendTableRight.getModel().setValueAt(total, 2 + i, 2);
+
+            int q1 = total;
+            String q2 = String.format("%,d", q1);
+
+            trendTableRight.getModel().setValueAt(q2, 2 + i, 2);
+
         }
 
-        trendTableRight.getModel()
-                .setValueAt(total2, 36, 2);
+        trendTableRight.getModel().setValueAt(total2, 36, 2);
 
         // / Bottom Total 8x8 JTable
         JPanel totalsPanel = new JPanel(new BorderLayout());
@@ -1053,55 +1115,61 @@ public class SpoilageByDay2 {
             }
         };;
 
-        totalsTable.getModel()
-                .setValueAt("Stolle & Sacoba", 0, 1);
-        totalsTable.getModel()
-                .setValueAt("Balancers", 0, 2);
-        totalsTable.getModel()
-                .setValueAt("Liners", 0, 3);
-        totalsTable.getModel()
-                .setValueAt("Shell Presses", 0, 4);
-        totalsTable.getModel()
-                .setValueAt("Border / Ovec", 0, 5);
-        totalsTable.getModel()
-                .setValueAt("QC Areas", 0, 6);
-        totalsTable.getModel()
-                .setValueAt("Total", 0, 7);
+        totalsTable.getModel().setValueAt("Stolle & Sacoba", 0, 1);
+        totalsTable.getModel().setValueAt("Balancers", 0, 2);
+        totalsTable.getModel().setValueAt("Liners", 0, 3);
+        totalsTable.getModel().setValueAt("Shell Presses", 0, 4);
+        totalsTable.getModel().setValueAt("Border / Ovec", 0, 5);
+        totalsTable.getModel().setValueAt("QC Areas", 0, 6);
+        totalsTable.getModel().setValueAt("Total", 0, 7);
 
-        totalsTable.getModel()
-                .setValueAt("Month To Date", 1, 0);
-        totalsTable.getModel()
-                .setValueAt("Plant Production", 2, 0);
-        totalsTable.getModel()
-                .setValueAt("As % of Production", 3, 0);
-        totalsTable.getModel()
-                .setValueAt("Total Spoilage", 4, 0);
-        totalsTable.getModel()
-                .setValueAt("As a % of Spoilage", 5, 0);
+        totalsTable.getModel().setValueAt("Month To Date", 1, 0);
+        totalsTable.getModel().setValueAt("Plant Production", 2, 0);
+        totalsTable.getModel().setValueAt("As % of Production", 3, 0);
+        totalsTable.getModel().setValueAt("Total Spoilage", 4, 0);
+        totalsTable.getModel().setValueAt("As a % of Spoilage", 5, 0);
 
-        totalsTable.getModel()
-                .setValueAt(SQLiteConnection.LinersAndShellsGetTotal("1", month, year), 2, 1);
-        totalsTable.getModel()
-                .setValueAt(SQLiteConnection.LinersAndShellsGetTotal("1", month, year), 2, 2);
-        totalsTable.getModel()
-                .setValueAt(SQLiteConnection.LinersAndShellsGetTotal("1", month, year), 2, 3);
-        totalsTable.getModel()
-                .setValueAt(SQLiteConnection.LinersAndShellsGetTotal("1", month, year), 2, 4);
-        totalsTable.getModel()
-                .setValueAt(SQLiteConnection.LinersAndShellsGetTotal("1", month, year), 2, 5);
-        totalsTable.getModel()
-                .setValueAt(SQLiteConnection.LinersAndShellsGetTotal("1", month, year), 2, 6);
-        totalsTable.getModel()
-                .setValueAt(SQLiteConnection.LinersAndShellsGetTotal("1", month, year), 2, 7);
+        int q15 = SQLiteConnection.LinersAndShellsGetTotal("1", month, year);
+        String q16 = String.format("%,d", q15);
+
+        totalsTable.getModel().setValueAt(q16, 2, 1);
+        totalsTable.getModel().setValueAt(q16, 2, 2);
+        totalsTable.getModel().setValueAt(q16, 2, 3);
+        totalsTable.getModel().setValueAt(q16, 2, 4);
+        totalsTable.getModel().setValueAt(q16, 2, 5);
+        totalsTable.getModel().setValueAt(q16, 2, 6);
+        totalsTable.getModel().setValueAt(q16, 2, 7);
 
         try { // Monthly Totals
-            totalsTable.getModel().setValueAt(SQLiteConnection.SpoilageByDayGetMonthsTotalStolle(month, year), 1, 1);
-            totalsTable.getModel().setValueAt(SQLiteConnection.SpoilageByDayGetMonthsTotalBalancers(month, year), 1, 2);
-            totalsTable.getModel().setValueAt(SQLiteConnection.SpoilageByDayGetMonthsTotalLiners(month, year), 1, 3);
-            totalsTable.getModel().setValueAt(SQLiteConnection.SpoilageByDayGetMonthsTotalShellPresses(month, year), 1, 4);
-            totalsTable.getModel().setValueAt(SQLiteConnection.SpoilageByDayGetMonthsTotalBordenOvec(month, year), 1, 5);
-            totalsTable.getModel().setValueAt(SQLiteConnection.SpoilageByDayGetMonthsTotalQCAreas(month, year), 1, 6);
-            totalsTable.getModel().setValueAt(SQLiteConnection.SpoilageByDayTotalFigure(month, year), 1, 7);
+
+            int q1 = SQLiteConnection.SpoilageByDayGetMonthsTotalStolle(month, year);
+            String q2 = String.format("%,d", q1);
+
+            int q3 = SQLiteConnection.SpoilageByDayGetMonthsTotalLiners(month, year);
+            String q4 = String.format("%,d", q3);
+
+            int q5 = SQLiteConnection.SpoilageByDayGetMonthsTotalShellPresses(month, year);
+            String q6 = String.format("%,d", q5);
+
+            int q7 = SQLiteConnection.SpoilageByDayGetMonthsTotalBordenOvec(month, year);
+            String q8 = String.format("%,d", q7);
+
+            int q9 = SQLiteConnection.SpoilageByDayGetMonthsTotalQCAreas(month, year);
+            String q10 = String.format("%,d", q9);
+
+            int q11 = SQLiteConnection.SpoilageByDayTotalFigure(month, year);
+            String q12 = String.format("%,d", q11);
+
+            int q13 = SQLiteConnection.SpoilageByDayTotalFigure(month, year);
+            String q14 = String.format("%,d", q13);
+
+            totalsTable.getModel().setValueAt(q2, 1, 1);
+            totalsTable.getModel().setValueAt(q4, 1, 2);
+            totalsTable.getModel().setValueAt(q6, 1, 3);
+            totalsTable.getModel().setValueAt(q8, 1, 4);
+            totalsTable.getModel().setValueAt(q10, 1, 5);
+            totalsTable.getModel().setValueAt(q12, 1, 6);
+            totalsTable.getModel().setValueAt(q14, 1, 7);
 
             // Production Percentages
             DecimalFormat df = new DecimalFormat("###.##"); // <- // "###.###"
@@ -1241,12 +1309,15 @@ public class SpoilageByDay2 {
             totalsTable.getModel().setValueAt(answerRounded16 + " %", 5, 6);
             System.out.println("Stolle Percentage : " + answerRounded16);
 
-            totalsTable.getModel().setValueAt(SQLiteConnection.SpoilageByDayTotalFigure(month, year), 4, 1);
-            totalsTable.getModel().setValueAt(SQLiteConnection.SpoilageByDayTotalFigure(month, year), 4, 2);
-            totalsTable.getModel().setValueAt(SQLiteConnection.SpoilageByDayTotalFigure(month, year), 4, 3);
-            totalsTable.getModel().setValueAt(SQLiteConnection.SpoilageByDayTotalFigure(month, year), 4, 4);
-            totalsTable.getModel().setValueAt(SQLiteConnection.SpoilageByDayTotalFigure(month, year), 4, 5);
-            totalsTable.getModel().setValueAt(SQLiteConnection.SpoilageByDayTotalFigure(month, year), 4, 6);
+            int q17 = SQLiteConnection.SpoilageByDayTotalFigure(month, year);
+            String q18 = String.format("%,d", q17);
+
+            totalsTable.getModel().setValueAt(q18, 4, 1);
+            totalsTable.getModel().setValueAt(q18, 4, 2);
+            totalsTable.getModel().setValueAt(q18, 4, 3);
+            totalsTable.getModel().setValueAt(q18, 4, 4);
+            totalsTable.getModel().setValueAt(q18, 4, 5);
+            totalsTable.getModel().setValueAt(q18, 4, 6);
 
         } catch (Exception e) {
             // TODO Auto-generated catch block

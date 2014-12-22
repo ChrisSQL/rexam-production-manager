@@ -33,11 +33,9 @@ import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.border.EmptyBorder;
-import org.apache.pdfbox.pdmodel.PDDocument;
 
 import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.JasperCompileManager;
-import net.sf.jasperreports.engine.JasperExportManager;
 import net.sf.jasperreports.engine.JasperFillManager;
 import net.sf.jasperreports.engine.JasperPrint;
 import net.sf.jasperreports.engine.JasperReport;
@@ -49,20 +47,21 @@ import net.sourceforge.jdatepicker.impl.UtilDateModel;
 
 import com.database.rexam.SQLiteConnection;
 import static com.database.rexam.SQLiteConnection.NCRReturnJTable;
+import static com.nonconformance.rexam.LinerEntryMenu.frame;
 import java.awt.Desktop;
+import java.awt.Frame;
 import java.io.FileOutputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JTable;
 import javax.swing.table.TableModel;
+import net.sf.jasperreports.view.JasperViewer;
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFFont;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.util.TempFile;
 
 public class StolleEntryMenu {
 
@@ -72,22 +71,23 @@ public class StolleEntryMenu {
     static JTextField NCRNumberJTextfield, identifiedByJTextfield, timeJTextfield, nonConformanceJTextfield, immediateActionTakenJTextfield,
             personsAlertedJTextfield, timeStartJTextField, unknown1JTextField, unknown2JTextField, totalDowntimeJTextField, departmentJTextField,
             dateSignOffCompletedJTextField;
-    static JComboBox departmentCombo, crewCombo, pressNumberCombo, defectCombo, generalCombo, identifiedByCombo, shiftManagerCombo, technicianCombo,
+    static JComboBox departmentCombo, crewCombo, pressNumberCombo, defectCombo, generalCombo, areaOfOriginCombo, identifiedByCombo, shiftManagerCombo, technicianCombo,
             operatorCombo, engineerCombo, departmentJCombo;
 
     static JLabel ALaneLabel, BLaneLabel, CLaneLabel, DLaneLabel;
     static JCheckBox ALaneJCheckBox, BLaneJCheckBox, CLaneJCheckBox, DLaneJCheckBox;
     static JTextArea beforeAJTextArea, ActionTakenAJTextArea, ResultAJTextArea, beforeBJTextArea, ActionTakenBJTextArea, ResultBJTextArea,
             beforeCJTextArea, ActionTakenCJTextArea, ResultCJTextArea, beforeDJTextArea, ActionTakenDJTextArea, ResultDJTextArea,
-            HFINumbersJTextField, OvecSleevesScrapped, longTermActionJTextArea;
+            HFINumbersJTextField, OvecSleevesScrapped, longTermActionJTextArea, defectJTextArea, defectJTextArea2;
 
-    static JButton refresh, searchMode, saveRecord, newEntryMode, exportToExcel, updateRecord, print, find, previous, next, summary, back;
+    static JButton refresh, searchMode, saveRecord, newEntryMode, exportToExcel, updateRecord, print, find, previous, next, summary, delete, back;
 
     static UtilDateModel model, model2, excelModel1, excelModel2;
     static JDatePanelImpl datePanel, datePanel2, excelDate1, excelDate2;
     static JDatePickerImpl datePicker, datePicker2, excelPicker1, excelPicker2;
-    static JFrame frame;
+    public static JFrame frame;
     static int CurrentNCRNumber;
+    static JScrollPane sp, sp2;
 
     static String query;
 
@@ -113,6 +113,7 @@ public class StolleEntryMenu {
 
         frame = new JFrame("Stolle NCR Entry");
         frame.setSize(1500, 768);
+        frame.setExtendedState(Frame.MAXIMIZED_BOTH);
         frame.setLocationRelativeTo(null);
 
         JPanel outerPanel = new JPanel(new BorderLayout());
@@ -132,8 +133,10 @@ public class StolleEntryMenu {
 
         frame.add(outerPanel);
         fillCombos();
+        fillGeneralCombo();
         frame.setVisible(true);
 
+        //    SQLiteConnection.AnalyticsUpdate("StolleEntryMenu");
     }
 
     public static JPanel createTopPanel(int viewIn) {
@@ -250,7 +253,7 @@ public class StolleEntryMenu {
         optionsPanel.add(previous);
         optionsPanel.add(next);
 
-        JPanel panel = new JPanel(new GridLayout(3, 12));
+        JPanel panel = new JPanel(new GridLayout(3, 10));
         panel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
         Date date = new Date();
@@ -299,8 +302,31 @@ public class StolleEntryMenu {
         departmentCombo = new JComboBox();
         crewCombo = new JComboBox();
         pressNumberCombo = new JComboBox();
+
         defectCombo = new JComboBox();
+        defectCombo.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                fillGeneralCombo();
+                fillAreaOfOriginCombo();
+
+            }
+        });
         generalCombo = new JComboBox();
+        generalCombo.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                fillAreaOfOriginCombo();
+                fillPossibleCauseArea();
+
+            }
+        });
+        areaOfOriginCombo = new JComboBox();
+
         identifiedByCombo = new JComboBox();
         shiftManagerCombo = new JComboBox();
         technicianCombo = new JComboBox();
@@ -319,11 +345,8 @@ public class StolleEntryMenu {
         panel.add(pressNumberLabel);
         panel.add(pressNumberCombo);
 
-        panel.add(defectLabel);
-        panel.add(defectCombo);
-
-        panel.add(generalLabel);
-        panel.add(generalCombo);
+        panel.add(new JLabel(" ", JLabel.CENTER));
+        panel.add(new JLabel(" ", JLabel.CENTER));
 
         panel.add(identifiedByLabel);
         panel.add(identifiedByJTextfield);
@@ -340,9 +363,6 @@ public class StolleEntryMenu {
         panel.add(immediateActionTakenLabel);
         panel.add(immediateActionTakenJTextfield);
 
-        panel.add(blankLabel1);
-        panel.add(blankLabel2);
-
         panel.add(personsAlertedLabel);
         panel.add(personsAlertedJTextfield);
 
@@ -358,15 +378,24 @@ public class StolleEntryMenu {
         panel.add(engineerLabel);
         panel.add(engineerCombo);
 
-        panel.add(blankLabel3);
-        panel.add(blankLabel4);
+        JPanel northPanelDefect = new JPanel(new GridLayout(1, 6));
+        northPanelDefect.setBorder(new EmptyBorder(5, 5, 5, 100));
+
+        northPanelDefect.add(new JLabel(" Defect ", JLabel.CENTER));
+        northPanelDefect.add(defectCombo);
+        northPanelDefect.add(new JLabel(" General ", JLabel.CENTER));
+        northPanelDefect.add(generalCombo);
+        northPanelDefect.add(new JLabel(" Area of Origin  ", JLabel.CENTER));
+        northPanelDefect.add(areaOfOriginCombo);
 
         if (viewIn == -1) {
             // outerPanel.add(optionsPanel, BorderLayout.NORTH);
-            outerPanel.add(panel, BorderLayout.SOUTH);
+            outerPanel.add(panel, BorderLayout.CENTER);
+            outerPanel.add(northPanelDefect, BorderLayout.SOUTH);
         } else if (viewIn == 1) {
 
-            outerPanel.add(panel, BorderLayout.SOUTH);
+            outerPanel.add(panel, BorderLayout.CENTER);
+            outerPanel.add(northPanelDefect, BorderLayout.SOUTH);
 
         }
 
@@ -374,6 +403,29 @@ public class StolleEntryMenu {
     }
 
     public static JPanel createCenterPanel() {
+
+        defectJTextArea = new JTextArea(4, 20);
+        defectJTextArea.setLineWrap(true);
+        defectJTextArea.setEditable(false);
+        sp = new JScrollPane(defectJTextArea);
+
+        defectJTextArea2 = new JTextArea(4, 20);
+        defectJTextArea2.setLineWrap(true);
+        defectJTextArea2.setEditable(false);
+        sp2 = new JScrollPane(defectJTextArea2);
+
+        JPanel textAreaPanel = new JPanel(new GridLayout(1, 2));
+        textAreaPanel.setBorder(new EmptyBorder(5, 15, 5, 15));
+
+        JPanel textAreaPanelLeft = new JPanel(new BorderLayout());
+        textAreaPanelLeft.add(new JLabel("   Causes   "), BorderLayout.WEST);
+        textAreaPanelLeft.add(sp);
+        textAreaPanel.add(textAreaPanelLeft);
+
+        JPanel textAreaPanelRight = new JPanel(new BorderLayout());
+        textAreaPanelRight.add(new JLabel("   Solutions   "), BorderLayout.WEST);
+        textAreaPanelRight.add(sp2);
+        textAreaPanel.add(textAreaPanelRight);
 
         JPanel panel = new JPanel(new BorderLayout());
 
@@ -531,7 +583,9 @@ public class StolleEntryMenu {
         panelCenter.add(panel16);
 
         panel.add(panelLeft, BorderLayout.WEST);
+        panel.add(textAreaPanel, BorderLayout.NORTH);
         panel.add(panelCenter, BorderLayout.CENTER);
+
         return panel;
 
     }
@@ -570,8 +624,26 @@ public class StolleEntryMenu {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-                frame.dispose();
+                StolleEntryMenu.frame.dispose();
                 new StolleEntryMenu(2);
+
+            }
+        });
+        delete = new JButton("Delete This NCR");
+        delete.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                try {
+                    SQLiteConnection.NCRStolleDelete(CurrentNCRNumber);
+
+                    StolleEntryMenu.frame.dispose();
+                    StolleEntryMenu.frame.dispose();
+                    createSummaryPanel();
+                } catch (SQLException ex) {
+                    Logger.getLogger(StolleEntryMenu.class.getName()).log(Level.SEVERE, null, ex);
+                }
 
             }
         });
@@ -783,6 +855,7 @@ public class StolleEntryMenu {
                     );
 
                     frame.dispose();
+                    new StolleEntryMenu(2);
                 } catch (NumberFormatException e1) {
                     // TODO Auto-generated catch block
                     e1.printStackTrace();
@@ -803,10 +876,10 @@ public class StolleEntryMenu {
         upperPanel.add(new JLabel("Time Start", SwingConstants.CENTER));
         upperPanel.add(timeStartJTextField);
 
-        upperPanel.add(new JLabel("Unknown 1", SwingConstants.CENTER));
+        upperPanel.add(new JLabel("Time Started", SwingConstants.CENTER));
         upperPanel.add(unknown1JTextField);
 
-        upperPanel.add(new JLabel("Unknown 2", SwingConstants.CENTER));
+        upperPanel.add(new JLabel("Time Finished", SwingConstants.CENTER));
         upperPanel.add(unknown2JTextField);
 
         upperPanel.add(new JLabel("Downtime (Mins)", SwingConstants.CENTER));
@@ -839,6 +912,7 @@ public class StolleEntryMenu {
             frame.setTitle("Stolle Entry Screen (Update Mode)");
 
             optionsPanel.add(summary);
+            optionsPanel.add(delete);
             optionsPanel.add(updateRecord);
             optionsPanel.add(print);
 
@@ -974,6 +1048,8 @@ public class StolleEntryMenu {
                 crewCombo.addItem(crewName);
             }
 
+            conn.close();
+
         } catch (Exception e) {
 
         }
@@ -993,6 +1069,8 @@ public class StolleEntryMenu {
                 pressNumberCombo.addItem(crewName);
             }
 
+            conn.close();
+
         } catch (Exception e) {
 
         }
@@ -1000,7 +1078,40 @@ public class StolleEntryMenu {
         // Identified By
         try {
 
-            String sql = "SELECT Employees.Name FROM Employees ORDER BY Name Asc";
+            String sql = "select Employees.Name from Employees ORDER BY Name ASC";
+            Connection conn = SQLiteConnection.Connect();
+            PreparedStatement pst = conn.prepareStatement(sql);
+            pst.setQueryTimeout(5);
+            ResultSet rs = pst.executeQuery();
+
+            identifiedByCombo.addItem("NA");
+            engineerCombo.addItem("NA");
+            operatorCombo.addItem("NA");
+            shiftManagerCombo.addItem("NA");
+            technicianCombo.addItem("NA");
+            departmentJCombo.addItem("NA");
+
+            while (rs.next()) {
+
+                String employeeName = rs.getString("Name");
+                identifiedByCombo.addItem(employeeName);
+                engineerCombo.addItem(employeeName);
+                operatorCombo.addItem(employeeName);
+                shiftManagerCombo.addItem(employeeName);
+                technicianCombo.addItem(employeeName);
+                departmentJCombo.addItem(employeeName);
+            }
+
+            conn.close();
+
+        } catch (Exception e) {
+
+        }
+
+        // Department
+        try {
+            String sql = "select Department.Name from Department ORDER BY Name ASC";
+
             Connection conn = SQLiteConnection.Connect();
             PreparedStatement pst = conn.prepareStatement(sql);
             pst.setQueryTimeout(5);
@@ -1009,26 +1120,36 @@ public class StolleEntryMenu {
             while (rs.next()) {
 
                 String employeeName = rs.getString("Name");
-                identifiedByCombo.addItem(employeeName);
-                operatorCombo.addItem(employeeName);
-                shiftManagerCombo.addItem(employeeName);
-                technicianCombo.addItem(employeeName);
-                engineerCombo.addItem(employeeName);
-                departmentJCombo.addItem(employeeName);
+                departmentCombo.addItem(employeeName);
             }
+
+            conn.close();
 
         } catch (Exception e) {
 
         }
 
-        // Departments
-        // Defect
-        // General
-        // Identified By
-        // Shift Manager
-        // Technician
-        // Operator
-        // Engineer
+        // Defect Group
+        try {
+            String sql = "SELECT Defects.DefectGroup from Defects GROUP BY DefectGroup ORDER BY DefectGroup  ASC";
+
+            Connection conn = SQLiteConnection.Connect();
+            PreparedStatement pst = conn.prepareStatement(sql);
+            pst.setQueryTimeout(5);
+            ResultSet rs = pst.executeQuery();
+
+            while (rs.next()) {
+
+                String employeeName = rs.getString("DefectGroup");
+                defectCombo.addItem(employeeName);
+            }
+
+            conn.close();
+
+        } catch (Exception e) {
+
+        }
+
     }
 
     private static JPanel createSummaryPanel() {
@@ -1066,7 +1187,7 @@ public class StolleEntryMenu {
 
         Connection conn = SQLiteConnection.Connect();
 
-        File file = new File("C:/Users/Chris/Documents/SPRING/Rexam4/src/com/nonconformance/rexam/StolleNCRForm.jrxml");
+        File file = new File("Reports/StolleNCRForm.jrxml");
         InputStream stream = new FileInputStream(file);
         JasperDesign design = JRXmlLoader.load(stream);
         JasperReport report = JasperCompileManager.compileReport(design);
@@ -1076,12 +1197,14 @@ public class StolleEntryMenu {
         params.put("NCRNumberParameter", NCRNumber); // note here you can add parameters which
         // would be utilized by the report
 
-        JasperPrint print = JasperFillManager.fillReport(report, params, conn);
-        JasperExportManager.exportReportToPdfFile(print, "StolleNCRReport" + NCRNumber + ".pdf");
-
-        PDDocument pdf = PDDocument.load("StolleNCRReport" + NCRNumber + ".pdf");
-        pdf.print();
-        pdf.close();
+        InputStream inputStream = new FileInputStream("Reports/StolleNCRForm.jrxml");
+        JasperCompileManager.compileReportToFile("Reports/StolleNCRForm.jrxml");
+        JasperDesign jasperDesign = JRXmlLoader.load(inputStream);
+        JasperReport jasperReport = JasperCompileManager.compileReport(jasperDesign);
+        JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, params, conn);
+        JasperViewer view = new net.sf.jasperreports.view.JasperViewer(jasperPrint, false);
+        view.setVisible(true);
+        view.toFront();
 
         conn.close();
 
@@ -1092,7 +1215,7 @@ public class StolleEntryMenu {
 
         Connection conn = SQLiteConnection.Connect();
 
-        File file = new File("C:/Users/Chris/Documents/SPRING/Rexam4/src/com/nonconformance/rexam/LinerNCRForm.jrxml");
+        File file = new File("Reports/LinerNCRForm.jrxml");
         InputStream stream = new FileInputStream(file);
         JasperDesign design = JRXmlLoader.load(stream);
         JasperReport report = JasperCompileManager.compileReport(design);
@@ -1102,12 +1225,14 @@ public class StolleEntryMenu {
         params.put("NCRNumberParameter", NCRNumber); // note here you can add parameters which
         // would be utilized by the report
 
-        JasperPrint print = JasperFillManager.fillReport(report, params, conn);
-        JasperExportManager.exportReportToPdfFile(print, "LinerNCRReport" + NCRNumber + ".pdf");
-
-        PDDocument pdf = PDDocument.load("LinerNCRReport" + NCRNumber + ".pdf");
-        pdf.print();
-        pdf.close();
+        InputStream inputStream = new FileInputStream("Reports/LinerNCRForm.jrxml");
+        JasperCompileManager.compileReportToFile("Reports/LinerNCRForm.jrxml");
+        JasperDesign jasperDesign = JRXmlLoader.load(inputStream);
+        JasperReport jasperReport = JasperCompileManager.compileReport(jasperDesign);
+        JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, params, conn);
+        JasperViewer view = new net.sf.jasperreports.view.JasperViewer(jasperPrint, false);
+        view.setVisible(true);
+        view.toFront();
 
         conn.close();
 
@@ -1118,7 +1243,7 @@ public class StolleEntryMenu {
 
         Connection conn = SQLiteConnection.Connect();
 
-        File file = new File("C:/Users/Chris/Documents/SPRING/Rexam4/src/com/nonconformance/rexam/ShellPressNCRForm.jrxml");
+        File file = new File("Reports/ShellPressNCRForm.jrxml");
         InputStream stream = new FileInputStream(file);
         JasperDesign design = JRXmlLoader.load(stream);
         JasperReport report = JasperCompileManager.compileReport(design);
@@ -1128,12 +1253,14 @@ public class StolleEntryMenu {
         params.put("NCRNumberParameter", NCRNumber); // note here you can add parameters which
         // would be utilized by the report
 
-        JasperPrint print = JasperFillManager.fillReport(report, params, conn);
-        JasperExportManager.exportReportToPdfFile(print, "ShellPressNCRReport" + NCRNumber + ".pdf");
-
-        PDDocument pdf = PDDocument.load("ShellPressNCRReport" + NCRNumber + ".pdf");
-        pdf.print();
-        pdf.close();
+        InputStream inputStream = new FileInputStream("Reports/ShellPressNCRForm.jrxml");
+        JasperCompileManager.compileReportToFile("Reports/ShellPressNCRForm.jrxml");
+        JasperDesign jasperDesign = JRXmlLoader.load(inputStream);
+        JasperReport jasperReport = JasperCompileManager.compileReport(jasperDesign);
+        JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, params, conn);
+        JasperViewer view = new net.sf.jasperreports.view.JasperViewer(jasperPrint, false);
+        view.setVisible(true);
+        view.toFront();
 
         conn.close();
 
@@ -1144,7 +1271,7 @@ public class StolleEntryMenu {
 
         Connection conn = SQLiteConnection.Connect();
 
-        File file = new File("C:/Users/Chris/Documents/SPRING/Rexam4/src/com/nonconformance/rexam/OtherNCRForm.jrxml");
+        File file = new File("Reports/OtherNCRForm.jrxml");
         InputStream stream = new FileInputStream(file);
         JasperDesign design = JRXmlLoader.load(stream);
         JasperReport report = JasperCompileManager.compileReport(design);
@@ -1154,12 +1281,14 @@ public class StolleEntryMenu {
         params.put("NCRNumberParameter", NCRNumber); // note here you can add parameters which
         // would be utilized by the report
 
-        JasperPrint print = JasperFillManager.fillReport(report, params, conn);
-        JasperExportManager.exportReportToPdfFile(print, "Reports/Stolle/OtherNCRForm" + NCRNumber + ".pdf");
-
-        PDDocument pdf = PDDocument.load("Reports/Stolle/OtherNCRForm" + NCRNumber + ".pdf");
-        pdf.print();
-        pdf.close();
+        InputStream inputStream = new FileInputStream("Reports/OtherNCRForm.jrxml");
+        JasperCompileManager.compileReportToFile("Reports/OtherNCRForm.jrxml");
+        JasperDesign jasperDesign = JRXmlLoader.load(inputStream);
+        JasperReport jasperReport = JasperCompileManager.compileReport(jasperDesign);
+        JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, params, conn);
+        JasperViewer view = new net.sf.jasperreports.view.JasperViewer(jasperPrint, false);
+        view.setVisible(true);
+        view.toFront();
 
         conn.close();
 
@@ -1259,26 +1388,26 @@ public class StolleEntryMenu {
         HSSFCellStyle style = workBook.createCellStyle();
         style.setFont(font);
         style.setAlignment(CellStyle.ALIGN_CENTER);
-        
+
         HSSFFont font2 = workBook.createFont();
         HSSFCellStyle style2 = workBook.createCellStyle();
         style2.setFont(font2);
         style2.setAlignment(CellStyle.ALIGN_CENTER);
-        
+
         sheet1.setDefaultColumnWidth(12);
 
         Row headerRow = sheet1.createRow(0); //Create row at line 0
         for (int headings = 0; headings < model2.getColumnCount(); headings++) { //For each column
             headerRow.createCell(headings).setCellValue(model2.getColumnName(headings));//Write column name
             headerRow.getCell(headings).setCellStyle(style);
-            
+
         }
 
         for (int rows = 0; rows < model2.getRowCount(); rows++) { //For each table row
             for (int cols = 0; cols < table.getColumnCount(); cols++) { //For each table column
                 row.createCell(cols).setCellValue(model2.getValueAt(rows, cols).toString()); //Write value
                 row.getCell(cols).setCellStyle(style2);
-                
+
             }
 
             //Set the row to the next one in the sequence 
@@ -1286,15 +1415,120 @@ public class StolleEntryMenu {
         }
 
         try {
-            FileOutputStream output = new FileOutputStream("TempExcel.xls");
+            FileOutputStream output = new FileOutputStream("ExcelFiles/NonConformance.xls");
             workBook.write(output);
 
             Desktop dt = Desktop.getDesktop();
-            dt.open(new File("TempExcel.xls"));
+            dt.open(new File("ExcelFiles/NonConformance.xls"));
 
             output.close();
         } catch (Exception e) {
             e.printStackTrace();
+        }
+
+    }
+
+    public static void fillGeneralCombo() {
+
+        String defect = defectCombo.getSelectedItem() + "";
+
+        generalCombo.removeAllItems();
+
+        // Defect General
+        try {
+            String sql = "SELECT Defects.General from Defects WHERE Defects.DefectGroup = \'" + defect + "\' ORDER BY General  ASC";
+            System.out.println(sql);
+            Connection conn = SQLiteConnection.Connect();
+            PreparedStatement pst = conn.prepareStatement(sql);
+            pst.setQueryTimeout(5);
+            ResultSet rs = pst.executeQuery();
+
+            while (rs.next()) {
+
+                String employeeName = rs.getString("General");
+                generalCombo.addItem(employeeName);
+            }
+
+            conn.close();
+
+        } catch (Exception e) {
+
+        }
+
+    }
+
+    public static void fillAreaOfOriginCombo() {
+
+        areaOfOriginCombo.removeAllItems();
+
+        String defect2 = generalCombo.getSelectedItem() + "";
+
+        // Defect General
+        try {
+            String sql = "SELECT Defects.AreaOfOrigin from Defects WHERE Defects.General = \'" + defect2 + "\' ORDER BY AreaOfOrigin  ASC";
+            System.out.println(sql);
+            Connection conn = SQLiteConnection.Connect();
+            PreparedStatement pst = conn.prepareStatement(sql);
+            pst.setQueryTimeout(5);
+            ResultSet rs = pst.executeQuery();
+
+            while (rs.next()) {
+
+                String employeeName = rs.getString("AreaOfOrigin");
+                areaOfOriginCombo.addItem(employeeName);
+            }
+            conn.close();
+
+        } catch (Exception e) {
+
+        }
+
+    }
+
+    public static void fillPossibleCauseArea() {
+
+        defectJTextArea.setText(" ");
+
+        String defect3 = generalCombo.getSelectedItem() + "";
+
+        // Defect General
+        try {
+            String sql = "SELECT Defects.PossibleCauses from Defects WHERE Defects.General = \'" + defect3 + "\' ";
+            System.out.println("Defect 3 " + defect3);
+            Connection conn = SQLiteConnection.Connect();
+            PreparedStatement pst = conn.prepareStatement(sql);
+            pst.setQueryTimeout(5);
+            ResultSet rs = pst.executeQuery();
+
+            String employeeName = rs.getString("PossibleCauses");
+            defectJTextArea.setText(employeeName);
+
+            conn.close();
+
+        } catch (Exception e) {
+
+        }
+
+        defectJTextArea2.setText(" ");
+
+        String defect4 = generalCombo.getSelectedItem() + "";
+
+        // Defect General
+        try {
+            String sql = "SELECT Defects.Actions from Defects WHERE Defects.General = \'" + defect4 + "\' ";
+            System.out.println("Defect 4 " + defect4);
+            Connection conn = SQLiteConnection.Connect();
+            PreparedStatement pst = conn.prepareStatement(sql);
+            pst.setQueryTimeout(5);
+            ResultSet rs = pst.executeQuery();
+
+            String employeeName = rs.getString("Actions");
+            defectJTextArea2.setText(employeeName);
+
+            conn.close();
+
+        } catch (Exception e) {
+
         }
 
     }

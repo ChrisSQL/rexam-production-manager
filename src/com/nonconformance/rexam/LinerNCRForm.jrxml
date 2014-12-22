@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Created with Jaspersoft Studio version 5.6.1.final using JasperReports Library version 5.6.1  -->
-<!-- 2014-09-15T09:32:54 -->
+<!-- Created with Jaspersoft Studio version last-->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="StolleNCRForm" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="2b239283-cdbc-40db-a2a9-57749561b07f">
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="One Empty Record"/>
 	<parameter name="NCRNumberParameter" class="java.lang.String"/>
@@ -29,8 +28,6 @@
 	<field name="DateSignedOff" class="java.lang.Object"/>
 	<field name="LongTermAction" class="java.lang.Object"/>
 	<field name="TimeStamp" class="java.lang.Object"/>
-	<field name="Edit" class="java.lang.Object"/>
-	<field name="Report" class="java.lang.Object"/>
 	<field name="BeforeHead1CheckBox" class="java.lang.Boolean"/>
 	<field name="BeforeHead2CheckBox" class="java.lang.Boolean"/>
 	<field name="BeforeHead3CheckBox" class="java.lang.Boolean"/>
@@ -61,10 +58,6 @@
 	</background>
 	<title>
 		<band height="100" splitType="Stretch">
-			<image>
-				<reportElement x="10" y="40" width="220" height="50" uuid="2ba002ac-cc33-443a-8256-9f3b180deeb6"/>
-				<imageExpression><![CDATA["C:/Users/Chris/Documents/SPRING/Rexam3/rexam-logo.png"]]></imageExpression>
-			</image>
 			<textField>
 				<reportElement x="-1" y="0" width="100" height="30" uuid="05b5b3d5-3067-4bc2-be25-d29addfb27e8"/>
 				<textElement textAlignment="Right" verticalAlignment="Middle"/>
@@ -92,6 +85,10 @@
 				</textElement>
 				<text><![CDATA[Beverage Can Europe and Asia]]></text>
 			</staticText>
+			<image onErrorType="Blank">
+				<reportElement x="21" y="40" width="190" height="50" uuid="ade00107-d201-41bc-b8da-d6ab5be6b611"/>
+				<imageExpression><![CDATA["rexam-logo.png"]]></imageExpression>
+			</image>
 		</band>
 	</title>
 	<pageHeader>

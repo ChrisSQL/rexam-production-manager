@@ -31,6 +31,7 @@ import net.sourceforge.jdatepicker.impl.UtilDateModel;
 import com.database.rexam.SQLiteConnection;
 import com.productiontrackingscreens.rexam.LinerDataEntryScreen;
 import java.awt.Desktop;
+import java.awt.Frame;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -38,6 +39,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
@@ -55,7 +57,7 @@ import org.apache.poi.ss.usermodel.Row;
 
 public class LinerAndShellsEntry {
 
-    static JButton add, find, next, previous, update, addNew, search, monthly, go, back, refresh, summary, exportToExcel, importFromExcel;
+    static JButton add, find, next, previous, delete, update, addNew, search, monthly, go, back, refresh, summary, exportToExcel, importFromExcel;
     JLabel dateLabel, dateLabel2, optime2Label, optime3Label, optime4Label, optimeTotal, m1LinersLabel, m2LinersLabel, m3LinersLabel, mod4LinersLabel, modTotal;
     JLabel optime2Monthly, optime3Monthly, optime4Monthly;
     static JTextField optime2TextField, optime3TextField, optime4TextField, optimeTotalTextfield, m1LinersTextField, m2LinersTextField, m3LinersTextField, m4LinersTextField,
@@ -81,7 +83,11 @@ public class LinerAndShellsEntry {
     public static void main(String[] args) throws SQLException {
 
         new LinerAndShellsEntry(1, -1);
-
+//        try {
+//            importdata();
+//        } catch (IOException ex) {
+//            Logger.getLogger(LinerAndShellsEntry.class.getName()).log(Level.SEVERE, null, ex);
+//        }
     }
 
     public LinerAndShellsEntry(int idIn, int view) throws SQLException {
@@ -440,21 +446,66 @@ public class LinerAndShellsEntry {
                 int m4LinersSum4 = Integer.parseInt(m4LinersTextField.getText());
                 int mLinerSum = (m1LinersSum1 + m2LinersSum2 + m3LinersSum3 + m4LinersSum4);
 
+                String dayString = date.substring(8, 10); // Correct
+                String monthString = date.substring(5, 7); // Correct
+                String yearString = date.substring(0, 4); // Correct
                 try {
-                    SQLiteConnection.LinerAndShellsInsert(
-                            SQLiteConnection.LinerAndShellsGetHighestID() + 1, date, Integer.parseInt(optime2TextField.getText()),
-                            Integer.parseInt(optime3TextField.getText()), Integer.parseInt(optime4TextField.getText()), optimeTotalSum,
-                            Integer.parseInt(m1LinersTextField.getText()), Integer.parseInt(m2LinersTextField.getText()),
-                            Integer.parseInt(m3LinersTextField.getText()), Integer.parseInt(m4LinersTextField.getText()), mLinerSum
-                    );
+                    if (SQLiteConnection.MaintenanceStolleSpoilageEntryExists(yearString + "", monthString + "", dayString + "") == false) {
 
-                } catch (SQLException e1) {
-                    // TODO Auto-generated catch block
-                    e1.printStackTrace();
+                        try {
+                            SQLiteConnection.LinerAndShellsInsert(
+                                    SQLiteConnection.LinerAndShellsGetHighestID() + 1,
+                                    date,
+                                    Integer.parseInt(optime2TextField.getText()),
+                                    Integer.parseInt(optime3TextField.getText()),
+                                    Integer.parseInt(optime4TextField.getText()),
+                                    optimeTotalSum,
+                                    Integer.parseInt(m1LinersTextField.getText()),
+                                    Integer.parseInt(m2LinersTextField.getText()),
+                                    Integer.parseInt(m3LinersTextField.getText()),
+                                    Integer.parseInt(m4LinersTextField.getText()), mLinerSum
+                            );
+
+                        } catch (SQLException e1) {
+                            // TODO Auto-generated catch block
+                            e1.printStackTrace();
+                        }
+
+                    } else {
+
+                        try {
+                            SQLiteConnection.LinerAndShellsUpdateByDate(
+                                    Integer.parseInt(optime2TextField.getText()),
+                                    Integer.parseInt(optime3TextField.getText()),
+                                    Integer.parseInt(optime4TextField.getText()),
+                                    Integer.parseInt(optimeTotalTextfield.getText()),
+                                    Integer.parseInt(m1LinersTextField.getText()),
+                                    Integer.parseInt(m2LinersTextField.getText()),
+                                    Integer.parseInt(m3LinersTextField.getText()),
+                                    Integer.parseInt(m4LinersTextField.getText()),
+                                    Integer.parseInt(modTotalTextfield.getText()),
+                                    date
+                            );
+
+                            frame101.dispose();
+
+                        } catch (SQLException e1) {
+                            // TODO Auto-generated catch block
+                            e1.printStackTrace();
+                        }
+
+                    }
+                } catch (SQLException ex) {
+                    Logger.getLogger(LinerAndShellsEntry.class.getName()).log(Level.SEVERE, null, ex);
                 }
 
                 // TODO Auto-generated method stub
                 frame101.dispose();
+                try {
+                    createSummaryScreen();
+                } catch (SQLException ex) {
+                    Logger.getLogger(LinerAndShellsEntry.class.getName()).log(Level.SEVERE, null, ex);
+                }
 
             }
         });
@@ -501,11 +552,9 @@ public class LinerAndShellsEntry {
 
                 // TODO Auto-generated method stub
                 try {
-                    new LinerAndShellsEntry(1, -2);
-                    setLastEntry();
-                } catch (SQLException e1) {
-                    // TODO Auto-generated catch block
-                    e1.printStackTrace();
+                    LinerAndShellsEntry.createSummaryScreen();
+                } catch (SQLException ex) {
+                    Logger.getLogger(LinerAndShellsEntry.class.getName()).log(Level.SEVERE, null, ex);
                 }
                 frame101.dispose();
 
@@ -718,6 +767,33 @@ public class LinerAndShellsEntry {
             }
         });
 
+        delete = new JButton("Delete ");
+        delete.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                JDialog.setDefaultLookAndFeelDecorated(true);
+                int response = JOptionPane.showConfirmDialog(null, "Do you want to delete?", "Confirm",
+                        JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                if (response == JOptionPane.NO_OPTION) {
+                    System.out.println("No button clicked");
+                } else if (response == JOptionPane.YES_OPTION) {
+                    SQLiteConnection.LinerAndShellsDelete(currentId);
+                    frameSummary.dispose();
+                    frame101.dispose();
+                    try {
+                        createSummaryScreen();
+                    } catch (SQLException ex) {
+                        Logger.getLogger(EndCounts.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                } else if (response == JOptionPane.CLOSED_OPTION) {
+                    System.out.println("JOptionPane closed");
+                }
+
+            }
+        });
+
         dateLabel = new JLabel("Date : ", SwingConstants.CENTER);
         dateLabel2 = new JLabel("Date : ", SwingConstants.CENTER);
         optime2Label = new JLabel("Optime 2 : ", SwingConstants.CENTER);
@@ -740,6 +816,7 @@ public class LinerAndShellsEntry {
         // buttonsPanel.add(find);
         buttonsPanel.add(previous);
         buttonsPanel.add(next);
+        buttonsPanel.add(delete);
 
         outerPanel.add(buttonsPanel, BorderLayout.NORTH);
 
@@ -758,6 +835,7 @@ public class LinerAndShellsEntry {
 
             find.setVisible(false);
             previous.setVisible(false);
+            delete.setVisible(false);
             next.setVisible(false);
             addNew.setVisible(false);
             summary.setVisible(false);
@@ -879,6 +957,7 @@ public class LinerAndShellsEntry {
             monthly.setVisible(false);
             find.setVisible(false);
             previous.setVisible(false);
+            delete.setVisible(false);
             next.setVisible(false);
             search.setVisible(false);
             update.setVisible(false);
@@ -1008,7 +1087,7 @@ public class LinerAndShellsEntry {
             }
         });
 
-        importFromExcel = new JButton("Import from Excel");
+        importFromExcel = new JButton("Import from Viscan");
         importFromExcel.addActionListener(new ActionListener() {
 
             @Override
@@ -1027,6 +1106,7 @@ public class LinerAndShellsEntry {
         // Outer Frame
         frameSummary = new JFrame("Liner Data Report");
         frameSummary.setSize(1300, 700);
+        frameSummary.setExtendedState(Frame.MAXIMIZED_BOTH);
         frameSummary.setLocationRelativeTo(null);
 
         // JPanel
@@ -1313,10 +1393,12 @@ public class LinerAndShellsEntry {
 
             System.out.println("Start Date : " + startDate);
             System.out.println("End Date : " + endDate);
-            
-         //    if (FileName == AcumenceReport16.xls){}
 
-            if (startDate.equalsIgnoreCase(endDate)) {
+            //    if (FileName == AcumenceReport16.xls){}
+            HSSFCell calendarDate = rows[8].getCell((short) 1);
+            String calendarDateString = calendarDate.getStringCellValue();
+
+            if (startDate.equalsIgnoreCase(endDate) && calendarDateString.equalsIgnoreCase("No")) {
 
                 try {
 
@@ -1377,16 +1459,120 @@ public class LinerAndShellsEntry {
                             (int) Stolle44
                     );
 
-               //     JOptionPane.showMessageDialog(null, "Double Check Dates and Values then Save Records.");
+                    //     JOptionPane.showMessageDialog(null, "Double Check Dates and Values then Save Records.");
                 } catch (SQLException ex) {
                     Logger.getLogger(LinerAndShellsEntry.class.getName()).log(Level.SEVERE, null, ex);
                 }
 
             } else {
-                JOptionPane.showMessageDialog(null, "Excel File is for more than 1 day.");
+                JOptionPane.showMessageDialog(null, "Wrong File. "
+                        + "Excel File is for more than 1 day or not for correct TimeFrame.\n "
+                        + "Ensure  Calendar is YES");
             }
 
             ////////////////
+        }
+
+        // Import into Database with matching dates if it doesnt exist for LinersAndShells, LinerDefects, EndCounts
+        // If exist skip that individual section
+    }
+
+    public static void importdata() throws FileNotFoundException, IOException {
+
+        fileChooser = new JFileChooser();
+        fileChooser.setAcceptAllFileFilterUsed(false);
+        fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Excel Documents", "xls"));
+
+        int result = fileChooser.showOpenDialog(frameSummary);
+        if (result == JFileChooser.APPROVE_OPTION) {
+
+            File selectedFile = fileChooser.getSelectedFile();
+            System.out.println("Selected file: " + selectedFile.getAbsolutePath());
+
+            ////////////////
+            FileInputStream excelFile = new FileInputStream(selectedFile);
+            HSSFWorkbook workbook = new HSSFWorkbook(excelFile);
+
+            // Create 31 Arrays [31][8] // Each Array has A2, B2, C2, D2, E2, F2, G2, H2, I2 
+            HSSFRow[] rows = new HSSFRow[32];
+            HSSFSheet worksheet = workbook.getSheet("5");
+
+            int[][] ints = new int[31][8];
+
+            for (int i = 0; i < 32; i++) {
+
+                rows[i] = worksheet.getRow(i);
+
+            }
+
+            HSSFCell[] cells = new HSSFCell[31];
+
+            // get CellA1 to A31 and Assign to int
+            for (int i = 0; i < 31; i++) {
+
+                ints[i][0] = (int) rows[i].getCell((int) 0).getNumericCellValue();
+                System.out.println("Column A : " + ints[i][0]);
+
+                ints[i][1] = (int) rows[i].getCell((int) 1).getNumericCellValue();
+                System.out.println("Column B : " + ints[i][1]);
+
+                ints[i][2] = (int) rows[i].getCell((int) 2).getNumericCellValue();
+                System.out.println("Column C : " + ints[i][2]);
+
+                ints[i][3] = (int) rows[i].getCell((int) 3).getNumericCellValue();
+                System.out.println("Column D : " + ints[i][3]);
+
+                ints[i][4] = (int) rows[i].getCell((int) 4).getNumericCellValue();
+                System.out.println("Column E : " + ints[i][4]);
+
+                ints[i][5] = (int) rows[i].getCell((int) 5).getNumericCellValue();
+                System.out.println("Column F : " + ints[i][5]);
+
+                ints[i][6] = (int) rows[i].getCell((int) 6).getNumericCellValue();
+                System.out.println("Column G : " + ints[i][6]);
+
+                ints[i][7] = (int) rows[i].getCell((int) 7).getNumericCellValue();
+                System.out.println("Column H : " + ints[i][7]);
+
+            }
+
+            for (int i = 0; i < 31; i++) {
+
+                try {
+
+                    LinerAndShellsEntry linerScreen = new LinerAndShellsEntry(1, -1);
+
+                 // Set Date to 2014-01-i
+
+                    int day = ints[i][0];
+
+                    model.setDate(2014, 04, day);
+                    
+                    linerScreen.optime2TextField.setText(ints[i][1] + "");
+                    linerScreen.optime3TextField.setText(ints[i][2] + "");
+                    linerScreen.optime4TextField.setText(ints[i][3] + "");
+                    linerScreen.optimeTotalTextfield.setText((ints[i][1] + ints[i][2] + ints[i][3]) + "");
+                    linerScreen.m1LinersTextField.setText(ints[i][4] + "");
+                    linerScreen.m2LinersTextField.setText(ints[i][5] + "");
+                    linerScreen.m3LinersTextField.setText(ints[i][6] + "");
+                    linerScreen.m4LinersTextField.setText(ints[i][7] + "");
+                    linerScreen.modTotalTextfield.setText((ints[i][4] + ints[i][5] + ints[i][6] + ints[i][7]) + "");
+                    
+                    add.doClick();
+                    LinerAndShellsEntry.frameSummary.dispose();
+
+                } catch (SQLException ex) {
+                    Logger.getLogger(LinerAndShellsEntry.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                
+                try {
+                    createSummaryScreen();
+                } catch (SQLException ex) {
+                    Logger.getLogger(LinerAndShellsEntry.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
+            }
+
         }
 
         // Import into Database with matching dates if it doesnt exist for LinersAndShells, LinerDefects, EndCounts
@@ -1445,11 +1631,11 @@ public class LinerAndShellsEntry {
         }
 
         try {
-            FileOutputStream output = new FileOutputStream("LinerShellsExcel.xls");
+            FileOutputStream output = new FileOutputStream("ExcelFiles/BinEntry.xls");
             workBook.write(output);
 
             Desktop dt = Desktop.getDesktop();
-            dt.open(new File("LinerShellsExcel.xls"));
+            dt.open(new File("ExcelFiles/BinEntry.xls"));
 
             output.close();
         } catch (Exception e) {
@@ -1480,6 +1666,42 @@ public class LinerAndShellsEntry {
         int mLinerSum = (m1LinersSum1 + m2LinersSum2 + m3LinersSum3 + m4LinersSum4);
         modTotalTextfield.setText(mLinerSum + "");
 
+    }
+
+    public static void setOptime2TextField(String optime2TextField) {
+        LinerAndShellsEntry.optime2TextField.setText(optime2TextField);
+    }
+
+    public static void setOptime3TextField(String optime3TextField) {
+        LinerAndShellsEntry.optime3TextField.setText(optime3TextField);
+    }
+
+    public static void setOptime4TextField(String optime4TextField) {
+        LinerAndShellsEntry.optime4TextField.setText(optime4TextField);
+    }
+
+    public static void setOptimeTotalTextfield(String optimeTotalTextfield) {
+        LinerAndShellsEntry.optimeTotalTextfield.setText(optimeTotalTextfield);
+    }
+
+    public static void setM1LinersTextField(String m1LinersTextField) {
+        LinerAndShellsEntry.m1LinersTextField.setText(m1LinersTextField);
+    }
+
+    public static void setM2LinersTextField(String m2LinersTextField) {
+        LinerAndShellsEntry.m2LinersTextField.setText(m2LinersTextField);
+    }
+
+    public static void setM3LinersTextField(String m3LinersTextField) {
+        LinerAndShellsEntry.m3LinersTextField.setText(m3LinersTextField);
+    }
+
+    public static void setM4LinersTextField(String m4LinersTextField) {
+        LinerAndShellsEntry.m4LinersTextField.setText(m4LinersTextField);
+    }
+
+    public static void setModTotalTextfield(String modTotalTextfield) {
+        LinerAndShellsEntry.modTotalTextfield.setText(modTotalTextfield);
     }
 
 }

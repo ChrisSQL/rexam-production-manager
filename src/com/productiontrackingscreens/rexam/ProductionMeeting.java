@@ -29,6 +29,7 @@ import net.sourceforge.jdatepicker.impl.JDatePickerImpl;
 import net.sourceforge.jdatepicker.impl.UtilDateModel;
 
 import com.database.rexam.SQLiteConnection;
+import java.awt.Frame;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JScrollPane;
@@ -113,6 +114,7 @@ public class ProductionMeeting {
         JFrame frame8 = new JFrame("Production Meeting");
         // frame8.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame8.setSize(1300, 900);
+        frame8.setExtendedState(Frame.MAXIMIZED_BOTH);
         frame8.setLocationRelativeTo(null);
 
         JPanel outerPanel = new JPanel(new BorderLayout());
@@ -1713,6 +1715,7 @@ public class ProductionMeeting {
         // Outer Frame
         frameSummary = new JFrame("Liner Data Report");
         frameSummary.setSize(1300, 900);
+        frameSummary.setExtendedState(Frame.MAXIMIZED_BOTH);
         frameSummary.setLocationRelativeTo(null);
 
         // JPanel

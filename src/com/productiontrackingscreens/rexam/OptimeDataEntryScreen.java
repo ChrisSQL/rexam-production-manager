@@ -46,6 +46,7 @@ import net.sourceforge.jdatepicker.impl.UtilDateModel;
 
 import com.database.rexam.SQLiteConnection;
 import java.awt.Desktop;
+import java.awt.Frame;
 import java.io.FileOutputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -690,6 +691,7 @@ public class OptimeDataEntryScreen {
         frameSummary = new JFrame("Optime Production Report");
         frameSummary.toFront();
         frameSummary.setSize(1366, 768);
+        frameSummary.setExtendedState(Frame.MAXIMIZED_BOTH);
         frameSummary.setLocationRelativeTo(null);
 
         // JPanel

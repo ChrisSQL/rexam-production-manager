@@ -32,96 +32,28 @@ public class ProductionWeeklyReport {
 			lineSpoilageLabel1, totalSpoilageLabel1, HFISpoilagePercentageLabel1, lineSpoilagePercentageLabel1, totalSpoilagePercentageLabel1, calculateLabel1, calculateLabel2,
 			calculateLabel3;
 
-	JTextField b64TextField;
+	JTextField b64TextField, endsPackedTextField1;
 
-	static JTextField shellsProducedTextField1;
-
-	JTextField endsPackedTextField1;
-
-	static JTextField HFIOpeningTextField1;
-
-	static JTextField HFICreatedTextField1;
-
-	static JTextField HFIRecoveredTextField1;
-
-	static JTextField HFIScrappedTextField1;
-
-	static JTextField HFIRemainingTextField1;
-
-	static JTextField HFISpoilageTextField1;
-
-	static JTextField lineSpoilageTextField1;
-
-	static JTextField totalSpoilageTextField1;
-
-	static JTextField HFISpoilagePercentageTextField1;
-
-	static JTextField lineSpoilagePercentageTextField1;
-
-	static JTextField totalSpoilagePercentageTextField1;
+	static JTextField shellsProducedTextField1, HFIOpeningTextField1, HFICreatedTextField1, HFIRecoveredTextField1, HFIScrappedTextField1, HFIRemainingTextField1, HFISpoilageTextField1, lineSpoilageTextField1, totalSpoilageTextField1, HFISpoilagePercentageTextField1, lineSpoilagePercentageTextField1, totalSpoilagePercentageTextField1;
 
 	JLabel cdlLabel, shellsProducedLabel2, endsPackedLabel2, HFIOpeningLabel2, HFICreatedLabel2, HFIRecoveredLabel2, HFIScrappedLabel2, HFIRemainingLabel2, HFISpoilageLabel2,
 			lineSpoilageLabel2, totalSpoilageLabel2, HFISpoilagePercentageLabel2, lineSpoilagePercentageLabel2, totalSpoilagePercentageLabel2;
 
-	JTextField cdlTextField;
+	JTextField cdlTextField, endsPackedTextField2, totalsTextField, endsPackedTextField3;
 
-	static JTextField shellsProducedTextField2;
-
-	JTextField endsPackedTextField2;
-
-	static JTextField HFIOpeningTextField2;
-
-	static JTextField HFICreatedTextField2;
-
-	static JTextField HFIRecoveredTextField2;
-
-	static JTextField HFIScrappedTextField2;
-
-	static JTextField HFIRemainingTextField2;
-
-	static JTextField HFISpoilageTextField2;
-
-	static JTextField lineSpoilageTextField2;
-
-	static JTextField totalSpoilageTextField2;
-
-	static JTextField HFISpoilagePercentageTextField2;
-
-	static JTextField lineSpoilagePercentageTextField2;
-
-	static JTextField totalSpoilagePercentageTextField2;
+	static JTextField shellsProducedTextField2, HFIOpeningTextField2, HFICreatedTextField2, HFIRecoveredTextField2, HFIScrappedTextField2,HFIRemainingTextField2, HFISpoilageTextField2, lineSpoilageTextField2, totalSpoilageTextField2, HFISpoilagePercentageTextField2, lineSpoilagePercentageTextField2, totalSpoilagePercentageTextField2;
 
 	JLabel totalsLabel, shellsProducedLabel3, endsPackedLabel3, HFIOpeningLabel3, HFICreatedLabel3, HFIRecoveredLabel3, HFIScrappedLabel3, HFIRemainingLabel3, HFISpoilageLabel3,
 			lineSpoilageLabel3, totalSpoilageLabel3, HFISpoilagePercentageLabel3, lineSpoilagePercentageLabel3, totalSpoilagePercentageLabel3;
 
-	JTextField totalsTextField;
-
-	static JTextField shellsProducedTextField3;
-
-	JTextField endsPackedTextField3;
-
-	static JTextField HFIOpeningTextField3;
-
-	static JTextField HFICreatedTextField3;
-
-	static JTextField HFIRecoveredTextField3;
-
-	static JTextField HFIScrappedTextField3;
-
-	static JTextField HFIRemainingTextField3;
-
-	static JTextField HFISpoilageTextField3, lineSpoilageTextField3, totalSpoilageTextField3, HFISpoilagePercentageTextField3;
-
-	static JTextField lineSpoilagePercentageTextField3;
-
-	static JTextField totalSpoilagePercentageTextField3;
+	static JTextField HFIOpeningTextField3, HFICreatedTextField3, HFIRecoveredTextField3, HFIScrappedTextField3, HFIRemainingTextField3, HFISpoilageTextField3, lineSpoilageTextField3, totalSpoilageTextField3, HFISpoilagePercentageTextField3, lineSpoilagePercentageTextField3, totalSpoilagePercentageTextField3, shellsProducedTextField3;
 
 	JButton calculateTotalSpoilage1, calculateTotalSpoilage2, calculateTotalSpoilage3, saveButton, backButton;
 
 	public static void main(String[] args) {
 
 		try {
-			new ProductionWeeklyReport(1, "June", "2014");
+			new ProductionWeeklyReport(1, "September", "2014");
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -176,8 +108,12 @@ public class ProductionWeeklyReport {
 		shellsProducedTextField1 = new JTextField();
 		shellsProducedTextField1.setBorder(borderYellow);
 		shellsProducedTextField1.setEditable(false);
+                
+                
 		shellsProducedTextField1.setText(SQLiteConnection.ProductionWeeklyReportTotalOptime2And3ForMonth(monthIn, yearIn) + "");
-		endsPackedTextField1 = new JTextField();
+		
+                
+                endsPackedTextField1 = new JTextField();
 		endsPackedTextField1.setEditable(false);
 		endsPackedTextField1.setText(SQLiteConnection.ProductionWeeklyReportTotalAllW1And2And3sForMonth(monthIn, yearIn) + "");
 
@@ -695,6 +631,8 @@ public class ProductionWeeklyReport {
 
 		frame.add(outerPanel);
 		frame.setVisible(true);
+                
+                SQLiteConnection.AnalyticsUpdate("ProductionWeeklyReport");
 
 	}
 
@@ -740,60 +678,60 @@ public class ProductionWeeklyReport {
 
 		DecimalFormat df = new DecimalFormat("###.##"); // <- // "###.###"
 														// specifies precision
-		double y1 = (Double.parseDouble(HFISpoilageTextField1.getText()));
-		double x1 = (Double.parseDouble(shellsProducedTextField1.getText()));
+		double y1 = (Double.parseDouble(HFISpoilageTextField1.getText()))+0.01;
+		double x1 = (Double.parseDouble(shellsProducedTextField1.getText()))+0.01;
 		double answer1 = (y1 / x1) * 100;
-		double answerRounded1 = Double.parseDouble(df.format(answer1).toString());
+		double answerRounded1 = Double.parseDouble(df.format(answer1).toString())+0.01;
 		HFISpoilagePercentageTextField1.setText(answerRounded1 + "%");
 
-		double y2 = (Double.parseDouble(HFISpoilageTextField2.getText()));
-		double x2 = (Double.parseDouble(shellsProducedTextField2.getText()));
+		double y2 = (Double.parseDouble(HFISpoilageTextField2.getText()))+0.01;
+		double x2 = (Double.parseDouble(shellsProducedTextField2.getText()))+0.01;
 		double answer2 = (y2 / x2) * 100;
 		double answerRounded2 = Double.parseDouble(df.format(answer2).toString());
 		HFISpoilagePercentageTextField2.setText(answerRounded2 + "%");
 
-		double y3 = (Double.parseDouble(HFISpoilageTextField3.getText()));
-		double x3 = (Double.parseDouble(shellsProducedTextField3.getText()));
+		double y3 = (Double.parseDouble(HFISpoilageTextField3.getText()))+0.01;
+		double x3 = (Double.parseDouble(shellsProducedTextField3.getText()))+0.01;
 		double answer3 = (y3 / x3) * 100;
 		double answerRounded3 = Double.parseDouble(df.format(answer3).toString());
 		HFISpoilagePercentageTextField3.setText(answerRounded3 + "%");
 
 		// Line Spoilage Percentages
 
-		double y4 = (Double.parseDouble(lineSpoilageTextField1.getText()));
-		double x4 = (Double.parseDouble(shellsProducedTextField1.getText()));
+		double y4 = (Double.parseDouble(lineSpoilageTextField1.getText()))+0.01;
+		double x4 = (Double.parseDouble(shellsProducedTextField1.getText()))+0.01;
 		double answer4 = (y4 / x4) * 100;
 		double answerRounded4 = Double.parseDouble(df.format(answer4).toString());
 		lineSpoilagePercentageTextField1.setText(answerRounded4 + "%");
 
-		double y5 = (Double.parseDouble(lineSpoilageTextField2.getText()));
-		double x5 = (Double.parseDouble(shellsProducedTextField2.getText()));
+		double y5 = (Double.parseDouble(lineSpoilageTextField2.getText()))+0.01;
+		double x5 = (Double.parseDouble(shellsProducedTextField2.getText()))+0.01;
 		double answer5 = (y5 / x5) * 100;
 		double answerRounded5 = Double.parseDouble(df.format(answer5).toString());
 		lineSpoilagePercentageTextField2.setText(answerRounded5 + "%");
 
-		double y6 = (Double.parseDouble(lineSpoilageTextField3.getText()));
-		double x6 = (Double.parseDouble(shellsProducedTextField3.getText()));
+		double y6 = (Double.parseDouble(lineSpoilageTextField3.getText()))+0.01;
+		double x6 = (Double.parseDouble(shellsProducedTextField3.getText()))+0.01;
 		double answer6 = (y6 / x6) * 100;
 		double answerRounded6 = Double.parseDouble(df.format(answer6).toString());
 		lineSpoilagePercentageTextField3.setText(answerRounded6 + "%");
 
 		// Total Spoilage Percentage
 
-		double y7 = (Double.parseDouble(totalSpoilageTextField1.getText()));
-		double x7 = (Double.parseDouble(shellsProducedTextField1.getText()));
+		double y7 = (Double.parseDouble(totalSpoilageTextField1.getText()))+0.01;
+		double x7 = (Double.parseDouble(shellsProducedTextField1.getText()))+0.01;
 		double answer7 = (y7 / x7) * 100;
 		double answerRounded7 = Double.parseDouble(df.format(answer7).toString());
 		totalSpoilagePercentageTextField1.setText(answerRounded7 + "%");
 
-		double y8 = (Double.parseDouble(totalSpoilageTextField2.getText()));
-		double x8 = (Double.parseDouble(shellsProducedTextField2.getText()));
+		double y8 = (Double.parseDouble(totalSpoilageTextField2.getText()))+0.01;
+		double x8 = (Double.parseDouble(shellsProducedTextField2.getText()))+0.01;
 		double answer8 = (y8 / x8) * 100;
 		double answerRounded8 = Double.parseDouble(df.format(answer8).toString());
 		totalSpoilagePercentageTextField2.setText(answerRounded8 + "%");
 
-		double y9 = (Double.parseDouble(totalSpoilageTextField3.getText()));
-		double x9 = (Double.parseDouble(shellsProducedTextField3.getText()));
+		double y9 = (Double.parseDouble(totalSpoilageTextField3.getText()))+0.01;
+		double x9 = (Double.parseDouble(shellsProducedTextField3.getText()))+0.01;
 		double answer9 = (y9 / x9) * 100;
 		double answerRounded9 = Double.parseDouble(df.format(answer9).toString());
 		totalSpoilagePercentageTextField3.setText(answerRounded9 + "%");

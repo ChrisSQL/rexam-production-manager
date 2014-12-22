@@ -25,6 +25,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.text.PlainDocument;
 
 import com.database.rexam.SQLiteConnection;
+import java.awt.Frame;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -78,6 +79,7 @@ public class EmployeeAddressList {
         frame9 = new JFrame("Employee List");
         // frame9.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame9.setSize(1500, 768);
+        frame9.setExtendedState(Frame.MAXIMIZED_BOTH);
         frame9.setLocationRelativeTo(null);
         // frame9.setResizable(false);
 

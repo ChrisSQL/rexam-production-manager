@@ -1,5 +1,6 @@
 package com.maintenance.rexam;
 
+import com.binentryscreens.rexam.LinerAndShellsEntry;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.FlowLayout;
@@ -27,15 +28,26 @@ import net.sourceforge.jdatepicker.impl.UtilDateModel;
 
 import com.database.rexam.SQLiteConnection;
 import java.awt.Desktop;
+import java.awt.Frame;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JCheckBox;
+import javax.swing.JDialog;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.TableModel;
+import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.hssf.usermodel.HSSFFont;
+import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -43,7 +55,7 @@ import org.apache.poi.ss.usermodel.Row;
 
 public class StolleSpoilage {
 
-    static JButton add, find, next, previous, update, addNew, summary, refresh, search, monthly, go, back, calculateTotal1, calculateTotal2, calculateTotal3;
+    static JButton add, find, next, previous, delete, update, addNew, summary, refresh, search, monthly, go, back, calculateTotal1, calculateTotal2, calculateTotal3;
     JLabel dateLabel, dateLabel2;
     static JTextField Stolle11JTextField, Stolle12JTextField, Stolle21JTextField, Stolle22JTextField, Stolle31JTextField, Stolle32JTextField, Stolle33JTextField, Stolle41JTextField, Stolle42JTextField, Stolle43JTextField, Stolle44JTextField;
     static JTextField Stolle11MonthlyJTextField, Stolle12MonthlyJTextField, Stolle21MonthlyJTextField, Stolle22MonthlyJTextField, Stolle31MonthlyJTextField, Stolle32MonthlyJTextField, Stolle33MonthlyJTextField, Stolle41MonthlyJTextField, Stolle42MonthlyJTextField, Stolle43MonthlyJTextField, Stolle44MonthlyJTextField;
@@ -57,22 +69,23 @@ public class StolleSpoilage {
     static String query, item;
 
     static JFrame frameSummary;
+    static JFileChooser fileChooser;
 
     public static void main(String[] args) throws SQLException {
+        
+            new StolleSpoilage(1, -1);
 
-        new StolleSpoilage(1, -1);
+//        try {
+//            
+//
+//            importdata();
+//        } catch (IOException ex) {
+//            Logger.getLogger(StolleSpoilage.class.getName()).log(Level.SEVERE, null, ex);
+//        }
 
     }
 
     public StolleSpoilage(int idIn, int view) throws SQLException {
-
-        // Add a view to analytics.
-        try {
-            SQLiteConnection.incrementViewsAnalytics(0, 0, 0, 0, 0, 0, 0, 0, 1);
-        } catch (SQLException e2) {
-            // TODO Auto-generated catch block
-            e2.printStackTrace();
-        }
 
         try {
             for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
@@ -155,7 +168,7 @@ public class StolleSpoilage {
 
         Stolle43JTextField = new JTextField();
         Stolle43JTextField.setText("0.0");
-        
+
         Stolle44JTextField = new JTextField();
         Stolle44JTextField.setText("0.0");
 
@@ -235,28 +248,65 @@ public class StolleSpoilage {
                 selectedDate = (Date) datePicker.getModel().getValue();
                 String date = new SimpleDateFormat("yyyy-MM-dd").format(selectedDate);
 
-                // Get int value of a JTextfield
+                String dayString = date.substring(8, 10); // Correct
+                String monthString = date.substring(5, 7); // Correct
+                String yearString = date.substring(0, 4); // Correct
                 try {
-                    SQLiteConnection.MaintenanceStolleSpoilageInsert(
+                    if (SQLiteConnection.MaintenanceStolleSpoilageEntryExists(yearString + "", monthString + "", dayString + "") == false) {
+                        
+                        // Get int value of a JTextfield
+                        try {
+                            SQLiteConnection.MaintenanceStolleSpoilageInsert(
+                                    SQLiteConnection.MaintenanceStolleSpoilageGetHighestID() + 1,
+                                    date,
+                                    Double.valueOf(Stolle11JTextField.getText()),
+                                    Double.valueOf(Stolle12JTextField.getText()),
+                                    Double.valueOf(Stolle21JTextField.getText()),
+                                    Double.valueOf(Stolle22JTextField.getText()),
+                                    Double.valueOf(Stolle31JTextField.getText()),
+                                    Double.valueOf(Stolle32JTextField.getText()),
+                                    Double.valueOf(Stolle33JTextField.getText()),
+                                    Double.valueOf(Stolle41JTextField.getText()),
+                                    Double.valueOf(Stolle42JTextField.getText()),
+                                    Double.valueOf(Stolle43JTextField.getText()),
+                                    Double.valueOf(Stolle44JTextField.getText())
+                            );
                             
-                            SQLiteConnection.MaintenanceStolleSpoilageGetHighestID() + 1,
-                            date,                           
-                            Double.valueOf(Stolle11JTextField.getText()),
-                            Double.valueOf(Stolle12JTextField.getText()),
-                            Double.valueOf(Stolle21JTextField.getText()),
-                            Double.valueOf(Stolle22JTextField.getText()),
-                            Double.valueOf(Stolle31JTextField.getText()),
-                            Double.valueOf(Stolle32JTextField.getText()),
-                            Double.valueOf(Stolle33JTextField.getText()),
-                            Double.valueOf(Stolle41JTextField.getText()),
-                            Double.valueOf(Stolle42JTextField.getText()),
-                            Double.valueOf(Stolle43JTextField.getText()),
-                            Double.valueOf(Stolle44JTextField.getText())
-                    );
-
-                } catch (SQLException e1) {
-                    // TODO Auto-generated catch block
-                    e1.printStackTrace();
+                        } catch (SQLException e1) {
+                            // TODO Auto-generated catch block
+                            e1.printStackTrace();
+                        }
+                        
+                    } else {
+                        
+                        try {
+                            SQLiteConnection.MaintenanceStolleSpoilageUpdateByDate(
+                                    
+                                    Double.valueOf(Stolle11JTextField.getText()),
+                                    Double.valueOf(Stolle12JTextField.getText()),
+                                    Double.valueOf(Stolle21JTextField.getText()),
+                                    Double.valueOf(Stolle22JTextField.getText()),
+                                    Double.valueOf(Stolle31JTextField.getText()),
+                                    Double.valueOf(Stolle32JTextField.getText()),
+                                    Double.valueOf(Stolle33JTextField.getText()),
+                                    Double.valueOf(Stolle41JTextField.getText()),
+                                    Double.valueOf(Stolle42JTextField.getText()),
+                                    Double.valueOf(Stolle43JTextField.getText()),
+                                    Double.valueOf(Stolle44JTextField.getText()),
+                                    date
+                            );
+                            
+                            frame15.dispose();
+                           // createSummaryScreen();
+                            
+                        } catch (SQLException e1) {
+                            // TODO Auto-generated catch block
+                            e1.printStackTrace();
+                        }
+                        
+                    }
+                } catch (SQLException ex) {
+                    Logger.getLogger(StolleSpoilage.class.getName()).log(Level.SEVERE, null, ex);
                 }
 
                 // TODO Auto-generated method stub
@@ -496,6 +546,37 @@ public class StolleSpoilage {
             }
         });
 
+        delete = new JButton("Delete");
+        delete.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                JDialog.setDefaultLookAndFeelDecorated(true);
+                int response = JOptionPane.showConfirmDialog(null, "Do you want to delete?", "Confirm",
+                        JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                if (response == JOptionPane.NO_OPTION) {
+                    System.out.println("No button clicked");
+                } else if (response == JOptionPane.YES_OPTION) {
+                    try {
+                        // Delete CurrentID
+                        SQLiteConnection.MaintenanceStolleSpoilageDelete(currentId);
+
+                        // Create Summary Screen
+                        frameSummary.dispose();
+                        frame15.dispose();
+
+                        createSummaryScreen();
+                    } catch (SQLException ex) {
+                        Logger.getLogger(ShellPressProduction.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                } else if (response == JOptionPane.CLOSED_OPTION) {
+                    System.out.println("JOptionPane closed");
+                }
+
+            }
+        });
+        
         dateLabel = new JLabel("Date : ", SwingConstants.CENTER);
         dateLabel2 = new JLabel("Date : ", SwingConstants.CENTER);
 
@@ -507,6 +588,7 @@ public class StolleSpoilage {
         //buttonsPanel.add(find);
         buttonsPanel.add(previous);
         buttonsPanel.add(next);
+        buttonsPanel.add(delete);
 
         outerPanel.add(buttonsPanel, BorderLayout.NORTH);
 
@@ -526,6 +608,7 @@ public class StolleSpoilage {
             find.setVisible(false);
             previous.setVisible(false);
             next.setVisible(false);
+            delete.setVisible(false);
             addNew.setVisible(false);
             update.setVisible(false);
             back.setVisible(false);
@@ -538,7 +621,7 @@ public class StolleSpoilage {
             optionPanel1.add(Stolle11JTextField);
 
             optionPanel1.add(new JLabel("Stolle 12", SwingConstants.CENTER));
-            optionPanel1.add(Stolle12JTextField);           
+            optionPanel1.add(Stolle12JTextField);
 
             optionPanel1.add(new JLabel("Stolle 21", SwingConstants.CENTER));
             optionPanel1.add(Stolle21JTextField);
@@ -555,7 +638,6 @@ public class StolleSpoilage {
             optionPanel1.add(new JLabel("Stolle 33", SwingConstants.CENTER));
             optionPanel1.add(Stolle33JTextField);
 
-
             optionPanel1.add(new JLabel("Stolle 41", SwingConstants.CENTER));
             optionPanel1.add(Stolle41JTextField);
 
@@ -564,10 +646,9 @@ public class StolleSpoilage {
 
             optionPanel1.add(new JLabel("Stolle 43", SwingConstants.CENTER));
             optionPanel1.add(Stolle43JTextField);
-            
+
             optionPanel1.add(new JLabel("Stolle 44", SwingConstants.CENTER));
             optionPanel1.add(Stolle44JTextField);
-      
 
         } // Searching
         else if (view == -2) {
@@ -613,7 +694,7 @@ public class StolleSpoilage {
 
             optionPanel1.add(new JLabel("Stolle 43", SwingConstants.CENTER));
             optionPanel1.add(Stolle43JTextField);
-            
+
             optionPanel1.add(new JLabel("Stolle 44", SwingConstants.CENTER));
             optionPanel1.add(Stolle44JTextField);
 
@@ -654,7 +735,7 @@ public class StolleSpoilage {
 
             optionPanel1.add(new JLabel("Stolle 43", SwingConstants.CENTER));
             optionPanel1.add(Stolle43MonthlyJTextField);
-            
+
             optionPanel1.add(new JLabel("Stolle 44", SwingConstants.CENTER));
             optionPanel1.add(Stolle44MonthlyJTextField);
 
@@ -662,6 +743,7 @@ public class StolleSpoilage {
             find.setVisible(false);
             previous.setVisible(false);
             next.setVisible(false);
+            delete.setVisible(false);
             search.setVisible(false);
             update.setVisible(false);
             add.setVisible(false);
@@ -694,6 +776,9 @@ public class StolleSpoilage {
         frame15.add(outerPanel);
 
         frame15.setVisible(true);
+
+        // Add a view to analytics.
+        SQLiteConnection.AnalyticsUpdate("StolleSpoilage");
 
     }
 
@@ -794,6 +879,7 @@ public class StolleSpoilage {
         // Outer Frame
         frameSummary = new JFrame("Stolle Spoilage Report");
         frameSummary.setSize(1300, 700);
+        frameSummary.setExtendedState(Frame.MAXIMIZED_BOTH);
         frameSummary.setLocationRelativeTo(null);
 
         // JPanel
@@ -809,10 +895,11 @@ public class StolleSpoilage {
         optionsPanel2.add(ExportToExcel);
 
         JPanel summaryPanel = SQLiteConnection.MaintenanceStolleSpoilageSummaryTable(1);
+        JScrollPane scrollPane = new JScrollPane(summaryPanel);
         optionsPanel2.setBackground(Color.GRAY);
 
         outerPanel.add(lastSevenDaysPanel(), BorderLayout.NORTH);
-        outerPanel.add(summaryPanel, BorderLayout.CENTER);
+        outerPanel.add(scrollPane, BorderLayout.CENTER);
         outerPanel.add(optionsPanel2, BorderLayout.SOUTH);
         summary.setVisible(false);
         frameSummary.add(outerPanel);
@@ -821,8 +908,8 @@ public class StolleSpoilage {
     }
 
     public static JPanel lastSevenDaysPanel() {
-        
-        String [] averages = new String[16];
+
+        String[] averages = new String[16];
         try {
             averages = SQLiteConnection.MaintenanceStolleSPoilageSevenDaysAverages();
         } catch (SQLException ex) {
@@ -833,10 +920,10 @@ public class StolleSpoilage {
         String string12 = averages[1];
         String string21 = averages[2];
         String string22 = averages[3];
-        String string31 = averages[4]; 
+        String string31 = averages[4];
         String string32 = averages[5];
         String string33 = averages[6];
-        String string41 = averages[7]; 
+        String string41 = averages[7];
         String string42 = averages[8];
         String string43 = averages[9];
         String string44 = averages[10];
@@ -851,11 +938,11 @@ public class StolleSpoilage {
 
         panel.add(new JTextField(string21));
         panel.add(new JTextField(string22));
-        
+
         panel.add(new JTextField(string31));
         panel.add(new JTextField(string32));
         panel.add(new JTextField(string33));
-        
+
         panel.add(new JTextField(string41));
         panel.add(new JTextField(string42));
         panel.add(new JTextField(string43));
@@ -923,6 +1010,24 @@ public class StolleSpoilage {
 
     }
 
+    public void setStolleSpoilageToInput(int year, int month, int day, double stolle11, double stolle12, double stolle21, double stolle22, double stolle31, double stolle32, double stolle33, double stolle41, double stolle42, double stolle43, double stolle44) {
+
+        model.setDate(year, month, day);
+
+        Stolle11JTextField.setText(stolle11 + "");
+        Stolle12JTextField.setText(stolle12 + "");
+        Stolle21JTextField.setText(stolle21 + "");
+        Stolle22JTextField.setText(stolle22 + "");
+        Stolle31JTextField.setText(stolle31 + "");
+        Stolle32JTextField.setText(stolle32 + "");
+        Stolle33JTextField.setText(stolle33 + "");
+        Stolle41JTextField.setText(stolle41 + "");
+        Stolle42JTextField.setText(stolle42 + "");
+        Stolle43JTextField.setText(stolle43 + "");
+        Stolle44JTextField.setText(stolle44 + "");
+
+    }
+
     public static void exportToExcel() {
 
         String[] typesArray = {"Stolle Spoilage"};
@@ -962,7 +1067,7 @@ public class StolleSpoilage {
                 System.out.println("Modified Date 2 : " + modifiedDate2);
                 System.out.println("Item : " + item);
 
-                query = "SELECT * FROM MainStolleProduction WHERE Date BETWEEN \'" + modifiedDate1 + "\' AND \'" + modifiedDate2 + "\' ORDER BY " + sortTypesCombo.getSelectedItem() + ";";
+                query = "SELECT * FROM MainStolleSpoilage WHERE Date BETWEEN \'" + modifiedDate1 + "\' AND \'" + modifiedDate2 + "\' ORDER BY " + sortTypesCombo.getSelectedItem() + ";";
 
                 System.out.println(query);
                 generateExcelFile(item, query);
@@ -1049,11 +1154,11 @@ public class StolleSpoilage {
         }
 
         try {
-            FileOutputStream output = new FileOutputStream("MaintenanceExcel.xls");
+            FileOutputStream output = new FileOutputStream("ExcelFiles/MaintenanceExcel.xls");
             workBook.write(output);
 
             Desktop dt = Desktop.getDesktop();
-            dt.open(new File("MaintenanceExcel.xls"));
+            dt.open(new File("ExcelFiles/MaintenanceExcel.xls"));
 
             output.close();
         } catch (Exception e) {
@@ -1062,4 +1167,106 @@ public class StolleSpoilage {
 
     }
 
+    public static void importdata() throws FileNotFoundException, IOException {
+
+        fileChooser = new JFileChooser();
+        fileChooser.setAcceptAllFileFilterUsed(false);
+        fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("Excel Documents", "xls"));
+
+        int result = fileChooser.showOpenDialog(frameSummary);
+        if (result == JFileChooser.APPROVE_OPTION) {
+
+            File selectedFile = fileChooser.getSelectedFile();
+            System.out.println("Selected file: " + selectedFile.getAbsolutePath());
+
+            ////////////////
+            FileInputStream excelFile = new FileInputStream(selectedFile);
+            HSSFWorkbook workbook = new HSSFWorkbook(excelFile);
+
+            // Create 31 Arrays [31][8] // Each Array has A2, B2, C2, D2, E2, F2, G2, H2, I2 
+            HSSFRow[] rows = new HSSFRow[32];
+            HSSFSheet worksheet = workbook.getSheet("StolleSpoilage5");
+
+            String[][] ints = new String[31][12];
+
+            for (int i = 0; i < 32; i++) {
+
+                rows[i] = worksheet.getRow(i);
+
+            }
+
+            String[][] strings = new String[31][12];
+            HSSFCell[] cells = new HSSFCell[31];
+
+            // get CellA1 to A31 and Assign to int
+            for (int i = 0; i < 31; i++) {
+
+                for (int j = 0; j < 12; j++) {
+
+                    cells[i] = rows[i].getCell(j);                   
+                    
+                   strings[i][j] = cells[i].getNumericCellValue() + "";
+                    
+                    System.out.println(strings[i][j]);
+
+                }
+
+                
+
+            }
+
+            for (int i = 0; i < 31; i++) {
+
+                try {
+
+                    StolleSpoilage linerDefects = new StolleSpoilage(1, -1);
+
+                 // Set Date to 2014-01-i
+                    String day = strings[i][0];
+                    double dayDouble = Double.parseDouble(day);
+                    int dayInt = (int) dayDouble;
+
+              //      model.setDate(2014, 01, dayInt);
+
+                    linerDefects.setStolleSpoilageToInput(
+                            
+                            2014, 
+                            04, 
+                            dayInt, 
+                            Double.parseDouble(strings[i][1]), 
+                            Double.parseDouble(strings[i][2]), 
+                            Double.parseDouble(strings[i][3]), 
+                            Double.parseDouble(strings[i][4]), 
+                            Double.parseDouble(strings[i][5]), 
+                            Double.parseDouble(strings[i][6]), 
+                            Double.parseDouble(strings[i][7]), 
+                            Double.parseDouble(strings[i][8]), 
+                            Double.parseDouble(strings[i][9]), 
+                            Double.parseDouble(strings[i][10]), 
+                            Double.parseDouble(strings[i][11])
+                    
+                    );
+                    
+                    add.doClick();
+                   
+
+                } catch (SQLException ex) {
+                    Logger.getLogger(LinerAndShellsEntry.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
+                try {
+                    createSummaryScreen();
+                } catch (SQLException ex) {
+                    Logger.getLogger(LinerAndShellsEntry.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
+            }
+        }
+
+        // Import into Database with matching dates if it doesnt exist for LinersAndShells, LinerDefects, EndCounts
+        // If exist skip that individual section
+    }
+  
+    
+    
 }

@@ -2,6 +2,8 @@ package com.database.rexam;
 
 import com.binentryscreens.rexam.EndCounts;
 import com.binentryscreens.rexam.LinerAndShellsEntry;
+import com.binentryscreens.rexam.LinerDefects;
+import static com.database.rexam.SQLiteConnection.Connect;
 import com.maintenance.rexam.BalancerProduction;
 import com.maintenance.rexam.EHSStatutoryChecks;
 import com.maintenance.rexam.LexanFingerTracking;
@@ -9,8 +11,9 @@ import com.maintenance.rexam.LineBalance;
 import com.maintenance.rexam.LinerProduction;
 import com.maintenance.rexam.LinerSpoilage;
 import com.maintenance.rexam.MachineOEE;
-import com.maintenance.rexam.StolleDowntime;
+import com.maintenance.rexam.StolleDowntimeDay;
 import com.maintenance.rexam.ShellPressProduction;
+import com.maintenance.rexam.StolleDowntimeShift;
 import com.maintenance.rexam.StolleProduction;
 import com.maintenance.rexam.StolleSpoilage;
 import java.awt.BorderLayout;
@@ -38,6 +41,7 @@ import com.nonconformance.rexam.LinerEntryMenu;
 import com.nonconformance.rexam.OtherEntryMenu;
 import com.nonconformance.rexam.ShellPressEntryMenu;
 import com.nonconformance.rexam.StolleEntryMenu;
+import com.overtime.rexam.EmployeeOvertimeSystem;
 import com.par.rexam.ParEntry;
 import com.productiontrackingscreens.rexam.LSSPMActivityEntry2;
 import com.productiontrackingscreens.rexam.LinerDataEntryScreen;
@@ -46,17 +50,20 @@ import com.productiontrackingscreens.rexam.MeetingQualityIssues;
 import com.productiontrackingscreens.rexam.OptimeDataEntryScreen;
 import com.productiontrackingscreens.rexam.ProductionMeeting;
 import com.productiontrackingscreens.rexam.StolleDataEntryScreen;
+import java.awt.Color;
+import java.awt.Component;
+import java.text.DecimalFormat;
 import java.util.Calendar;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.BorderFactory;
+import javax.swing.JScrollPane;
+import javax.swing.table.TableCellRenderer;
 
 public class SQLiteConnection {
 
     public static void main(String[] args) throws Exception {
 
-        // TODO Auto-generated method stub
-        Date date = new Date();
-        MaintenanceMachineOEEgetAverages(30);
     }
 
     public SQLiteConnection() {
@@ -64,11 +71,12 @@ public class SQLiteConnection {
         Connection c = null;
         try {
             Class.forName("org.sqlite.JDBC");
-            c = DriverManager.getConnection("jdbc:sqlite:test.db");
+            c = DriverManager.getConnection("jdbc:sqlite:Database/test.db");
             c.setAutoCommit(false);
         } catch (Exception e) {
             System.err.println(e.getClass().getName() + ": " + e.getMessage());
             System.exit(0);
+            JOptionPane.showMessageDialog(null, "Database File Not found. Please make sure Network Drive is ready and Database file is in correct folder.");
         }
         System.out.println("Opened database successfully");
 
@@ -79,7 +87,7 @@ public class SQLiteConnection {
         Connection c = null;
         try {
             Class.forName("org.sqlite.JDBC");
-            c = DriverManager.getConnection("jdbc:sqlite:test.db");
+            c = DriverManager.getConnection("jdbc:sqlite:Database/test.db");
         } catch (Exception e) {
             System.err.println(e.getClass().getName() + ": " + e.getMessage());
             System.exit(0);
@@ -107,7 +115,7 @@ public class SQLiteConnection {
 
         try {
             Class.forName("org.sqlite.JDBC");
-            c = DriverManager.getConnection("jdbc:sqlite:test.db");
+            c = DriverManager.getConnection("jdbc:sqlite:Database/test.db");
             c.setAutoCommit(false);
             System.out.println("Opened database successfully");
 
@@ -484,6 +492,7 @@ public class SQLiteConnection {
         DefaultTableModel model = new DefaultTableModel(data, cols);
 
         JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         table.getColumnModel().getColumn(0).setMaxWidth(35);
         table.getColumnModel().getColumn(1).setMaxWidth(80);
@@ -839,7 +848,7 @@ public class SQLiteConnection {
 
         if (reportType == 1) {
             psmt = conn
-                    .prepareStatement("SELECT ID, OptimeNumber as Optime, Date, Shift, Crew, PressSpeed, ShellType, Operator, Production, Comment FROM OptimeEntry ORDER BY Date DESC");
+                    .prepareStatement("SELECT OptimeNumber as Optime, Date, Shift, Crew, PressSpeed, ShellType, Operator, Production,  ID,  Comment FROM OptimeEntry ORDER BY Date DESC, Optime");
             psmt.setQueryTimeout(10);
             rs = psmt.executeQuery();
         } else if (reportType == 2) {
@@ -871,15 +880,21 @@ public class SQLiteConnection {
 
             Vector row = new Vector(len);
 
+            int q1 = rs.getInt(6);
+            String q2 = String.format("%,d", q1);
+
+            int q3 = rs.getInt(9);
+            String q4 = String.format("%,d", q3);
+
             row.add(rs.getString(1));
             row.add(rs.getString(2));
             row.add(rs.getString(3));
             row.add(rs.getString(4));
             row.add(rs.getString(5));
-            row.add(rs.getString(6));
+            row.add(q2);
             row.add(rs.getString(7));
             row.add(rs.getString(8));
-            row.add(rs.getString(9));
+            row.add(q4);
             row.add(rs.getString(10));
 
             data.add(row);
@@ -889,13 +904,17 @@ public class SQLiteConnection {
         DefaultTableModel model = new DefaultTableModel(data, cols);
 
         JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-        table.getColumnModel().getColumn(0).setMaxWidth(40);
-        table.getColumnModel().getColumn(1).setMaxWidth(50);
-        table.getColumnModel().getColumn(3).setMaxWidth(50);
-        table.getColumnModel().getColumn(4).setMaxWidth(50);
+        table.getColumnModel().getColumn(0).setMaxWidth(60);
+        table.getColumnModel().getColumn(1).setMaxWidth(80);
+        table.getColumnModel().getColumn(2).setMinWidth(130);
+        table.getColumnModel().getColumn(3).setMaxWidth(60);
+        table.getColumnModel().getColumn(4).setMaxWidth(120);
+        table.getColumnModel().getColumn(5).setMinWidth(120);
         table.getColumnModel().getColumn(6).setMinWidth(180);
-        table.getColumnModel().getColumn(8).setMaxWidth(100);
+        table.getColumnModel().getColumn(7).setMinWidth(130);
+        table.getColumnModel().getColumn(8).setMinWidth(80);
         table.getColumnModel().getColumn(9).setMinWidth(400);
 		// table.getColumnModel().getColumn(1).setPreferredWidth(6);
 
@@ -914,10 +933,10 @@ public class SQLiteConnection {
 
                     // System.out.println("Clicked : " + row );
                     System.out.println(table.getValueAt(table.getSelectedRow(),
-                            0).toString());
+                            8).toString());
 
                     String idString = table.getValueAt(table.getSelectedRow(),
-                            0).toString();
+                            8).toString();
                     int id = Integer.valueOf(idString);
                     OptimeDataEntryScreen optime = new OptimeDataEntryScreen(1, 2);
                     optime.setOptimeEntry(id);
@@ -971,6 +990,12 @@ public class SQLiteConnection {
 
         while (rs.next()) {
 
+            int q1 = rs.getInt(6);
+            String q2 = String.format("%,d", q1);
+
+            int q3 = rs.getInt(9);
+            String q4 = String.format("%,d", q3);
+
             Vector row = new Vector(len);
 
             row.add(rs.getString(1));
@@ -978,10 +1003,10 @@ public class SQLiteConnection {
             row.add(rs.getString(3));
             row.add(rs.getString(4));
             row.add(rs.getString(5));
-            row.add(rs.getString(6));
+            row.add(q2);
             row.add(rs.getString(7));
             row.add(rs.getString(8));
-            row.add(rs.getString(9));
+            row.add(q4);
             row.add(rs.getString(10));
 
             data.add(row);
@@ -991,6 +1016,7 @@ public class SQLiteConnection {
         DefaultTableModel model = new DefaultTableModel(data, cols);
 
         JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         table.getColumnModel().getColumn(0).setMaxWidth(40);
         table.getColumnModel().getColumn(1).setMaxWidth(50);
@@ -1086,6 +1112,7 @@ public class SQLiteConnection {
         DefaultTableModel model = new DefaultTableModel(data, cols);
 
         JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         table.getColumnModel().getColumn(0).setMinWidth(40);
         table.getColumnModel().getColumn(1).setMinWidth(40);
@@ -1166,8 +1193,11 @@ public class SQLiteConnection {
 
             Vector row = new Vector(len);
 
+            int q1 = rs.getInt(2);
+            String q2 = String.format("%,d", q1);
+
             row.add(rs.getString(1));
-            row.add(rs.getInt(2));
+            row.add(q2);
 
             data.add(row);
         }
@@ -1176,6 +1206,7 @@ public class SQLiteConnection {
         DefaultTableModel model = new DefaultTableModel(data, cols);
 
         JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         table.getColumnModel().getColumn(0).setMinWidth(500);
         table.getColumnModel().getColumn(1).setMinWidth(500);
@@ -1217,6 +1248,80 @@ public class SQLiteConnection {
         conn.close();
 
         return outerPanel;
+
+    }
+
+    public static boolean OptimeEntryExists(String yearIn, String monthIn, String dayIn, String optimeNumberIn, String shiftIn) throws SQLException {
+
+        String date = yearIn + "-" + monthIn + "-" + dayIn;
+        System.out.println("Date ZZZZ " + date);
+
+        boolean result = false;
+        int count = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT OptimeEntry.OptimeNumber "
+                + "FROM OptimeEntry "
+                + "WHERE OptimeEntry.Date = \'" + date + "\' "
+                + "AND OptimeEntry.Shift = \'" + shiftIn + "\' "
+                + "AND OptimeEntry.OptimeNumber = \'" + optimeNumberIn + "\';";
+        System.out.println("WWWWWW : " + selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            count++;
+            System.out.println("Count++");
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        if (count > 0) {
+
+            System.out.println("True");
+            return true;
+
+        } else {
+
+            System.out.println("False");
+            return false;
+        }
+
+    }
+
+    public static void OptimeEntryDelete(int currentIdIn) {
+
+        try {
+            Connection conn = Connect();
+            conn.setAutoCommit(false);
+            Statement s = conn.createStatement();
+            s.setQueryTimeout(10);
+
+            // QUERY
+            // //////////////////////////////////////////////////////////////////////
+            String selTable = "Delete FROM OPtimeEntry WHERE OPtimeEntry.ID = " + currentIdIn + ";";
+
+            System.out.println("Error : " + selTable);
+
+            s.execute(selTable);
+
+            // /////////////////////////////////////////////////////////////////////////////
+            conn.commit();
+            s.close();
+            conn.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
+        }
 
     }
 
@@ -1596,7 +1701,7 @@ public class SQLiteConnection {
 
         if (reportType == 1) {
             psmt = conn
-                    .prepareStatement("SELECT Press, Date, Shift, Crew, Operator, Packer, SacobaDowntime as DTime, QCInspector, StolleProduction as Production, PackedEnds, ID, Comment FROM Stolle ORDER BY Date DESC");
+                    .prepareStatement("SELECT Press, Date, Shift, Crew, Operator, Packer, SacobaDowntime as DTime, QCInspector, StolleProduction as Production, PackedEnds, ID, Comment FROM Stolle ORDER BY Date DESC, Press");
             psmt.setQueryTimeout(10);
             rs = psmt.executeQuery();
         } else if (reportType == 2) {
@@ -1628,6 +1733,12 @@ public class SQLiteConnection {
 
             Vector row = new Vector(len);
 
+            int q1 = rs.getInt(9);
+            String q2 = String.format("%,d", q1);
+
+            int q3 = rs.getInt(10);
+            String q4 = String.format("%,d", q3);
+
             row.add(rs.getString(1));
             row.add(rs.getString(2));
             row.add(rs.getString(3));
@@ -1635,9 +1746,9 @@ public class SQLiteConnection {
             row.add(rs.getString(5));
             row.add(rs.getString(6));
             row.add(rs.getString(7));
-            row.add(rs.getString(8));
-            row.add(rs.getString(9));
-            row.add(rs.getString(10));
+            row.add(rs.getString(8)); //
+            row.add(q2); // 
+            row.add(q4);
             row.add(rs.getString(11));
             row.add(rs.getString(12));
 
@@ -1648,6 +1759,7 @@ public class SQLiteConnection {
         DefaultTableModel model = new DefaultTableModel(data, cols);
 
         JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
         table.getColumnModel().getColumn(0).setMaxWidth(50);
@@ -1745,6 +1857,12 @@ public class SQLiteConnection {
 
             Vector row = new Vector(len);
 
+            int q1 = rs.getInt(9);
+            String q2 = String.format("%,d", q1);
+
+            int q3 = rs.getInt(10);
+            String q4 = String.format("%,d", q1);
+
             row.add(rs.getString(1));
             row.add(rs.getString(2));
             row.add(rs.getString(3));
@@ -1753,8 +1871,8 @@ public class SQLiteConnection {
             row.add(rs.getString(6));
             row.add(rs.getString(7));
             row.add(rs.getString(8));
-            row.add(rs.getString(9));
-            row.add(rs.getString(10));
+            row.add(q2);
+            row.add(q4);
             row.add(rs.getString(11));
             row.add(rs.getString(12));
 
@@ -1765,6 +1883,7 @@ public class SQLiteConnection {
         DefaultTableModel model = new DefaultTableModel(data, cols);
 
         JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
         table.getColumnModel().getColumn(0).setMaxWidth(50);
@@ -1865,6 +1984,7 @@ public class SQLiteConnection {
         DefaultTableModel model = new DefaultTableModel(data, cols);
 
         JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         table.getColumnModel().getColumn(0).setMaxWidth(50);
         table.getColumnModel().getColumn(1).setMaxWidth(50);
@@ -1945,8 +2065,11 @@ public class SQLiteConnection {
 
             Vector row = new Vector(len);
 
+            int q1 = rs.getInt(2);
+            String q2 = String.format("%,d", q1);
+
             row.add(rs.getString(1));
-            row.add(rs.getInt(2));
+            row.add(q2);
 
             data.add(row);
         }
@@ -1955,6 +2078,7 @@ public class SQLiteConnection {
         DefaultTableModel model = new DefaultTableModel(data, cols);
 
         JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         table.getColumnModel().getColumn(0).setMinWidth(500);
         table.getColumnModel().getColumn(1).setMinWidth(500);
@@ -1996,6 +2120,80 @@ public class SQLiteConnection {
         conn.close();
 
         return outerPanel;
+
+    }
+
+    public static boolean StolleExists(String yearIn, String monthIn, String dayIn, String PressNumberIn, String shiftIn) throws SQLException {
+
+        String date = yearIn + "-" + monthIn + "-" + dayIn;
+        System.out.println("Date ZZZZ " + date);
+
+        boolean result = false;
+        int count = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT Stolle.Press "
+                + "FROM Stolle "
+                + "WHERE Stolle.Date = \'" + date + "\' "
+                + "AND Stolle.Shift = \'" + shiftIn + "\' "
+                + "AND Stolle.Press = \'" + PressNumberIn + "\';";
+        System.out.println("XXXXXX : " + selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            count++;
+            System.out.println("Count++");
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        if (count > 0) {
+
+            System.out.println("True");
+            return true;
+
+        } else {
+
+            System.out.println("False");
+            return false;
+        }
+
+    }
+
+    public static void StolleDelete(int currentIdIn) {
+
+        try {
+            Connection conn = Connect();
+            conn.setAutoCommit(false);
+            Statement s = conn.createStatement();
+            s.setQueryTimeout(10);
+
+            // QUERY
+            // //////////////////////////////////////////////////////////////////////
+            String selTable = "Delete FROM Stolle WHERE Stolle.ID = " + currentIdIn + ";";
+
+            System.out.println("Error : " + selTable);
+
+            s.execute(selTable);
+
+            // /////////////////////////////////////////////////////////////////////////////
+            conn.commit();
+            s.close();
+            conn.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
+        }
 
     }
 
@@ -2189,7 +2387,7 @@ public class SQLiteConnection {
         // QUERY
         // //////////////////////////////////////////////////////////////////////
         String sql = "update LinerEntry set Date=? , Shift=? , Crew=? , Module=? , Operator=? , Liner=? , "
-                + "LinerInfeed=? , ShellsSpoiled=?, CalculatedSpoilage=? , Comments=?, where ID=?";
+                + "LinerInfeed=? , ShellsSpoiled=?, CalculatedSpoilage=? , Comments=? where ID=?";
 
         PreparedStatement updateLiner = conn.prepareStatement(sql);
 
@@ -2203,7 +2401,7 @@ public class SQLiteConnection {
         updateLiner.setDouble(8, shellsSpoiledIn);
         updateLiner.setDouble(9, calculatedSpoilageIn);
         updateLiner.setString(10, commentsIn);
-        updateLiner.setInt(16, idIn);
+        updateLiner.setInt(11, idIn);
 
         updateLiner.executeUpdate();
 
@@ -2335,7 +2533,7 @@ public class SQLiteConnection {
 
         if (reportType == 1) {
             psmt = conn
-                    .prepareStatement("SELECT Module, Date, Shift, Crew, Operator, LinerInfeed, ShellsSpoiled, CalculatedSpoilage as Spoilage, ID, Comments FROM LinerEntry ORDER BY Date DESC");
+                    .prepareStatement("SELECT Module, Liner, Date, Shift, Crew, Operator, LinerInfeed, ShellsSpoiled, CalculatedSpoilage as Spoilage, ID, Comments FROM LinerEntry ORDER BY Date DESC, Module, Liner");
             psmt.setQueryTimeout(10);
             rs = psmt.executeQuery();
         } else if (reportType == 2) {
@@ -2377,6 +2575,7 @@ public class SQLiteConnection {
             row.add(rs.getString(8));
             row.add(rs.getString(9));
             row.add(rs.getString(10));
+            row.add(rs.getString(11));
 
             data.add(row);
         }
@@ -2385,17 +2584,18 @@ public class SQLiteConnection {
         DefaultTableModel model = new DefaultTableModel(data, cols);
 
         JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
         table.getColumnModel().getColumn(0).setMinWidth(80);
-        table.getColumnModel().getColumn(2).setMaxWidth(50);
         table.getColumnModel().getColumn(3).setMaxWidth(50);
-        table.getColumnModel().getColumn(4).setMinWidth(80);
-        table.getColumnModel().getColumn(5).setMinWidth(80);
+        table.getColumnModel().getColumn(4).setMaxWidth(50);
+        table.getColumnModel().getColumn(5).setMinWidth(130);
         table.getColumnModel().getColumn(6).setMinWidth(80);
         table.getColumnModel().getColumn(7).setMinWidth(80);
-        table.getColumnModel().getColumn(8).setMaxWidth(50);
-        table.getColumnModel().getColumn(9).setMinWidth(500);
+        table.getColumnModel().getColumn(8).setMinWidth(80);
+        table.getColumnModel().getColumn(9).setMaxWidth(50);
+        table.getColumnModel().getColumn(10).setMinWidth(500);
 
         //    Render Checkbox
 //        TableColumn tc = table.getColumnModel().getColumn(9);
@@ -2411,13 +2611,14 @@ public class SQLiteConnection {
 
                     // System.out.println("Clicked : " + row );
                     System.out.println(table.getValueAt(table.getSelectedRow(),
-                            8).toString());
+                            9).toString());
 
                     String idString = table.getValueAt(table.getSelectedRow(),
-                            8).toString();
+                            9).toString();
                     int id = Integer.valueOf(idString);
-                    LinerDataEntryScreen par = new LinerDataEntryScreen(1, -1);
+                    LinerDataEntryScreen par = new LinerDataEntryScreen(1, -2);
                     par.setLinerDataEntryToID(id);
+                    System.out.println("ID ZZZZZZ = " + id);
 
                 }
             }
@@ -2473,6 +2674,9 @@ public class SQLiteConnection {
 
         while (rs.next()) {
 
+            int q1 = rs.getInt(6);
+            String q2 = String.format("%,d", q1);
+
             Vector row = new Vector(len);
 
             row.add(rs.getString(1));
@@ -2480,7 +2684,7 @@ public class SQLiteConnection {
             row.add(rs.getString(3));
             row.add(rs.getString(4));
             row.add(rs.getString(5));
-            row.add(rs.getString(6));
+            row.add(q2);
             row.add(rs.getBoolean(7));
             row.add(rs.getBoolean(8));
             row.add(rs.getBoolean(9));
@@ -2499,6 +2703,7 @@ public class SQLiteConnection {
         DefaultTableModel model = new DefaultTableModel(data, cols);
 
         JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
 //        table.getColumnModel().getColumn(0).setMinWidth(100);
@@ -2519,7 +2724,7 @@ public class SQLiteConnection {
 
 //        table.getColumnModel().getColumn(7).setMinWidth(80);
         table.getColumnModel().getColumn(14).setMinWidth(500);
-        table.getColumnModel().getColumn(15).setMaxWidth(20);
+        table.getColumnModel().getColumn(15).setMaxWidth(40);
 
         // Render Checkbox
         TableColumn tc1 = table.getColumnModel().getColumn(6);
@@ -2568,6 +2773,106 @@ public class SQLiteConnection {
         conn.close();
 
         return outerPanel;
+
+    }
+
+    public static void LinerUsageDelete(int currentIdIn) {
+
+        try {
+            Connection conn = Connect();
+            conn.setAutoCommit(false);
+            Statement s = conn.createStatement();
+            s.setQueryTimeout(10);
+
+            // QUERY
+            // //////////////////////////////////////////////////////////////////////
+            String selTable = "Delete FROM LinerUsage WHERE LinerUsage.ID = " + currentIdIn + ";";
+
+            System.out.println("Error : " + selTable);
+
+            s.execute(selTable);
+
+            // /////////////////////////////////////////////////////////////////////////////
+            conn.commit();
+            s.close();
+            conn.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+    }
+
+    public static boolean LinerEntryExists(String yearIn, String monthIn, String dayIn, String linerNumberIn, String shiftIn) throws SQLException {
+
+        String date = yearIn + "-" + monthIn + "-" + dayIn;
+        System.out.println("Date ZZZZ " + date);
+
+        boolean result = false;
+        int count = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT LinerEntry.Liner "
+                + "FROM LinerEntry "
+                + "WHERE LinerEntry.Date = \'" + date + "\' "
+                + "AND LinerEntry.Shift = \'" + shiftIn + "\' "
+                + "AND LinerEntry.Liner = \'" + linerNumberIn + "\';";
+        System.out.println("XXXXXX : " + selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            count++;
+            System.out.println("Count++");
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        if (count > 0) {
+
+            System.out.println("True");
+            return true;
+
+        } else {
+
+            System.out.println("False");
+            return false;
+        }
+
+    }
+
+    public static void linerEntryDelete(int currentIdIn) {
+
+        try {
+            Connection conn = Connect();
+            conn.setAutoCommit(false);
+            Statement s = conn.createStatement();
+            s.setQueryTimeout(10);
+
+            // QUERY
+            // //////////////////////////////////////////////////////////////////////
+            String selTable = "Delete FROM LinerEntry WHERE LinerEntry.ID = " + currentIdIn + ";";
+
+            System.out.println("Error : " + selTable);
+
+            s.execute(selTable);
+
+            // /////////////////////////////////////////////////////////////////////////////
+            conn.commit();
+            s.close();
+            conn.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
+        }
 
     }
 
@@ -2977,6 +3282,7 @@ public class SQLiteConnection {
         DefaultTableModel model = new DefaultTableModel(data, cols);
 
         JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         table.getColumnModel().getColumn(0).setMaxWidth(100);
         table.getColumnModel().getColumn(1).setMinWidth(100);
@@ -3429,6 +3735,7 @@ public class SQLiteConnection {
         DefaultTableModel model = new DefaultTableModel(data, cols);
 
         JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         table.getColumnModel().getColumn(0).setMaxWidth(100);
         table.getColumnModel().getColumn(1).setMaxWidth(100);
@@ -3577,7 +3884,7 @@ public class SQLiteConnection {
 
     public static Object[] EmployeeReturnEntryByName(String nameIn) throws Exception {
 
-        Object[] result = new Object[21];
+        Object[] result = new Object[11];
 
         Connection conn = Connect();
         Statement s = conn.createStatement();
@@ -3597,33 +3904,13 @@ public class SQLiteConnection {
             result[2] = rs.getString(3);
             result[3] = rs.getString(4);
             result[4] = rs.getString(5);
-            result[5] = rs.getBoolean(6);
-            result[6] = rs.getBoolean(7);
-            result[7] = rs.getBoolean(8);
-            result[8] = rs.getBoolean(9);
-            result[9] = rs.getBoolean(10);
-            result[10] = rs.getBoolean(11);
-            result[11] = rs.getBoolean(12);
-            result[12] = rs.getBoolean(13);
-            result[13] = rs.getBoolean(14);
-            result[14] = rs.getBoolean(15);
-            result[15] = rs.getBoolean(16);
-            result[16] = rs.getBoolean(17);
-            result[17] = rs.getBoolean(18);
+            result[5] = rs.getString(6);
+            result[6] = rs.getString(7);
+            result[7] = rs.getString(8);
+            result[8] = rs.getString(9);
+            result[9] = rs.getInt(10);
+            result[10] = rs.getString(11);
 
-            result[18] = rs.getString(19);
-            result[19] = rs.getString(20);
-            result[20] = rs.getString(21);
-
-            // System.out.println("ID " + result[0]);
-            // System.out.println("Name " + result[1]);
-            // System.out.println("Address " + result[2]);
-            // System.out.println("Crew " + result[3]);
-            // System.out.println("Job Title " + result[4]);
-            // System.out.println("Phone Number " + result[5]);
-            // System.out.println("Mobile Number " + result[6]);
-            // System.out.println("TimeStamp " + result[7]);
-            rs.close();
             s.close();
             conn.close();
 
@@ -3636,7 +3923,7 @@ public class SQLiteConnection {
 
     public static Object[] EmployeeReturnEntryById(int idIn) throws Exception {
 
-        Object[] result = new Object[21];
+        Object[] result = new Object[11];
 
         Connection conn = Connect();
         Statement s = conn.createStatement();
@@ -3656,23 +3943,12 @@ public class SQLiteConnection {
             result[2] = rs.getString(3);
             result[3] = rs.getString(4);
             result[4] = rs.getString(5);
-            result[5] = rs.getBoolean(6);
-            result[6] = rs.getBoolean(7);
-            result[7] = rs.getBoolean(8);
-            result[8] = rs.getBoolean(9);
-            result[9] = rs.getBoolean(10);
-            result[10] = rs.getBoolean(11);
-            result[11] = rs.getBoolean(12);
-            result[12] = rs.getBoolean(13);
-            result[13] = rs.getBoolean(14);
-            result[14] = rs.getBoolean(15);
-            result[15] = rs.getBoolean(16);
-            result[16] = rs.getBoolean(17);
-            result[17] = rs.getBoolean(18);
-
-            result[18] = rs.getString(19);
-            result[19] = rs.getString(20);
-            result[20] = rs.getString(21);
+            result[5] = rs.getString(6);
+            result[5] = rs.getString(7);
+            result[6] = rs.getString(8);
+            result[7] = rs.getString(9);
+            result[8] = rs.getInt(10);
+            result[9] = rs.getString(11);
 
         }
 
@@ -3718,8 +3994,7 @@ public class SQLiteConnection {
     }
 
     public static void EmployeeInsert(
-            int idIn, String employeeIdIn, String nameIn, String addressIn, String crewIn, Boolean departmentHeadIn, Boolean shiftManagerIn,
-            Boolean technicianIn, Boolean leadHandIn, Boolean operatorIn, Boolean engineerIn, Boolean packerIn, Boolean qcInspectorIn, Boolean forkliftDriverIn, Boolean ProcessLeaderIn, Boolean ToolmakerIn, Boolean FitterIn, Boolean ElectricianIn, String phoneNumberIn,
+            int idIn, String employeeIdIn, String nameIn, String addressIn, String phoneExtIn, String jobIn, String crewIn, String phoneNumberIn,
             String mobileNumberIn
     ) throws SQLException {
 
@@ -3734,31 +4009,19 @@ public class SQLiteConnection {
 
         // QUERY
         // //////////////////////////////////////////////////////////////////////
-        PreparedStatement updateLproductionMeeting = conn.prepareStatement("insert into Employees values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+        PreparedStatement updateLproductionMeeting = conn.prepareStatement("insert into Employees values(?,?,?,?,?,?,?,?,?,?,?)");
 
         updateLproductionMeeting.setInt(1, idIn);
         updateLproductionMeeting.setString(2, employeeIdIn);
         updateLproductionMeeting.setString(3, nameIn);
         updateLproductionMeeting.setString(4, addressIn);
-        updateLproductionMeeting.setString(5, crewIn);
-        updateLproductionMeeting.setBoolean(6, departmentHeadIn);
-        updateLproductionMeeting.setBoolean(7, shiftManagerIn);
-        updateLproductionMeeting.setBoolean(8, technicianIn);
-        updateLproductionMeeting.setBoolean(9, leadHandIn);
-        updateLproductionMeeting.setBoolean(10, operatorIn);
-        updateLproductionMeeting.setBoolean(11, engineerIn);
-        updateLproductionMeeting.setBoolean(12, packerIn);
-        updateLproductionMeeting.setBoolean(13, qcInspectorIn);
-
-        updateLproductionMeeting.setBoolean(14, forkliftDriverIn);
-        updateLproductionMeeting.setBoolean(15, ProcessLeaderIn);
-        updateLproductionMeeting.setBoolean(16, ToolmakerIn);
-        updateLproductionMeeting.setBoolean(17, FitterIn);
-        updateLproductionMeeting.setBoolean(18, ElectricianIn);
-
-        updateLproductionMeeting.setString(19, phoneNumberIn);
-        updateLproductionMeeting.setString(20, mobileNumberIn);
-        updateLproductionMeeting.setString(21, dateF);
+        updateLproductionMeeting.setString(5, phoneExtIn);
+        updateLproductionMeeting.setString(6, jobIn);
+        updateLproductionMeeting.setString(7, crewIn);
+        updateLproductionMeeting.setString(8, phoneNumberIn);
+        updateLproductionMeeting.setString(9, mobileNumberIn);
+        updateLproductionMeeting.setInt(10, 1);
+        updateLproductionMeeting.setString(11, dateF);
 
         updateLproductionMeeting.executeUpdate();
 
@@ -3770,9 +4033,7 @@ public class SQLiteConnection {
     }
 
     public static void EmployeeUpdate(
-            String employeeIdIn, String nameIn, String addressIn, String crewIn, Boolean departmentHeadIn, Boolean shiftManagerIn, Boolean technicianIn,
-            Boolean leadHandIn, Boolean operatorIn, Boolean engineerIn, Boolean packerIn, Boolean qcInspectorIn, Boolean forkliftDriverIn, Boolean ProcessLeaderIn,
-            Boolean ToolmakerIn, Boolean FitterIn, Boolean ElectricianIn, String phoneNumberIn, String mobileNumberIn, int idIn
+            String employeeIdIn, String nameIn, String addressIn, String phoneExtIn, String crewIn, String jobIn, String phoneNumberIn, String mobileNumberIn, int idIn
     )
             throws SQLException {
 
@@ -3783,7 +4044,7 @@ public class SQLiteConnection {
 
         // QUERY
         // //////////////////////////////////////////////////////////////////////
-        String sql = "update Employees set EmployeeID=?, Name=? , Address=? , Crew=? , DepartmentHead=? , ShiftManager=? , Technician=?,  LeadHand=?, Operator=?,  Engineer=?, Packer=?, QCInspector=?, ForkLiftDriver=?,  ProcessLeader=?,  ToolMaker=?,  Fitter=?,   Electrician=?, PhoneNumber=?, MobileNumber=? where ID=?";
+        String sql = "update Employees set EmployeeID=?, Name=? , Address=? , PhoneExt=? ,jobsTitle=? , Crew=? , PhoneNumber=?, MobileNumber=? where ID=?";
 
         PreparedStatement updateEmployees = conn.prepareStatement(sql);
         updateEmployees.setQueryTimeout(10);
@@ -3791,27 +4052,12 @@ public class SQLiteConnection {
         updateEmployees.setString(1, employeeIdIn);
         updateEmployees.setString(2, nameIn);
         updateEmployees.setString(3, addressIn);
-        updateEmployees.setString(4, crewIn);
-
-        updateEmployees.setBoolean(5, departmentHeadIn);
-        updateEmployees.setBoolean(6, shiftManagerIn);
-        updateEmployees.setBoolean(7, technicianIn);
-        updateEmployees.setBoolean(8, leadHandIn);
-        updateEmployees.setBoolean(9, operatorIn);
-        updateEmployees.setBoolean(10, engineerIn);
-        updateEmployees.setBoolean(11, packerIn);
-        updateEmployees.setBoolean(12, qcInspectorIn);
-        updateEmployees.setBoolean(13, forkliftDriverIn);
-        updateEmployees.setBoolean(14, ProcessLeaderIn);
-        updateEmployees.setBoolean(15, ToolmakerIn);
-        updateEmployees.setBoolean(16, FitterIn);
-        updateEmployees.setBoolean(17, ElectricianIn);
-
-        updateEmployees.setString(18, phoneNumberIn);
-        updateEmployees.setString(19, mobileNumberIn);
-
-        updateEmployees.setInt(20, idIn);
-
+        updateEmployees.setString(4, phoneExtIn);
+        updateEmployees.setString(5, jobIn);
+        updateEmployees.setString(6, crewIn);
+        updateEmployees.setString(7, phoneNumberIn);
+        updateEmployees.setString(8, mobileNumberIn);
+        updateEmployees.setInt(9, idIn);
         updateEmployees.executeUpdate();
 
         // /////////////////////////////////////////////////////////////////////////////
@@ -3846,7 +4092,7 @@ public class SQLiteConnection {
 
     public static Object[] EmployeeGetNextEntryById(String nameIn) throws SQLException {
 
-        Object[] result = new Object[21];
+        Object[] result = new Object[11];
 
         Connection conn = Connect();
         Statement s = conn.createStatement();
@@ -3866,23 +4112,12 @@ public class SQLiteConnection {
             result[2] = rs.getString(3);
             result[3] = rs.getString(4);
             result[4] = rs.getString(5);
-            result[5] = rs.getBoolean(6);
-            result[6] = rs.getBoolean(7);
-            result[7] = rs.getBoolean(8);
-            result[8] = rs.getBoolean(9);
-            result[9] = rs.getBoolean(10);
-            result[10] = rs.getBoolean(11);
-            result[11] = rs.getBoolean(12);
-            result[12] = rs.getBoolean(13);
-            result[13] = rs.getBoolean(14);
-            result[14] = rs.getBoolean(15);
-            result[15] = rs.getBoolean(16);
-            result[16] = rs.getBoolean(17);
-            result[17] = rs.getBoolean(18);
-
-            result[18] = rs.getString(19);
-            result[19] = rs.getString(20);
-            result[20] = rs.getString(21);
+            result[5] = rs.getString(6);
+            result[5] = rs.getString(7);
+            result[6] = rs.getString(8);
+            result[7] = rs.getString(9);
+            result[8] = rs.getInt(10);
+            result[9] = rs.getString(11);
 
             for (int i = 0; i < result.length; i++) {
 
@@ -3902,7 +4137,7 @@ public class SQLiteConnection {
 
     public static Object[] EmployeeGetPreviousEntryById(String nameIn) throws SQLException {
 
-        Object[] result = new Object[21];
+        Object[] result = new Object[11];
 
         Connection conn = Connect();
         Statement s = conn.createStatement();
@@ -3922,23 +4157,12 @@ public class SQLiteConnection {
             result[2] = rs.getString(3);
             result[3] = rs.getString(4);
             result[4] = rs.getString(5);
-            result[5] = rs.getBoolean(6);
-            result[6] = rs.getBoolean(7);
-            result[7] = rs.getBoolean(8);
-            result[8] = rs.getBoolean(9);
-            result[9] = rs.getBoolean(10);
-            result[10] = rs.getBoolean(11);
-            result[11] = rs.getBoolean(12);
-            result[12] = rs.getBoolean(13);
-            result[13] = rs.getBoolean(14);
-            result[14] = rs.getBoolean(15);
-            result[15] = rs.getBoolean(16);
-            result[16] = rs.getBoolean(17);
-            result[17] = rs.getBoolean(18);
-
-            result[18] = rs.getString(19);
-            result[19] = rs.getString(20);
-            result[20] = rs.getString(21);
+            result[5] = rs.getString(6);
+            result[5] = rs.getString(7);
+            result[6] = rs.getString(8);
+            result[7] = rs.getString(9);
+            result[8] = rs.getInt(10);
+            result[9] = rs.getString(11);
 
             for (int i = 0; i < result.length; i++) {
 
@@ -3981,7 +4205,7 @@ public class SQLiteConnection {
         Connection conn = Connect();
         Statement s = conn.createStatement();
         s.setQueryTimeout(5);
-        ResultSet r = s.executeQuery("SELECT * FROM Employees ORDER by Name ASC");
+        ResultSet r = s.executeQuery("SELECT * FROM Employees ORDER by QueuePosition ASC");
 
         while ((r != null) && (r.next())) {
 
@@ -4008,22 +4232,12 @@ public class SQLiteConnection {
         PreparedStatement psmt = conn.prepareStatement("SELECT "
                 + "Name,"
                 + "EmployeeID, "
+                + "jobsTitle, "
                 + "Crew, "
-                + "DepartmentHead, "
-                + "ShiftManager, "
-                + "ProcessLeader, "
-                + "Technician, "
-                + "LeadHand, "
-                + "Operator, "
-                + "Engineer, "
-                + "Packer, "
-                + "ForkliftDriver, "
-                + "ToolMaker, "
-                + "Fitter, "
-                + "Electrician, "
-                + "QCInspector, "
-                + "ID "
-                + "FROM Employees ORDER BY Name ASC");
+                + "PhoneExt "
+                + "FROM "
+                + "Employees "
+                + "ORDER BY Name ASC");
         psmt.setQueryTimeout(10);
         ResultSet rs = psmt.executeQuery();
         DefaultTableModel dm = new DefaultTableModel();
@@ -4049,20 +4263,8 @@ public class SQLiteConnection {
             row.add(rs.getString(1));
             row.add(rs.getString(2));
             row.add(rs.getString(3));
-            row.add(rs.getBoolean(4));
-            row.add(rs.getBoolean(5));
-            row.add(rs.getBoolean(6));
-            row.add(rs.getBoolean(7));
-            row.add(rs.getBoolean(8));
-            row.add(rs.getBoolean(9));
-            row.add(rs.getBoolean(10));
-            row.add(rs.getBoolean(11));
-            row.add(rs.getBoolean(12));
-            row.add(rs.getBoolean(13));
-            row.add(rs.getBoolean(14));
-            row.add(rs.getBoolean(15));
-            row.add(rs.getBoolean(16));
-            row.add(rs.getString(17));
+            row.add(rs.getString(4));
+            row.add(rs.getString(5));
 
             data.add(row);
         }
@@ -4071,51 +4273,54 @@ public class SQLiteConnection {
         DefaultTableModel model = new DefaultTableModel(data, cols);
 
         JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
 
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
-        table.getColumnModel().getColumn(2).setMaxWidth(40);
-        table.getColumnModel().getColumn(16).setMaxWidth(30);
-
-        TableColumn tc = table.getColumnModel().getColumn(3);
-        tc.setCellRenderer(table.getDefaultRenderer(Boolean.class));
-
-        TableColumn tc1 = table.getColumnModel().getColumn(4);
-        tc1.setCellRenderer(table.getDefaultRenderer(Boolean.class));
-
-        TableColumn tc2 = table.getColumnModel().getColumn(5);
-        tc2.setCellRenderer(table.getDefaultRenderer(Boolean.class));
-
-        TableColumn tc3 = table.getColumnModel().getColumn(6);
-        tc3.setCellRenderer(table.getDefaultRenderer(Boolean.class));
-
-        TableColumn tc4 = table.getColumnModel().getColumn(7);
-        tc4.setCellRenderer(table.getDefaultRenderer(Boolean.class));
-
-        TableColumn tc5 = table.getColumnModel().getColumn(8);
-        tc5.setCellRenderer(table.getDefaultRenderer(Boolean.class));
-
-        TableColumn tc6 = table.getColumnModel().getColumn(9);
-        tc6.setCellRenderer(table.getDefaultRenderer(Boolean.class));
-
-        TableColumn tc7 = table.getColumnModel().getColumn(10);
-        tc7.setCellRenderer(table.getDefaultRenderer(Boolean.class));
-
-        TableColumn tc8 = table.getColumnModel().getColumn(11);
-        tc8.setCellRenderer(table.getDefaultRenderer(Boolean.class));
-
-        TableColumn tc9 = table.getColumnModel().getColumn(12);
-        tc9.setCellRenderer(table.getDefaultRenderer(Boolean.class));
-
-        TableColumn tc10 = table.getColumnModel().getColumn(13);
-        tc10.setCellRenderer(table.getDefaultRenderer(Boolean.class));
-
-        TableColumn tc11 = table.getColumnModel().getColumn(14);
-        tc11.setCellRenderer(table.getDefaultRenderer(Boolean.class));
-        
-        TableColumn tc12 = table.getColumnModel().getColumn(15);
-        tc12.setCellRenderer(table.getDefaultRenderer(Boolean.class));
-
+//        table.getColumnModel().getColumn(0).setMinWidth(100);
+//        table.getColumnModel().getColumn(2).setMaxWidth(40);
+//        table.getColumnModel().getColumn(17).setMaxWidth(40);
+//        TableColumn tc = table.getColumnModel().getColumn(3);
+//        tc.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc1 = table.getColumnModel().getColumn(4);
+//        tc1.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc2 = table.getColumnModel().getColumn(5);
+//        tc2.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc3 = table.getColumnModel().getColumn(6);
+//        tc3.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc4 = table.getColumnModel().getColumn(7);
+//        tc4.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc5 = table.getColumnModel().getColumn(8);
+//        tc5.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc6 = table.getColumnModel().getColumn(9);
+//        tc6.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc7 = table.getColumnModel().getColumn(10);
+//        tc7.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc8 = table.getColumnModel().getColumn(11);
+//        tc8.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc9 = table.getColumnModel().getColumn(12);
+//        tc9.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc10 = table.getColumnModel().getColumn(13);
+//        tc10.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc11 = table.getColumnModel().getColumn(14);
+//        tc11.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc12 = table.getColumnModel().getColumn(15);
+//        tc12.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc13 = table.getColumnModel().getColumn(16);
+//        tc13.setCellRenderer(table.getDefaultRenderer(Boolean.class));
         JTableHeader header = table.getTableHeader();
 
         outerPanel.add(header, BorderLayout.NORTH);
@@ -4125,7 +4330,119 @@ public class SQLiteConnection {
         stmt.close();
         conn.close();
 
-        return outerPanel;
+        JScrollPane scrollPane = new JScrollPane(outerPanel);
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(scrollPane);
+
+        return panel;
+
+    }
+
+    public static JTable EmployeeOvertimeSummaryTableGrouped() throws SQLException {
+
+        JPanel outerPanel = new JPanel(new BorderLayout());
+
+        Connection conn = Connect();
+        Statement stmt = conn.createStatement();
+        stmt.setQueryTimeout(10);
+
+        PreparedStatement psmt = conn.prepareStatement(" SELECT Employees.Name, EmployeeOvertime.Job, EmployeeOvertime.Crew, EmployeeOvertime.Status FROM EmployeeOvertime");
+        psmt.setQueryTimeout(10);
+        ResultSet rs = psmt.executeQuery();
+        DefaultTableModel dm = new DefaultTableModel();
+
+        // get column names
+        int len = rs.getMetaData().getColumnCount();
+        System.out.println("LEN : " + len);
+        Vector cols = new Vector(len);
+        for (int i = 1; i <= len; i++) {// Note starting at 1
+
+            cols.add(rs.getMetaData().getColumnName(i));
+            System.out.println(rs.getMetaData().getColumnName(i));
+
+        }
+
+        // Add Data
+        Vector data = new Vector();
+
+        while (rs.next()) {
+
+            Vector row = new Vector(len);
+
+            row.add(rs.getString(1));
+            row.add(rs.getString(2));
+            row.add(rs.getString(3));
+
+            data.add(row);
+        }
+
+        // Now create the table
+        DefaultTableModel model = new DefaultTableModel(data, cols);
+
+        JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
+
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+//        table.getColumnModel().getColumn(0).setMinWidth(100);
+//        table.getColumnModel().getColumn(2).setMaxWidth(40);
+//        table.getColumnModel().getColumn(17).setMaxWidth(40);
+//
+//        TableColumn tc = table.getColumnModel().getColumn(3);
+//        tc.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc1 = table.getColumnModel().getColumn(4);
+//        tc1.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc2 = table.getColumnModel().getColumn(5);
+//        tc2.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc3 = table.getColumnModel().getColumn(6);
+//        tc3.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc4 = table.getColumnModel().getColumn(7);
+//        tc4.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc5 = table.getColumnModel().getColumn(8);
+//        tc5.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc6 = table.getColumnModel().getColumn(9);
+//        tc6.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc7 = table.getColumnModel().getColumn(10);
+//        tc7.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc8 = table.getColumnModel().getColumn(11);
+//        tc8.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc9 = table.getColumnModel().getColumn(12);
+//        tc9.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc10 = table.getColumnModel().getColumn(13);
+//        tc10.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc11 = table.getColumnModel().getColumn(14);
+//        tc11.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc12 = table.getColumnModel().getColumn(15);
+//        tc12.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc13 = table.getColumnModel().getColumn(16);
+//        tc13.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+        JTableHeader header = table.getTableHeader();
+
+        outerPanel.add(header, BorderLayout.NORTH);
+        outerPanel.add(table, BorderLayout.CENTER);
+
+        psmt.close();
+        stmt.close();
+        conn.close();
+
+        JScrollPane scrollPane = new JScrollPane(outerPanel);
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(scrollPane);
+
+        return table;
 
     }
 
@@ -4185,6 +4502,7 @@ public class SQLiteConnection {
         };
 
         JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
 
         JTableHeader header = table.getTableHeader();
 
@@ -4220,6 +4538,1474 @@ public class SQLiteConnection {
     }
 
     public static void EmployeeDeleteByID(int idIn) {
+
+    }
+
+    // Employee Overtime
+    public static JTable EmployeeOvertimeSummaryTableForkliftDriver(String crewIn) throws SQLException {
+
+        JPanel outerPanel = new JPanel(new BorderLayout());
+
+        Connection conn = Connect();
+        Statement stmt = conn.createStatement();
+        stmt.setQueryTimeout(10);
+
+        PreparedStatement psmt = conn.prepareStatement("SELECT "
+                + "Name,"
+                + "Crew, "
+                + "JobsTitle, "
+                + "OvertimeQueuePosition AS Queue "
+                + "FROM Employees "
+                + "Where JobsTitle = 'Forklift Driver' "
+                + "And Crew = \'" + crewIn + "\' "
+                + "ORDER BY OvertimeQueuePosition, Name ASC");
+        psmt.setQueryTimeout(10);
+        ResultSet rs = psmt.executeQuery();
+        DefaultTableModel dm = new DefaultTableModel();
+
+        // get column names
+        int len = rs.getMetaData().getColumnCount();
+        System.out.println("LEN : " + len);
+        Vector cols = new Vector(len);
+        for (int i = 1; i <= len; i++) {// Note starting at 1
+
+            cols.add(rs.getMetaData().getColumnName(i));
+            System.out.println(rs.getMetaData().getColumnName(i));
+
+        }
+
+        // Add Data
+        Vector data = new Vector();
+
+        while (rs.next()) {
+
+            Vector row = new Vector(len);
+
+            row.add(rs.getString(1));
+            row.add(rs.getString(2));
+            row.add(rs.getString(3));
+            row.add(rs.getInt(4) + 1);
+
+            data.add(row);
+        }
+
+        // Now create the table
+        DefaultTableModel model = new DefaultTableModel(data, cols);
+
+        JTable table = new JTable(model);
+        table.setEnabled(false);
+
+        int position = SQLiteConnection.EmployeeOvertimeGetQueuePosition("Forklift Driver", crewIn);
+
+        System.out.println("Print : " + table.getModel().getValueAt(position, 0));
+
+        EmployeeOvertimeSystem.setSelectedName(table.getModel().getValueAt(position, 0) + "");
+
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+//        table.getColumnModel().getColumn(1).setMaxWidth(50);
+//        table.getColumnModel().getColumn(7).setMaxWidth(50);
+//
+//        TableColumn tc = table.getColumnModel().getColumn(2);
+//        tc.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc1 = table.getColumnModel().getColumn(3);
+//        tc1.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc2 = table.getColumnModel().getColumn(4);
+//        tc2.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc3 = table.getColumnModel().getColumn(5);
+//        tc3.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc4 = table.getColumnModel().getColumn(6);
+//        tc4.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+        JTableHeader header = table.getTableHeader();
+
+        outerPanel.add(header, BorderLayout.NORTH);
+        outerPanel.add(table, BorderLayout.CENTER);
+
+        psmt.close();
+        stmt.close();
+        conn.close();
+
+        JScrollPane scrollPane = new JScrollPane(outerPanel);
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(scrollPane);
+
+        return table;
+
+    }
+
+    public static JTable EmployeeOvertimeSummaryTableMachineOperator(String crewIn) throws SQLException {
+
+        JPanel outerPanel = new JPanel(new BorderLayout());
+
+        Connection conn = Connect();
+        Statement stmt = conn.createStatement();
+        stmt.setQueryTimeout(10);
+
+        PreparedStatement psmt = conn.prepareStatement("SELECT "
+                + "Name,"
+                + "Crew, "
+                + "JobsTitle, "
+                + "OvertimeQueuePosition AS Queue "
+                + "FROM Employees "
+                + "Where JobsTitle = 'Machine Operator' "
+                + "And Crew = \'" + crewIn + "\' "
+                + "ORDER BY OvertimeQueuePosition, Name ASC");
+        psmt.setQueryTimeout(10);
+        ResultSet rs = psmt.executeQuery();
+        DefaultTableModel dm = new DefaultTableModel();
+
+        // get column names
+        int len = rs.getMetaData().getColumnCount();
+        System.out.println("LEN : " + len);
+        Vector cols = new Vector(len);
+        for (int i = 1; i <= len; i++) {// Note starting at 1
+
+            cols.add(rs.getMetaData().getColumnName(i));
+            System.out.println(rs.getMetaData().getColumnName(i));
+
+        }
+
+        // Add Data
+        Vector data = new Vector();
+
+        while (rs.next()) {
+
+            Vector row = new Vector(len);
+
+            row.add(rs.getString(1));
+            row.add(rs.getString(2));
+            row.add(rs.getString(3));
+            row.add(rs.getInt(4) + 1);
+
+            data.add(row);
+        }
+
+        // Now create the table
+        DefaultTableModel model = new DefaultTableModel(data, cols);
+
+        JTable table = new JTable(model);
+        table.setEnabled(false);
+
+        int position = SQLiteConnection.EmployeeOvertimeGetQueuePosition("Machine Operator", crewIn);
+
+//        table.setRowSelectionInterval(position, position);
+//        table.addRowSelectionInterval(position, position);
+        EmployeeOvertimeSystem.setSelectedName(table.getModel().getValueAt(position, 0) + "");
+
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+//        table.getColumnModel().getColumn(1).setMaxWidth(50);
+//        table.getColumnModel().getColumn(7).setMaxWidth(50);
+//
+//        TableColumn tc = table.getColumnModel().getColumn(2);
+//        tc.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc1 = table.getColumnModel().getColumn(3);
+//        tc1.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc2 = table.getColumnModel().getColumn(4);
+//        tc2.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc3 = table.getColumnModel().getColumn(5);
+//        tc3.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc4 = table.getColumnModel().getColumn(6);
+//        tc4.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+        JTableHeader header = table.getTableHeader();
+
+        outerPanel.add(header, BorderLayout.NORTH);
+        outerPanel.add(table, BorderLayout.CENTER);
+
+        psmt.close();
+        stmt.close();
+        conn.close();
+
+        JScrollPane scrollPane = new JScrollPane(outerPanel);
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(scrollPane);
+
+        return table;
+
+    }
+
+    public static JTable EmployeeOvertimeSummaryTablePacker(String crewIn) throws SQLException {
+
+        JPanel outerPanel = new JPanel(new BorderLayout());
+
+        Connection conn = Connect();
+        Statement stmt = conn.createStatement();
+        stmt.setQueryTimeout(10);
+
+        PreparedStatement psmt = conn.prepareStatement("SELECT "
+                + "Name,"
+                + "Crew, "
+                + "JobsTitle, "
+                + "OvertimeQueuePosition AS Queue "
+                + "FROM Employees "
+                + "Where JobsTitle = 'Packer' "
+                + "And Crew = \'" + crewIn + "\' "
+                + "ORDER BY OvertimeQueuePosition, Name ASC");
+        psmt.setQueryTimeout(10);
+        ResultSet rs = psmt.executeQuery();
+        DefaultTableModel dm = new DefaultTableModel();
+
+        // get column names
+        int len = rs.getMetaData().getColumnCount();
+        System.out.println("LEN : " + len);
+        Vector cols = new Vector(len);
+        for (int i = 1; i <= len; i++) {// Note starting at 1
+
+            cols.add(rs.getMetaData().getColumnName(i));
+            System.out.println(rs.getMetaData().getColumnName(i));
+
+        }
+
+        // Add Data
+        Vector data = new Vector();
+
+        while (rs.next()) {
+
+            Vector row = new Vector(len);
+
+            row.add(rs.getString(1));
+            row.add(rs.getString(2));
+            row.add(rs.getString(3));
+            row.add(rs.getInt(4) + 1);
+
+            data.add(row);
+        }
+
+        // Now create the table
+        DefaultTableModel model = new DefaultTableModel(data, cols);
+
+        JTable table = new JTable(model);
+        table.setEnabled(false);
+
+        int position = SQLiteConnection.EmployeeOvertimeGetQueuePosition("Packer", crewIn);
+
+//        table.setRowSelectionInterval(position, position);
+//        table.addRowSelectionInterval(position, position);
+        EmployeeOvertimeSystem.setSelectedName(table.getModel().getValueAt(position, 0) + "");
+
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+//        table.getColumnModel().getColumn(1).setMaxWidth(50);
+//        table.getColumnModel().getColumn(7).setMaxWidth(50);
+//
+//        TableColumn tc = table.getColumnModel().getColumn(2);
+//        tc.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc1 = table.getColumnModel().getColumn(3);
+//        tc1.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc2 = table.getColumnModel().getColumn(4);
+//        tc2.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc3 = table.getColumnModel().getColumn(5);
+//        tc3.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc4 = table.getColumnModel().getColumn(6);
+//        tc4.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+        JTableHeader header = table.getTableHeader();
+
+        outerPanel.add(header, BorderLayout.NORTH);
+        outerPanel.add(table, BorderLayout.CENTER);
+
+        psmt.close();
+        stmt.close();
+        conn.close();
+
+        JScrollPane scrollPane = new JScrollPane(outerPanel);
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(scrollPane);
+
+        return table;
+
+    }
+
+    public static JTable EmployeeOvertimeSummaryTableQCInspector(String crewIn) throws SQLException {
+
+        JPanel outerPanel = new JPanel(new BorderLayout());
+
+        Connection conn = Connect();
+        Statement stmt = conn.createStatement();
+        stmt.setQueryTimeout(10);
+
+        PreparedStatement psmt = conn.prepareStatement("SELECT "
+                + "Name,"
+                + "Crew, "
+                + "JobsTitle, "
+                + "OvertimeQueuePosition AS Queue "
+                + "FROM Employees "
+                + "Where JobsTitle = 'QC Inspector' "
+                + "And Crew = \'" + crewIn + "\' "
+                + "ORDER BY OvertimeQueuePosition, Name ASC");
+        psmt.setQueryTimeout(10);
+        ResultSet rs = psmt.executeQuery();
+        DefaultTableModel dm = new DefaultTableModel();
+
+        // get column names
+        int len = rs.getMetaData().getColumnCount();
+        System.out.println("LEN : " + len);
+        Vector cols = new Vector(len);
+        for (int i = 1; i <= len; i++) {// Note starting at 1
+
+            cols.add(rs.getMetaData().getColumnName(i));
+            System.out.println(rs.getMetaData().getColumnName(i));
+
+        }
+
+        // Add Data
+        Vector data = new Vector();
+
+        while (rs.next()) {
+
+            Vector row = new Vector(len);
+
+            row.add(rs.getString(1));
+            row.add(rs.getString(2));
+            row.add(rs.getString(3));
+            row.add(rs.getInt(4) + 1);
+
+            data.add(row);
+        }
+
+        // Now create the table
+        DefaultTableModel model = new DefaultTableModel(data, cols);
+
+        JTable table = new JTable(model);
+        table.setEnabled(false);
+
+        int position = SQLiteConnection.EmployeeOvertimeGetQueuePosition("QC Inspector", crewIn);
+
+//        table.setRowSelectionInterval(position, position);
+//        table.addRowSelectionInterval(position, position);
+        EmployeeOvertimeSystem.setSelectedName(table.getModel().getValueAt(position, 0) + "");
+
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+//        table.getColumnModel().getColumn(1).setMaxWidth(50);
+//        table.getColumnModel().getColumn(7).setMaxWidth(50);
+//
+//        TableColumn tc = table.getColumnModel().getColumn(2);
+//        tc.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc1 = table.getColumnModel().getColumn(3);
+//        tc1.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc2 = table.getColumnModel().getColumn(4);
+//        tc2.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc3 = table.getColumnModel().getColumn(5);
+//        tc3.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc4 = table.getColumnModel().getColumn(6);
+//        tc4.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+        JTableHeader header = table.getTableHeader();
+
+        outerPanel.add(header, BorderLayout.NORTH);
+        outerPanel.add(table, BorderLayout.CENTER);
+
+        psmt.close();
+        stmt.close();
+        conn.close();
+
+        JScrollPane scrollPane = new JScrollPane(outerPanel);
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(scrollPane);
+
+        return table;
+
+    }
+
+    public static JTable EmployeeOvertimeSummaryTableTeamLeader(String crewIn) throws SQLException {
+
+        JPanel outerPanel = new JPanel(new BorderLayout());
+
+        Connection conn = Connect();
+        Statement stmt = conn.createStatement();
+        stmt.setQueryTimeout(10);
+
+        PreparedStatement psmt = conn.prepareStatement("SELECT "
+                + "Name,"
+                + "Crew, "
+                + "JobsTitle, "
+                + "OvertimeQueuePosition AS Queue "
+                + "FROM Employees "
+                + "Where JobsTitle = 'Team Leader' "
+                + "And Crew = \'" + crewIn + "\' "
+                + "ORDER BY OvertimeQueuePosition, Name ASC");
+        psmt.setQueryTimeout(10);
+        ResultSet rs = psmt.executeQuery();
+        DefaultTableModel dm = new DefaultTableModel();
+
+        // get column names
+        int len = rs.getMetaData().getColumnCount();
+        System.out.println("LEN : " + len);
+        Vector cols = new Vector(len);
+        for (int i = 1; i <= len; i++) {// Note starting at 1
+
+            cols.add(rs.getMetaData().getColumnName(i));
+            System.out.println(rs.getMetaData().getColumnName(i));
+
+        }
+
+        // Add Data
+        Vector data = new Vector();
+
+        while (rs.next()) {
+
+            Vector row = new Vector(len);
+
+            row.add(rs.getString(1));
+            row.add(rs.getString(2));
+            row.add(rs.getString(3));
+            row.add(rs.getInt(4) + 1);
+
+            data.add(row);
+        }
+
+        // Now create the table
+        DefaultTableModel model = new DefaultTableModel(data, cols);
+
+        JTable table = new JTable(model);
+        table.setEnabled(false);
+
+        int position = SQLiteConnection.EmployeeOvertimeGetQueuePosition("Team Leader", crewIn);
+
+//        table.setRowSelectionInterval(position, position);
+//        table.addRowSelectionInterval(position, position);
+        EmployeeOvertimeSystem.setSelectedName(table.getModel().getValueAt(position, 0) + "");
+
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+//        table.getColumnModel().getColumn(1).setMaxWidth(50);
+//        table.getColumnModel().getColumn(7).setMaxWidth(50);
+//
+//        TableColumn tc = table.getColumnModel().getColumn(2);
+//        tc.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc1 = table.getColumnModel().getColumn(3);
+//        tc1.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc2 = table.getColumnModel().getColumn(4);
+//        tc2.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc3 = table.getColumnModel().getColumn(5);
+//        tc3.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc4 = table.getColumnModel().getColumn(6);
+//        tc4.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+        JTableHeader header = table.getTableHeader();
+
+        outerPanel.add(header, BorderLayout.NORTH);
+        outerPanel.add(table, BorderLayout.CENTER);
+
+        psmt.close();
+        stmt.close();
+        conn.close();
+
+        JScrollPane scrollPane = new JScrollPane(outerPanel);
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(scrollPane);
+
+        return table;
+
+    }
+
+    public static int EmployeeOvertimeGetQueuePosition(String jobIn, String crewIn) throws SQLException {
+
+        int position = 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable2 = "SELECT EmployeeOvertimePosition.MarkerPosition FROM EmployeeOvertimePosition WHERE Job = \"" + jobIn + "\" AND Crew = \"" + crewIn + "\" ;";
+        System.out.println("Query : " + selTable2);
+        s.setQueryTimeout(10);
+        s.execute(selTable2);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            position = rs.getInt(1);
+
+            System.out.println("Position : " + position);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return position;
+
+    }
+
+    public static int EmployeeOvertimeGetQueuePositionByName(String nameIn, String crewIn) throws SQLException {
+
+        int position = 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable2 = "SELECT Employees.OvertimeQueuePosition FROM Employees WHERE Name = \"" + nameIn + "\" AND Crew = \"" + crewIn + "\" ;";
+        System.out.println("Query : " + selTable2);
+        s.setQueryTimeout(10);
+        s.execute(selTable2);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            position = rs.getInt(1);
+
+            System.out.println("Queue Position : " + position);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return position;
+
+    }
+
+    public static int EmployeeOvertimeGetCrewCount(String jobIn, String crewIn) throws SQLException {
+
+        int position = 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable2 = "SELECT COUNT(Name) FROM Employees WHERE JobsTitle = \"" + jobIn + "\" AND Crew = \"" + crewIn + "\" ;";
+        System.out.println("Query : " + selTable2);
+        s.setQueryTimeout(10);
+        s.execute(selTable2);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            position = rs.getInt(1);
+
+            System.out.println("Position : " + position);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return position;
+
+    }
+
+    public static int EmployeeOvertimeSetQueuePositionUp(String jobIn, String crewIn) throws SQLException {
+
+        int position = 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable2 = "UPDATE EmployeeOvertimePosition SET MarkerPosition = (MarkerPosition+1) WHERE Job = \"" + jobIn + "\" AND Crew = \"" + crewIn + "\" ";
+        System.out.println("Query Position Up: " + selTable2);
+        s.setQueryTimeout(10);
+        s.execute(selTable2);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            position = rs.getInt(1) + 1;
+
+            System.out.println("Position : " + position);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return position;
+
+    }
+
+    public static int EmployeeOvertimeSetQueuePositionDown(String jobIn, String crewIn) throws SQLException {
+
+        int position = 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable2 = "UPDATE EmployeeOvertimePosition SET MarkerPosition = (MarkerPosition-1) WHERE Job = \"" + jobIn + "\" AND Crew = \"" + crewIn + "\" ";
+        System.out.println("Query : " + selTable2);
+        s.setQueryTimeout(10);
+        s.execute(selTable2);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            position = rs.getInt(1) + 1;
+
+            System.out.println("Position : " + position);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return position;
+
+    }
+
+    public static int EmployeeOvertimeSetQueuePositionMinusOne(String jobIn, String crewIn, int queuePositionIn) throws SQLException {
+
+        int position = 1;
+        int queuePosition = queuePositionIn - 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable2 = "UPDATE Employees "
+                + "SET OvertimeQueuePosition = \'" + queuePosition + "\' "
+                + "WHERE  " + jobIn + " = '1' "
+                + "AND Crew = \"" + crewIn + "\" "
+                + "AND OvertimeQueuePosition = \'" + queuePositionIn + "\';";
+        System.out.println("Query : " + selTable2);
+        s.setQueryTimeout(10);
+        s.execute(selTable2);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            position = rs.getInt(1) + 1;
+
+            System.out.println("Position : " + position);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return position;
+
+    }
+
+    public static int EmployeeOvertimeSetQueuePositionPlusOne(String jobIn, String crewIn, int queuePositionIn) throws SQLException {
+
+        int position = 1;
+        int queuePosition = queuePositionIn;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable2 = "UPDATE Employees SET OvertimeQueuePosition = (OvertimeQueuePosition+1) WHERE  JobsTitle = \'" + jobIn + "\' AND Crew = \'" + crewIn + "\' "
+                + "AND OvertimeQueuePosition = \'" + queuePositionIn + "\';";
+        System.out.println("Query : " + selTable2);
+        s.setQueryTimeout(10);
+        s.execute(selTable2);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            //    position = rs.getInt(1) + 1;
+            System.out.println("Position : " + position);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return position;
+
+    }
+
+    public static void EmployeeOvertimeSetQueuePosition(String nameIn, String jobIn, String crewIn, int queuePositionIn) throws SQLException {
+
+        int queuePosition = queuePositionIn;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        if (queuePosition <= EmployeeOvertimeGetCrewCount(jobIn, crewIn)) {
+
+            // QUERY /////////////////////////////////////////////////////////////
+            String SetQueuePosition = "UPDATE Employees "
+                    + "SET OvertimeQueuePosition = (\'" + queuePosition + "\'-1) "
+                    + "WHERE Name = \"" + nameIn + "\" "
+                    + "AND  JobsTitle = \'" + jobIn + "\' "
+                    + "AND Crew = \"" + crewIn + "\";";
+
+            System.out.println("SetQueuePosition : " + SetQueuePosition);
+            s.setQueryTimeout(10);
+            s.execute(SetQueuePosition);
+
+            if (queuePositionIn == EmployeeOvertimeGetMaxQueue(jobIn, crewIn)) {
+                s.close();
+            } else {
+                s.execute(SetQueuePosition);
+                s.close();
+            }
+
+        }
+
+        conn.close();
+
+    }
+
+    public static void EmployeeOvertimeSetQueuePositionWithoutName(String jobIn, String crewIn, int queuePositionIn) throws SQLException {
+
+        int queuePosition = queuePositionIn;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        if (queuePosition <= EmployeeOvertimeGetCrewCount(jobIn, crewIn)) {
+
+            // QUERY /////////////////////////////////////////////////////////////
+            String SetQueuePosition = "UPDATE Employees "
+                    + "SET OvertimeQueuePosition = (\'" + queuePosition + "\'+1) "
+                    + "AND  JobsTitle = \'" + jobIn + "\' "
+                    + "AND OvertimeQueuePosition = \"" + queuePosition + "\""
+                    + "AND Crew = \"" + crewIn + "\";";
+
+            System.out.println("SetQueuePosition : " + SetQueuePosition);
+            s.setQueryTimeout(10);
+            s.execute(SetQueuePosition);
+
+            if (queuePositionIn == EmployeeOvertimeGetMaxQueue(jobIn, crewIn)) {
+                s.close();
+            } else {
+                s.execute(SetQueuePosition);
+                s.close();
+            }
+
+        }
+
+        conn.close();
+
+    }
+
+    public static String EmployeeOvertimegetNextNameByName(String nameIn, String jobIn, String crewIn) {
+
+        String nameOfEmployee = "";
+        int position1 = 0;
+
+        try {
+            Connection conn = Connect();
+            Statement s = conn.createStatement();
+
+            String sql1 = "SELECT OvertimeQueuePosition FROM Employees WHERE Name = \"" + nameIn + "\" AND  " + jobIn + " = '1' AND Crew = \"" + crewIn + "\";";
+
+            s.setQueryTimeout(10);
+            s.execute(sql1);
+
+            ResultSet rs = s.getResultSet();
+
+            while ((rs != null) && (rs.next())) {
+
+                position1 = rs.getInt(1);
+
+            }
+
+            String sql2 = "SELECT Name FROM Employees WHERE OvertimeQueuePosition = \"" + position1 + 1 + "\" AND  " + jobIn + " = '1' AND Crew = \"" + crewIn + "\";";
+
+            s.setQueryTimeout(10);
+            s.execute(sql1);
+
+            ResultSet rs1 = s.getResultSet();
+
+            while ((rs1 != null) && (rs1.next())) {
+
+                position1 = rs1.getInt(1);
+
+            }
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        } catch (SQLException ex) {
+            Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        return nameOfEmployee;
+
+    }
+
+    public static void EmployeeOvertimeSwapQueuePositions(String person1, String person2, String crewIn, String jobIn) throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        String sql1 = "UPDATE Employees SET OvertimeQueuePosition=(OvertimeQueuePosition+1) WHERE Name = \'" + person1 + "\' AND Crew = \'" + crewIn + "\' AND " + jobIn + " = '1' ;";
+        System.out.println("SQL1 : " + sql1);
+        String sql2 = "UPDATE Employees SET OvertimeQueuePosition=(OvertimeQueuePosition-1) WHERE Name = \'" + person2 + "\' AND Crew = \'" + crewIn + "\' AND " + jobIn + " = '1' ;";
+        System.out.println("SQL2 : " + sql2);
+        s.setQueryTimeout(10);
+        s.execute(sql1);
+        s.execute(sql2);
+
+        conn.close();
+
+    }
+
+    public static int EmployeeOvertimeGetMaxQueue(String jobIn, String crewIn) throws SQLException {
+
+        int position = 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable2 = "SELECT COUNT(Name) FROM Employees WHERE \"" + jobIn + "\" = \"1\" AND Crew = \"" + crewIn + "\" ;";
+        System.out.println("Query : " + selTable2);
+        s.setQueryTimeout(10);
+        s.execute(selTable2);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            position = rs.getInt(1);
+
+            System.out.println("Position : " + position);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return position;
+
+    }
+
+    public static String[] EmployeeOvertimeArrayOFNamesInCrewAndJob(String crewIn, String JobIn) throws SQLException {
+
+        int length = EmployeeOverTimeGetQueueLength(JobIn, crewIn);
+        String[] names = new String[length + 1];
+
+        Connection conn = Connect();
+        Statement stmt = conn.createStatement();
+        stmt.setQueryTimeout(10);
+
+        PreparedStatement psmt = conn.prepareStatement("SELECT "
+                + " Name "
+                + " FROM Employees "
+                + " Where JobsTitle = \'" + JobIn + "\' "
+                + " And Crew = \'" + crewIn + "\' ");
+        psmt.setQueryTimeout(10);
+        ResultSet rs = psmt.executeQuery();
+
+        int i = 1;
+
+        while (rs.next()) {
+
+            names[i] = rs.getString("Name");
+            System.out.println(i + " : " + names[i]);
+
+            i++;
+
+        }
+
+        psmt.close();
+        stmt.close();
+        conn.close();
+
+        return names;
+
+    }
+
+    public static int EmployeeOvertimeSetMarkerPosition(String jobIn, String crewIn, int markerPositionIn) throws SQLException {
+
+        int position = markerPositionIn - 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable2 = "UPDATE EmployeeOvertimePosition SET MarkerPosition = \"" + position + "\" WHERE Job = \"" + jobIn + "\" AND Crew = \"A\" ";
+        System.out.println("Query : " + selTable2);
+        s.setQueryTimeout(10);
+        s.execute(selTable2);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            position = rs.getInt(1) + 1;
+
+            System.out.println("Position : " + position);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return position;
+
+    }
+
+    public static void EmployeeOvertimeInsert(
+            String nameIn, String jobIn, String crewIn, String dateRequiredIn, String StatusIn
+    ) throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // TimeStamp in String Format
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date date = new Date();
+        String dateF = format.format(date);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        PreparedStatement updateLproductionMeeting = conn.prepareStatement("insert into EmployeeOvertime values(?,?,?,?,?,?)");
+
+        updateLproductionMeeting.setString(1, nameIn);
+        updateLproductionMeeting.setString(2, jobIn);
+        updateLproductionMeeting.setString(3, crewIn);
+        updateLproductionMeeting.setString(4, dateRequiredIn);
+        updateLproductionMeeting.setString(5, StatusIn);
+        updateLproductionMeeting.setString(6, dateF);
+
+        updateLproductionMeeting.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        updateLproductionMeeting.close();
+        s.close();
+        conn.close();
+
+    }
+
+    public static void EmployeeOvertimeInsertNewEmployee(
+            String nameIn, String jobIn, String crewIn, String StatusIn
+    ) throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // TimeStamp in String Format
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date date = new Date();
+        String dateF = format.format(date);
+
+        int absent, accepted, dontCount, refused, missATurn, setup;
+
+        absent = 0;
+        accepted = 0;
+        dontCount = 0;
+        refused = 0;
+        missATurn = 0;
+        setup = 0;
+
+        if (StatusIn.equalsIgnoreCase("Absent")) {
+            absent = 1;
+        } else if (StatusIn.equalsIgnoreCase("Accepted")) {
+            accepted = 1;
+        } else if (StatusIn.equalsIgnoreCase("DontCount")) {
+            dontCount = 1;
+        } else if (StatusIn.equalsIgnoreCase("Refused")) {
+            refused = 1;
+        } else if (StatusIn.equalsIgnoreCase("MissATurn")) {
+            missATurn = 1;
+        } else if (StatusIn.equalsIgnoreCase("SetUp")) {
+            setup = 1;
+        }
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        PreparedStatement updateLproductionMeeting = conn.prepareStatement("insert into EmployeeOvertime2 values(?,?,?,?,?,?,?)");
+
+        updateLproductionMeeting.setString(1, nameIn);
+        updateLproductionMeeting.setInt(2, absent);
+        updateLproductionMeeting.setInt(3, accepted);
+        updateLproductionMeeting.setInt(4, dontCount);
+        updateLproductionMeeting.setInt(5, refused);
+        updateLproductionMeeting.setInt(6, missATurn);
+        updateLproductionMeeting.setInt(7, setup);
+
+        updateLproductionMeeting.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        updateLproductionMeeting.close();
+        s.close();
+        conn.close();
+
+    }
+
+    public static void EmployeeOvertimeIncrement(String nameIn, String StatusIn) throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // TimeStamp in String Format
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date date = new Date();
+        String dateF = format.format(date);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        PreparedStatement updateLproductionMeeting = conn.prepareStatement("UPDATE EmployeeOvertime2 Set " + StatusIn + " = " + StatusIn + "+1 WHERE Name =?");
+
+        updateLproductionMeeting.setString(1, nameIn);
+
+        updateLproductionMeeting.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        updateLproductionMeeting.close();
+        s.close();
+        conn.close();
+
+    }
+    
+    public static void EmployeeOvertimeUpdateEmployeeOvertime2(String NameIn, int AbsentIn, int AcceptedIn, int DontCountIn, int RefusedIn, int MissATurnIn, int SetUpIn){
+    
+    
+        try {
+            Connection conn = Connect();
+            Statement s = conn.createStatement();
+            s.setQueryTimeout(10);
+            
+            // QUERY
+            // //////////////////////////////////////////////////////////////////////
+            String sql = "update EmployeeOvertime2 set Absent=? , Accepted=? , DontCount=? , Refused=? , MissATurn=? , SetUp=?  WHERE Name=?";
+            
+            PreparedStatement updateEmployees = conn.prepareStatement(sql);
+            
+            updateEmployees.setInt(1, AbsentIn);
+            updateEmployees.setInt(2, AcceptedIn);
+            updateEmployees.setInt(3, DontCountIn);
+            updateEmployees.setInt(4, RefusedIn);
+            updateEmployees.setInt(5, MissATurnIn);
+            updateEmployees.setInt(6, SetUpIn);
+            updateEmployees.setString(7, NameIn);
+            
+            updateEmployees.executeUpdate();
+            
+            // /////////////////////////////////////////////////////////////////////////////
+            s.close();
+            conn.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    
+    
+    
+    
+    }
+
+    public static JTable EmployeeOvertimeSummaryEntries(String sortIn, String crewIn) throws SQLException {
+
+        JPanel outerPanel = new JPanel(new BorderLayout());
+
+        String ascDesc = "DESC";
+        String crew = " 'A' or Crew = 'B' or Crew = 'C' or Crew = 'D' ";
+
+        if (sortIn.equalsIgnoreCase("Employees.Name")) {
+            ascDesc = "ASC";
+        }
+        if (sortIn.equalsIgnoreCase("Crew")) {
+            ascDesc = "ASC";
+        }
+        if (sortIn.equalsIgnoreCase("JobsTitle")) {
+            ascDesc = "ASC";
+        }
+
+        if (crewIn.equalsIgnoreCase("All")) {
+            crew = " Crew = 'A' or Crew = 'B' or Crew = 'C' or Crew = 'D'  ";
+        }
+        if (crewIn.equalsIgnoreCase("A")) {
+            crew = " Crew = 'A' ";
+        }
+        if (crewIn.equalsIgnoreCase("B")) {
+            crew = " Crew =  'B' ";
+        }
+        if (crewIn.equalsIgnoreCase("C")) {
+            crew = " Crew = 'C' ";
+        }
+        if (crewIn.equalsIgnoreCase("D")) {
+            crew = " Crew = 'D' ";
+        }
+
+        Connection conn = Connect();
+        Statement stmt = conn.createStatement();
+        stmt.setQueryTimeout(10);
+
+        PreparedStatement psmt = conn.prepareStatement(""
+                + "SELECT "
+                + "EmployeeOvertime2.Name, "
+                + "Employees.JobsTitle, "
+                + "Employees.Crew, "
+                + "EmployeeOvertime2.Absent, "
+                + "EmployeeOvertime2.Accepted, "
+                + "EmployeeOvertime2.DontCount, "
+                + "EmployeeOvertime2.Refused, "
+                + "EmployeeOvertime2.MissATurn, "
+                + "EmployeeOvertime2.Setup, "
+                + "(EmployeeOvertime2.Absent + EmployeeOvertime2.Accepted + EmployeeOvertime2.DontCount + EmployeeOvertime2.Refused + EmployeeOvertime2.MissATurn + EmployeeOvertime2.SetUp) AS Total\n"
+                + " FROM Employees INNER JOIN EmployeeOvertime2 "
+                + "ON Employees.Name=EmployeeOvertime2.Name "
+                + "WHERE " + crew + " "
+                + "ORDER BY " + sortIn + "  " + ascDesc + "");
+        psmt.setQueryTimeout(10);
+        ResultSet rs = psmt.executeQuery();
+        DefaultTableModel dm = new DefaultTableModel();
+
+        // get column names
+        int len = rs.getMetaData().getColumnCount();
+        System.out.println("LEN : " + len);
+        Vector cols = new Vector(len);
+        for (int i = 1; i <= len; i++) {// Note starting at 1
+
+            cols.add(rs.getMetaData().getColumnName(i));
+            System.out.println(rs.getMetaData().getColumnName(i));
+
+        }
+
+        // Add Data
+        Vector data = new Vector();
+
+        while (rs.next()) {
+
+            Vector row = new Vector(len);
+
+            row.add(rs.getString(1));
+            row.add(rs.getString(2));
+            row.add(rs.getString(3));
+            row.add(rs.getInt(4));
+            row.add(rs.getInt(5));
+            row.add(rs.getInt(6));
+            row.add(rs.getInt(7));
+            row.add(rs.getInt(8));
+            row.add(rs.getInt(9));
+            row.add(rs.getInt(10));
+
+            data.add(row);
+        }
+
+        // Now create the table
+        DefaultTableModel model = new DefaultTableModel(data, cols);
+
+        JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
+
+//        table.setRowSelectionInterval(1,1);
+//        table.addRowSelectionInterval(1,1);
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+//        table.addMouseListener(new MouseAdapter() {
+//            public void mousePressed(MouseEvent e) {
+//
+//                if (e.getClickCount() == 2) {
+//                    JTable target = (JTable) e.getSource();
+//
+//                    int row = target.getSelectedRow() + 1;
+//         // int column = target.getSelectedColumn();
+//
+//                    // System.out.println("Clicked : " + row );
+////                    System.out.println(table.getValueAt(table.getSelectedRow(),
+////                            0).toString());
+////
+//                    String job = table.getValueAt(table.getSelectedRow(), 2).toString();
+//                    String crew = table.getValueAt(table.getSelectedRow(), 3).toString();
+////                    int id = Integer.valueOf(idString);
+//                    try {
+//                        EmployeeOvertimeSystem.moveEmployeeFrame(job, crew);
+//
+//                    } catch (Exception ex) {
+//                        Logger.getLogger(SQLiteConnection.class
+//                                .getName()).log(Level.SEVERE, null, ex);
+//                    }
+//
+//                }
+//            }
+//        });
+        JTableHeader header = table.getTableHeader();
+
+        outerPanel.add(header, BorderLayout.NORTH);
+        outerPanel.add(table, BorderLayout.CENTER);
+
+        psmt.close();
+        stmt.close();
+        conn.close();
+
+        JScrollPane scrollPane = new JScrollPane(outerPanel);
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(scrollPane);
+
+        return table;
+
+    }
+
+    public static JTable EmployeeOvertimeSummaryPreviousEntries() throws SQLException {
+
+        JPanel outerPanel = new JPanel(new BorderLayout());
+
+        Connection conn = Connect();
+        Statement stmt = conn.createStatement();
+        stmt.setQueryTimeout(10);
+
+        PreparedStatement psmt = conn.prepareStatement(" SELECT  * FROM EmployeeOvertime ORDER BY TimeStamp DESC");
+        psmt.setQueryTimeout(10);
+        ResultSet rs = psmt.executeQuery();
+        DefaultTableModel dm = new DefaultTableModel();
+
+        // get column names
+        int len = rs.getMetaData().getColumnCount();
+        System.out.println("LEN : " + len);
+        Vector cols = new Vector(len);
+        for (int i = 1; i <= len; i++) {// Note starting at 1
+
+            cols.add(rs.getMetaData().getColumnName(i));
+            System.out.println(rs.getMetaData().getColumnName(i));
+
+        }
+
+        // Add Data
+        Vector data = new Vector();
+
+        while (rs.next()) {
+
+            Vector row = new Vector(len);
+
+            row.add(rs.getString(1));
+            row.add(rs.getString(2));
+            row.add(rs.getString(3));
+            row.add(rs.getString(4));
+            row.add(rs.getString(5));
+            row.add(rs.getString(6));
+
+            data.add(row);
+        }
+
+        // Now create the table
+        DefaultTableModel model = new DefaultTableModel(data, cols);
+
+        JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+        JTableHeader header = table.getTableHeader();
+
+        outerPanel.add(header, BorderLayout.NORTH);
+        outerPanel.add(table, BorderLayout.CENTER);
+
+        psmt.close();
+        stmt.close();
+        conn.close();
+
+        JScrollPane scrollPane = new JScrollPane(outerPanel);
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(scrollPane);
+
+        return table;
+
+    }
+
+    public static int EmployeeOverTimeGetQueueLength(String typeIn, String crewIn) throws SQLException {
+
+        int highestID = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT Count(Employees.Name) FROM Employees WHERE JobsTitle = \'" + typeIn + "\' AND crew = \'" + crewIn + "\' ;";
+        //   System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            highestID = rs.getInt(1);
+            //     System.out.println("Lowest ID :  " + highestID);
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        return highestID;
+
+    }
+
+    public static void EmployeeOvertimeShiftQueue(String typeIn, String crewIn) {
+
+        int amountInDepartmentAndCrew = 0;
+
+        try {
+            amountInDepartmentAndCrew = SQLiteConnection.EmployeeOverTimeGetQueueLength(typeIn, crewIn);
+            System.out.println("Amount In Department And Crew " + amountInDepartmentAndCrew);
+
+        } catch (SQLException ex) {
+            Logger.getLogger(EmployeeOvertimeSystem.class
+                    .getName()).log(Level.SEVERE, null, ex);
+        }
+
+        for (int i = 1; i < amountInDepartmentAndCrew; i++) {
+
+            System.out.println("Number " + i);
+
+            // UPDATE Employee.PositionInQueue FROM Employee WHERE positionInQueue = i, Job = jobIn and Crew = crewIn
+            // position i = position i + 1;
+            // position(amountInDepartmentAndCrew) = 1
+        }
+
+    }
+
+    public static boolean EmployeeOvertimeEntryExists(String jobIn, int queuePositionIn, String crewIn) throws SQLException {
+
+        int count = 0;
+        Connection conn = Connect();
+        PreparedStatement stmt = null;
+        ResultSet rset = null;
+
+        System.out.println("Job IN - " + jobIn);
+        System.out.println("Queue Position IN - " + queuePositionIn);
+
+        try {
+            stmt = conn.prepareStatement("SELECT Count(ID) from Employees WHERE OvertimeQueuePosition=? AND " + jobIn + " = '1' AND crew = \'" + crewIn + "\';");
+            stmt.setInt(1, queuePositionIn);
+            rset = stmt.executeQuery();
+            if (rset.next()) {
+                count = rset.getInt(1);
+            }
+            return count > 0;
+        } finally {
+            if (rset != null) {
+                try {
+                    rset.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (stmt != null) {
+                try {
+                    stmt.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    public static boolean EmployeeOvertimeNameEntryExists(String nameIn) throws SQLException {
+
+        int count = 0;
+        Connection conn = Connect();
+        PreparedStatement stmt = null;
+        ResultSet rset = null;
+
+        try {
+            stmt = conn.prepareStatement("SELECT Count(Name) from EmployeeOvertime2 WHERE Name=? ");
+            stmt.setString(1, nameIn);
+            rset = stmt.executeQuery();
+            if (rset.next()) {
+                count = rset.getInt(1);
+            }
+            return count > 0;
+        } finally {
+            if (rset != null) {
+                try {
+                    rset.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (stmt != null) {
+                try {
+                    stmt.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    public static Object[] EmployeeOvertimeGetEmployeeSummary(String nameIn) {
+
+        Object[] result = new Object[7];
+
+        try {
+
+            Connection conn = Connect();
+            Statement s = conn.createStatement();
+
+            // QUERY /////////////////////////////////////////////////////////////
+            String selTable = "SELECT Name, Absent, Accepted, DontCount, Refused, MissATurn, Setup FROM EmployeeOvertime2 WHERE Name = \"" + nameIn + "\";";
+            System.out.println(selTable);
+            s.setQueryTimeout(10);
+            s.execute(selTable);
+
+            ResultSet rs = s.getResultSet();
+
+            while ((rs != null) && (rs.next())) {
+
+                result[0] = rs.getString(1);
+                result[1] = rs.getInt(2);
+                result[2] = rs.getInt(3);
+                result[3] = rs.getInt(4);
+                result[4] = rs.getInt(5);
+                result[5] = rs.getInt(6);
+                result[6] = rs.getInt(7);
+
+                rs.close();
+                s.close();
+                conn.close();
+
+            }
+
+            // //////////////////////////////////////////////////////////////////////
+        } catch (SQLException ex) {
+            Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        for (int i = 0; i < 7; i++) {
+
+            System.out.println("Result : " + result[i]);
+
+        }
+
+        return result;
 
     }
 
@@ -4711,6 +6497,46 @@ public class SQLiteConnection {
 
     }
 
+    public static boolean LinerAndShellsEntryExists(String yearIn, String monthIn, String dayIn) throws SQLException {
+
+        boolean result = false;
+        int count = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT LinerEntry.DateString FROM LinerEntry WHERE LinerEntry.DateString = \'" + yearIn + "-" + monthIn + "-" + dayIn + "\';";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            count++;
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        if (count > 0) {
+
+            System.out.println("True");
+            return true;
+
+        } else {
+
+            System.out.println("True");
+            return false;
+        }
+
+    }
+
     public static void LinerAndShellsInsert(int idIn, String dateIn, int optime2, int optime3, int optime4, int shellsTotal, int m1liner,
             int m2liner, int m3liner, int m4liner, int linersTotal) throws SQLException {
 
@@ -4777,6 +6603,42 @@ public class SQLiteConnection {
         updateLinersAndShells.setInt(8, m4linerIn);
         updateLinersAndShells.setInt(9, linersTotal);
         updateLinersAndShells.setInt(10, idIn);
+
+        updateLinersAndShells.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static void LinerAndShellsUpdateByDate(int optime2In, int optime3In, int optime4In, int shellsTotal, int m1linerIn, int m2linerIn,
+            int m3linerIn, int m4linerIn, int linersTotal, String dateIn) throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        shellsTotal = (optime2In + optime3In + optime4In);
+        linersTotal = (m1linerIn + m2linerIn + m3linerIn + m4linerIn);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String sql = "UPDATE LinerAndShells SET Optime2=? , Optime3=? , Optime4=? , TotalShells=?, M1liner=? , "
+                + "M2liner=? , M3liner=? , M4liner=? , TotalLiners=? WHERE DateString=?";
+
+        PreparedStatement updateLinersAndShells = conn.prepareStatement(sql);
+
+        updateLinersAndShells.setInt(1, optime2In);
+        updateLinersAndShells.setInt(2, optime3In);
+        updateLinersAndShells.setInt(3, optime4In);
+        updateLinersAndShells.setInt(4, shellsTotal);
+        updateLinersAndShells.setInt(5, m1linerIn);
+        updateLinersAndShells.setInt(6, m2linerIn);
+        updateLinersAndShells.setInt(7, m3linerIn);
+        updateLinersAndShells.setInt(8, m4linerIn);
+        updateLinersAndShells.setInt(9, linersTotal);
+        updateLinersAndShells.setString(10, dateIn);
 
         updateLinersAndShells.executeUpdate();
 
@@ -5130,16 +6992,43 @@ public class SQLiteConnection {
 
             Vector row = new Vector(len);
 
+            int q1 = rs.getInt(2);
+            String q2 = String.format("%,d", q1);
+
+            int q3 = rs.getInt(3);
+            String q4 = String.format("%,d", q3);
+
+            int q5 = rs.getInt(4);
+            String q6 = String.format("%,d", q5);
+
+            int q7 = rs.getInt(5);
+            String q8 = String.format("%,d", q7);
+
+            int q9 = rs.getInt(6);
+            String q10 = String.format("%,d", q9);
+
+            int q11 = rs.getInt(7);
+            String q12 = String.format("%,d", q11);
+
+            int q13 = rs.getInt(8);
+            String q14 = String.format("%,d", q13);
+
+            int q15 = rs.getInt(9);
+            String q16 = String.format("%,d", q15);
+
+            int q17 = rs.getInt(10);
+            String q18 = String.format("%,d", q17);
+
             row.add(rs.getString(1));
-            row.add(rs.getString(2));
-            row.add(rs.getString(3));
-            row.add(rs.getString(4));
-            row.add(rs.getString(5));
-            row.add(rs.getString(6));
-            row.add(rs.getString(7));
-            row.add(rs.getString(8));
-            row.add(rs.getString(9));
-            row.add(rs.getString(10));
+            row.add(q2);
+            row.add(q4);
+            row.add(q6);
+            row.add(q8);
+            row.add(q10);
+            row.add(q12);
+            row.add(q14);
+            row.add(q16);
+            row.add(q18);
             row.add(rs.getString(11));
 
             data.add(row);
@@ -5149,6 +7038,7 @@ public class SQLiteConnection {
         DefaultTableModel model = new DefaultTableModel(data, cols);
 
         JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
 
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         table.getColumnModel().getColumn(0).setMaxWidth(80);
@@ -5177,8 +7067,10 @@ public class SQLiteConnection {
                     try {
                         linersAndShells = new LinerAndShellsEntry(1, -2);
                         linersAndShells.setLinersAndShellsToID(id);
+
                     } catch (SQLException ex) {
-                        Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
+                        Logger.getLogger(SQLiteConnection.class
+                                .getName()).log(Level.SEVERE, null, ex);
                     }
 
                 }
@@ -5195,6 +7087,32 @@ public class SQLiteConnection {
         conn.close();
 
         return outerPanel;
+
+    }
+
+    public static void LinerAndShellsDelete(int currentIdIn) {
+
+        try {
+            Connection conn = Connect();
+            conn.setAutoCommit(false);
+            Statement s = conn.createStatement();
+            s.setQueryTimeout(10);
+
+            // QUERY
+            // //////////////////////////////////////////////////////////////////////
+            String selTable = "Delete FROM LinerAndShells WHERE LinerAndShells.ID = " + currentIdIn + ";";
+
+            System.out.println("Error : " + selTable);
+
+            s.execute(selTable);
+
+            // /////////////////////////////////////////////////////////////////////////////
+            conn.commit();
+            s.close();
+            conn.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
+        }
 
     }
 
@@ -5322,6 +7240,46 @@ public class SQLiteConnection {
 
     }
 
+    public static boolean LinerDefectsEntryExists(String yearIn, String monthIn, String dayIn) throws SQLException {
+
+        boolean result = false;
+        int count = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT LinerDefects.DateString FROM LinerDefects WHERE LinerDefects.DateString = \'" + yearIn + "-" + monthIn + "-" + dayIn + "\';";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            count++;
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        if (count > 0) {
+
+            System.out.println("True");
+            return true;
+
+        } else {
+
+            System.out.println("True");
+            return false;
+        }
+
+    }
+
     public static void LinerDefectsInsert(int idIn, String dateIn, int M1LinerIn, int M1DefectsIn, int M2LinerIn, int M2DefectsIn, int M3LinerIn,
             int M3DefectsIn, int M4LinerIn, int M4DefectsIn, Double linerSpoiledPercentageIn, Double totalLinedIn, Double totalDefectsIn)
             throws SQLException {
@@ -5369,8 +7327,77 @@ public class SQLiteConnection {
 
     }
 
-    public static void LinerDefectsUpdate(int M1LinerIn, int M1DefectsIn, int M2LinerIn, int M2DefectsIn, int M3LinerIn, int M3DefectsIn,
-            int M4LinerIn, int M4DefectsIn, Double linerSpoiledPercentageIn, Double totalLinedIn, Double totalDefectsIn, int idIn)
+    public static void LinerDefectsUpdate(
+            String DateIn,
+            int M1LinerIn,
+            int M1DefectsIn,
+            int M2LinerIn,
+            int M2DefectsIn,
+            int M3LinerIn,
+            int M3DefectsIn,
+            int M4LinerIn,
+            int M4DefectsIn,
+            Double linerSpoiledPercentageIn,
+            Double totalLinedIn,
+            Double totalDefectsIn,
+            int idIn)
+            throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        Double totalLined = (M1LinerIn * 1.0 + M2LinerIn * 1.0 + M3LinerIn * 1.0 + M4LinerIn * 1.0);
+        System.out.println("Total Lined : " + totalLined);
+        Double totalDefects = (M1DefectsIn * 1.0 + M2DefectsIn * 1.0 + M3DefectsIn * 1.0 + M4DefectsIn * 1.0);
+        System.out.println("Total Defects : " + totalDefects);
+        Double linerSpoiledPercentage = ((totalDefects / totalLined * 100));
+        System.out.println("Total Spoiled %  : " + linerSpoiledPercentage);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String sql = "update LinerDefects set DateString=?, M1Liner=? , M1Defects=? , M2Liner=? , M2Defects=?, M3Liner=? , "
+                + "M3Defects=? , M4Liner=? , M4Defects=? , TotalLined=? , TotalDefects=?, LinerSpoiledPercentage=?  where ID=?";
+
+        System.out.println(idIn);
+
+        PreparedStatement updateLinerDefects = conn.prepareStatement(sql);
+
+        updateLinerDefects.setString(1, DateIn);
+        updateLinerDefects.setInt(2, M1LinerIn);
+        updateLinerDefects.setInt(3, M1DefectsIn);
+        updateLinerDefects.setInt(4, M2LinerIn);
+        updateLinerDefects.setInt(5, M2DefectsIn);
+        updateLinerDefects.setInt(6, M3LinerIn);
+        updateLinerDefects.setInt(7, M3DefectsIn);
+        updateLinerDefects.setInt(8, M4LinerIn);
+        updateLinerDefects.setInt(9, M4DefectsIn);
+        updateLinerDefects.setDouble(10, totalLined);
+        updateLinerDefects.setDouble(11, totalDefects);
+        updateLinerDefects.setDouble(12, linerSpoiledPercentage);
+        updateLinerDefects.setInt(13, idIn);
+
+        updateLinerDefects.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static void LinerDefectsUpdateByDate(
+            int M1LinerIn,
+            int M1DefectsIn,
+            int M2LinerIn,
+            int M2DefectsIn,
+            int M3LinerIn,
+            int M3DefectsIn,
+            int M4LinerIn,
+            int M4DefectsIn,
+            Double linerSpoiledPercentageIn,
+            Double totalLinedIn,
+            Double totalDefectsIn,
+            String DateIn)
             throws SQLException {
 
         Connection conn = Connect();
@@ -5387,9 +7414,7 @@ public class SQLiteConnection {
         // QUERY
         // //////////////////////////////////////////////////////////////////////
         String sql = "update LinerDefects set M1Liner=? , M1Defects=? , M2Liner=? , M2Defects=?, M3Liner=? , "
-                + "M3Defects=? , M4Liner=? , M4Defects=? , TotalLined=? , TotalDefects=?, LinerSpoiledPercentage=?  where ID=?";
-
-        System.out.println(idIn);
+                + "M3Defects=? , M4Liner=? , M4Defects=? , TotalLined=? , TotalDefects=?, LinerSpoiledPercentage=?  where DateString=?";
 
         PreparedStatement updateLinerDefects = conn.prepareStatement(sql);
 
@@ -5404,7 +7429,7 @@ public class SQLiteConnection {
         updateLinerDefects.setDouble(9, totalLined);
         updateLinerDefects.setDouble(10, totalDefects);
         updateLinerDefects.setDouble(11, linerSpoiledPercentage);
-        updateLinerDefects.setInt(12, idIn);
+        updateLinerDefects.setString(12, DateIn);
 
         updateLinerDefects.executeUpdate();
 
@@ -5713,6 +7738,169 @@ public class SQLiteConnection {
         return total;
     }
 
+    public static JPanel LinerDefectsSummaryTable(int in) throws SQLException {
+
+        JPanel outerPanel = new JPanel(new BorderLayout());
+
+        Connection conn = Connect();
+        Statement stmt = conn.createStatement();
+        stmt.setQueryTimeout(10);
+
+        PreparedStatement psmt = conn.prepareStatement("SELECT DateString as Date, M1Liner, M1Defects, M2Liner, M2Defects, M3Liner, M3Defects, M4Liner, M4Defects, TotalLined, TotalDefects, LinerSpoiledPercentage as Percent, ID FROM LinerDefects ORDER BY Date DESC");
+        psmt.setQueryTimeout(10);
+        ResultSet rs = psmt.executeQuery();
+        DefaultTableModel dm = new DefaultTableModel();
+
+        // get column names
+        int len = rs.getMetaData().getColumnCount();
+        System.out.println("LEN : " + len);
+        Vector cols = new Vector(len);
+        for (int i = 1; i <= len; i++) {// Note starting at 1
+
+            cols.add(rs.getMetaData().getColumnName(i));
+            System.out.println(rs.getMetaData().getColumnName(i));
+
+        }
+
+        // Add Data
+        Vector data = new Vector();
+
+        while (rs.next()) {
+
+            Vector row = new Vector(len);
+
+            int q1 = rs.getInt(2);
+            String q2 = String.format("%,d", q1);
+
+            int q3 = rs.getInt(3);
+            String q4 = String.format("%,d", q3);
+
+            int q5 = rs.getInt(4);
+            String q6 = String.format("%,d", q5);
+
+            int q7 = rs.getInt(5);
+            String q8 = String.format("%,d", q7);
+
+            int q9 = rs.getInt(6);
+            String q10 = String.format("%,d", q9);
+
+            int q11 = rs.getInt(7);
+            String q12 = String.format("%,d", q11);
+
+            int q13 = rs.getInt(8);
+            String q14 = String.format("%,d", q13);
+
+            int q15 = rs.getInt(9);
+            String q16 = String.format("%,d", q15);
+
+            int q17 = rs.getInt(10);
+            String q18 = String.format("%,d", q17);
+
+            int q19 = rs.getInt(11);
+            String q20 = String.format("%,d", q19);
+
+            double d = rs.getDouble(12);
+            DecimalFormat df = new DecimalFormat("#.##");
+
+            row.add(rs.getString(1));
+            row.add(q2);
+            row.add(q4);
+            row.add(q6);
+            row.add(q8);
+            row.add(q10);
+            row.add(q12);
+            row.add(q14);
+            row.add(q16);
+            row.add(q18);
+            row.add(q20);
+            row.add(df.format(d) + "%");
+            row.add(rs.getInt(13));
+
+            data.add(row);
+        }
+
+        // Now create the table
+        DefaultTableModel model = new DefaultTableModel(data, cols);
+
+        JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
+
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        table.getColumnModel().getColumn(0).setMinWidth(80);
+
+        table.getColumnModel().getColumn(12).setMaxWidth(40);
+
+        // Render Checkbox
+//        TableColumn tc = table.getColumnModel().getColumn(9);
+//        tc.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+                if (e.getClickCount() == 2) {
+                    JTable target = (JTable) e.getSource();
+
+                    int row = target.getSelectedRow() + 1;
+					// int column = target.getSelectedColumn();
+
+                    // System.out.println("Clicked : " + row );
+                    System.out.println(table.getValueAt(table.getSelectedRow(), 12).toString());
+
+                    String idString = table.getValueAt(table.getSelectedRow(), 12).toString();
+                    int id = Integer.valueOf(idString);
+                    LinerAndShellsEntry linersAndShells;
+                    try {
+                        LinerDefects endCounts = new LinerDefects(1, -2);
+                        endCounts.setDefectToId(id);
+
+                    } catch (SQLException ex) {
+                        Logger.getLogger(SQLiteConnection.class
+                                .getName()).log(Level.SEVERE, null, ex);
+                    }
+
+                }
+            }
+        });
+
+        JTableHeader header = table.getTableHeader();
+
+        outerPanel.add(header, BorderLayout.NORTH);
+        outerPanel.add(table, BorderLayout.CENTER);
+
+        psmt.close();
+        stmt.close();
+        conn.close();
+
+        return outerPanel;
+
+    }
+
+    public static void LinerDefectsDelete(int currentIdIn) {
+
+        try {
+            Connection conn = Connect();
+            conn.setAutoCommit(false);
+            Statement s = conn.createStatement();
+            s.setQueryTimeout(10);
+
+            // QUERY
+            // //////////////////////////////////////////////////////////////////////
+            String selTable = "Delete FROM LinerDefects WHERE LinerDefects.ID = " + currentIdIn + ";";
+
+            System.out.println("Error : " + selTable);
+
+            s.execute(selTable);
+
+            // /////////////////////////////////////////////////////////////////////////////
+            conn.commit();
+            s.close();
+            conn.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+    }
+
     // End Counts
     public static int EndCountsGetHighestID() throws SQLException {
 
@@ -5840,6 +8028,46 @@ public class SQLiteConnection {
 
     }
 
+    public static boolean EndCountsEntryExists(String yearIn, String monthIn, String dayIn) throws SQLException {
+
+        boolean result = false;
+        int count = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT EndCounts.DateString FROM EndCounts WHERE EndCounts.DateString = \'" + yearIn + "-" + monthIn + "-" + dayIn + "\';";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            count++;
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        if (count > 0) {
+
+            System.out.println("True");
+            return true;
+
+        } else {
+
+            System.out.println("True");
+            return false;
+        }
+
+    }
+
     public static void EndCountsInsert(int idIn, String dateIn, int W11In, int W12In, int W21In, int W22In, int W31In, int W32In, int W33In,
             int total1In, int W41In, int W42In, int W43In, int W44In, int total2In, int total3In) throws SQLException {
 
@@ -5921,6 +8149,48 @@ public class SQLiteConnection {
         EndCountsInsert.setInt(13, total2);
         EndCountsInsert.setInt(14, total3);
         EndCountsInsert.setInt(15, idIn);
+
+        EndCountsInsert.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static void EndCountsUpdateByDate(int W11In, int W12In, int W21In, int W22In, int W31In, int W32In, int W33In, int total1In,
+            int W41In, int W42In, int W43In, int W44In, int total2In, int total3In, String dateIn) throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        int total1 = (W11In + W12In + W21In + W22In + W31In + W32In + W33In);
+        int total2 = (W41In + W42In + W43In + W44In);
+        int total3 = total1 + total2;
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String sql = "update EndCounts set W11=? , W12=? , W21=? , W22=?, W31=? , "
+                + "W32=? , W33=? , total1=? , W41=? , W42=?, W43=?, W44=?, total2=?, total3=?  where DateString=?";
+
+        PreparedStatement EndCountsInsert = conn.prepareStatement(sql);
+
+        EndCountsInsert.setInt(1, W11In);
+        EndCountsInsert.setInt(2, W12In);
+        EndCountsInsert.setInt(3, W21In);
+        EndCountsInsert.setInt(4, W22In);
+        EndCountsInsert.setInt(5, W31In);
+        EndCountsInsert.setInt(6, W32In);
+        EndCountsInsert.setInt(7, W33In);
+        EndCountsInsert.setInt(8, total1);
+        EndCountsInsert.setInt(9, W41In);
+        EndCountsInsert.setInt(10, W42In);
+        EndCountsInsert.setInt(11, W43In);
+        EndCountsInsert.setInt(12, W44In);
+        EndCountsInsert.setInt(13, total2);
+        EndCountsInsert.setInt(14, total3);
+        EndCountsInsert.setString(15, dateIn);
 
         EndCountsInsert.executeUpdate();
 
@@ -6239,7 +8509,7 @@ public class SQLiteConnection {
         Statement stmt = conn.createStatement();
         stmt.setQueryTimeout(10);
 
-        PreparedStatement psmt = conn.prepareStatement("SELECT DateString as Date, W11, W12, W21, W22, W31, W32, W33, Total1, W41, W42, W43, W44, Total2, Total3, ID FROM EndCounts ORDER BY DateString DESC");
+        PreparedStatement psmt = conn.prepareStatement("SELECT DateString as Date, W11, W12, W21, W22, W31, W32, W33, Total1, W41, W42, W43, W44, Total2, Total3, ID FROM EndCounts ORDER BY Date DESC");
         psmt.setQueryTimeout(10);
         ResultSet rs = psmt.executeQuery();
         DefaultTableModel dm = new DefaultTableModel();
@@ -6262,21 +8532,63 @@ public class SQLiteConnection {
 
             Vector row = new Vector(len);
 
+            int q1 = rs.getInt(2);
+            String q2 = String.format("%,d", q1);
+
+            int q3 = rs.getInt(3);
+            String q4 = String.format("%,d", q3);
+
+            int q5 = rs.getInt(4);
+            String q6 = String.format("%,d", q5);
+
+            int q7 = rs.getInt(5);
+            String q8 = String.format("%,d", q7);
+
+            int q9 = rs.getInt(6);
+            String q10 = String.format("%,d", q9);
+
+            int q11 = rs.getInt(7);
+            String q12 = String.format("%,d", q11);
+
+            int q13 = rs.getInt(8);
+            String q14 = String.format("%,d", q13);
+
+            int q15 = rs.getInt(9);
+            String q16 = String.format("%,d", q15);
+
+            int q17 = rs.getInt(10);
+            String q18 = String.format("%,d", q17);
+
+            int q19 = rs.getInt(11);
+            String q20 = String.format("%,d", q19);
+
+            int q21 = rs.getInt(12);
+            String q22 = String.format("%,d", q21);
+
+            int q23 = rs.getInt(13);
+            String q24 = String.format("%,d", q23);
+
+            int q25 = rs.getInt(14);
+            String q26 = String.format("%,d", q25);
+
+            int q27 = rs.getInt(15);
+            String q28 = String.format("%,d", q27);
+
             row.add(rs.getString(1));
-            row.add(rs.getString(2));
-            row.add(rs.getString(3));
-            row.add(rs.getString(4));
-            row.add(rs.getString(5));
-            row.add(rs.getString(6));
-            row.add(rs.getString(7));
-            row.add(rs.getString(8));
-            row.add(rs.getString(9));
-            row.add(rs.getString(10));
-            row.add(rs.getString(11));
-            row.add(rs.getString(12));
-            row.add(rs.getString(13));
-            row.add(rs.getString(14));
-            row.add(rs.getString(15));
+            row.add(q2);
+            row.add(q4);
+            row.add(q6);
+            row.add(q8);
+            row.add(q10);
+            row.add(q12);
+            row.add(q14);
+            row.add(q16);
+            row.add(q18);
+            row.add(q20);
+            row.add(q22);
+            row.add(q24);
+            row.add(q26);
+            row.add(q28);
             row.add(rs.getString(16));
 
             data.add(row);
@@ -6286,6 +8598,7 @@ public class SQLiteConnection {
         DefaultTableModel model = new DefaultTableModel(data, cols);
 
         JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
 
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         table.getColumnModel().getColumn(0).setMaxWidth(100);
@@ -6314,8 +8627,10 @@ public class SQLiteConnection {
                     try {
                         EndCounts endCounts = new EndCounts(1, -2);
                         endCounts.setEndCountsToID(id);
+
                     } catch (SQLException ex) {
-                        Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
+                        Logger.getLogger(SQLiteConnection.class
+                                .getName()).log(Level.SEVERE, null, ex);
                     }
 
                 }
@@ -6332,6 +8647,32 @@ public class SQLiteConnection {
         conn.close();
 
         return outerPanel;
+
+    }
+
+    public static void EndCountsDelete(int currentIdIn) {
+
+        try {
+            Connection conn = Connect();
+            conn.setAutoCommit(false);
+            Statement s = conn.createStatement();
+            s.setQueryTimeout(10);
+
+            // QUERY
+            // //////////////////////////////////////////////////////////////////////
+            String selTable = "Delete FROM EndCounts WHERE EndCounts.ID = " + currentIdIn + ";";
+
+            System.out.println("Error : " + selTable);
+
+            s.execute(selTable);
+
+            // /////////////////////////////////////////////////////////////////////////////
+            conn.commit();
+            s.close();
+            conn.close();
+        } catch (SQLException ex) {
+            Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
+        }
 
     }
 
@@ -6366,6 +8707,39 @@ public class SQLiteConnection {
         return highestID;
     }
 
+    public static boolean SpoilageByDayCheckIfEntryExists(String dateIn) throws SQLException {
+
+        int count = 0;
+        Connection conn = Connect();
+        PreparedStatement stmt = null;
+        ResultSet rset = null;
+
+        try {
+            stmt = conn.prepareStatement("SELECT Count(ID) from SpoilageByDay WHERE DateString=?");
+            stmt.setString(1, dateIn);
+            rset = stmt.executeQuery();
+            if (rset.next()) {
+                count = rset.getInt(1);
+            }
+            return count > 0;
+        } finally {
+            if (rset != null) {
+                try {
+                    rset.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (stmt != null) {
+                try {
+                    stmt.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
     public static Object[] SpoilageByDayReturnEntryByDate(Date dateIn) throws Exception {
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -6379,6 +8753,72 @@ public class SQLiteConnection {
 
         // QUERY /////////////////////////////////////////////////////////////
         String selTable = "SELECT * FROM SpoilageByDay WHERE SpoilageByDay.DateString = \"" + df + "\";";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2);
+            result[1] = df1;
+            result[2] = rs.getInt(3);
+            result[3] = rs.getInt(4);
+            result[4] = rs.getInt(5);
+            result[5] = rs.getInt(6);
+            result[6] = rs.getInt(7);
+            result[7] = rs.getInt(8);
+            result[8] = rs.getInt(9);
+            result[9] = rs.getInt(10);
+            result[10] = rs.getInt(11);
+            result[11] = rs.getInt(12);
+            result[12] = rs.getInt(13);
+            result[13] = rs.getInt(14);
+            result[14] = rs.getInt(15);
+            result[15] = rs.getInt(16);
+            result[16] = rs.getInt(17);
+            result[17] = rs.getInt(18);
+            result[18] = rs.getInt(19);
+            result[19] = rs.getInt(20);
+            result[20] = rs.getInt(21);
+            result[21] = rs.getInt(22);
+            result[22] = rs.getInt(23);
+            result[23] = rs.getInt(24);
+            result[24] = rs.getInt(25);
+            result[25] = rs.getInt(26);
+            result[26] = rs.getInt(27);
+            result[27] = rs.getInt(28);
+            result[28] = rs.getInt(29);
+            result[29] = rs.getInt(30);
+            result[30] = rs.getInt(31);
+            result[31] = rs.getInt(32);
+            result[32] = rs.getInt(33);
+            result[33] = rs.getInt(34);
+            result[34] = rs.getInt(35);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+
+    }
+
+    public static Object[] SpoilageByDayReturnEntryByString(String dateIn) throws Exception {
+
+        // Need to format dateIn to proper Syntax ----> #2/2/2012#
+        Object[] result = new Object[35];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM SpoilageByDay WHERE SpoilageByDay.DateString = \"" + dateIn + "\";";
         System.out.println(selTable);
         s.setQueryTimeout(10);
         s.execute(selTable);
@@ -6949,6 +9389,7 @@ public class SQLiteConnection {
         s.execute(sql1);
         ResultSet rs1 = s.getResultSet();
         while ((rs1 != null) && (rs1.next())) {
+
             totals[0] = rs1.getInt(1);
         }
         // --------------------------------------------------------- //
@@ -8373,7 +10814,7 @@ public class SQLiteConnection {
 
         for (int i = 0; i < 31; i++) {
 
-            date = ( year + "-" + month + "-" + days[i]);
+            date = (year + "-" + month + "-" + days[i]);
             String sql1 = "SELECT SUM (Optime1And2 + Optime3 + M1BBal + M3BBal + M1Liner + M2Liner + Stolle11 + "
                     + "Stolle22 +  M3ABal +  M1ABal + OvecTester + QCLab + BordenNo1 + M4QcArea + Stolle21 + Stolle33 + "
                     + "Stolle12 + Stolle31 + Stolle32 + M2BBal + M2ABal + M3Liners + M3QcArea + Stolle42 + M4B2Bal + "
@@ -8472,6 +10913,180 @@ public class SQLiteConnection {
         System.out.println("Total : " + total);
 
         return total;
+
+    }
+
+    public static JPanel SpoilageByDaySummaryTable() throws SQLException {
+
+        JPanel outerPanel = new JPanel(new BorderLayout());
+
+        Connection conn = Connect();
+        Statement stmt = conn.createStatement();
+        stmt.setQueryTimeout(10);
+
+        PreparedStatement psmt = conn.prepareStatement(""
+                + "SELECT "
+                + "ID As ID, "
+                + "DateString As Date, "
+                + "Optime1and2 As O12, "
+                + "Optime3 As O3, "
+                + "M1BBal As M1B,  "
+                + "M3BBal As M3B, "
+                + "M1Liner As M1L,  "
+                + "M2Liner As M2L,  "
+                + "Stolle11 As S11,  "
+                + "Stolle22 As S22, "
+                + "M3ABal As M3A,  "
+                + "M1ABal As M1A,  "
+                + "OvecTester As OVEC,  "
+                + "QCLab As QCL, "
+                + "BordenNo1 As BORD1,  "
+                + "M4QcArea As M4QC,  "
+                + "Stolle21 As S21,  "
+                + "Stolle33 As S33, "
+                + "Stolle12 As S12,  "
+                + "Stolle31 As S31,  "
+                + "Stolle32 As S32,  "
+                + "M2BBal As M2B, "
+                + "M2ABal As M2A, "
+                + "M3Liners As M3L,  "
+                + "M3QcArea As M3QC,  "
+                + "Stolle42 As S42,  "
+                + "M4B2Bal As M4B2, "
+                + "M4Liners As M4L, "
+                + "QCMod1 As QCM1,  "
+                + "Stolle41 As S41,  "
+                + "Stolle43 As S43, "
+                + "Stolle44 As S44,  "
+                + "Balancer4B As BAL4B,  "
+                + "Balancer4A As BAL4A, "
+                + "Formatec As FORM, "
+                + "(Optime1and2 + Optime3 + M1BBal + M3BBal + M1Liner +  M2Liner +  Stolle11 +  Stolle22 + M3ABal +  M1ABal +  OvecTester +  QCLab + BordenNo1 +  M4QcArea +  Stolle21 +  Stolle33 + Stolle12 +  Stolle31 +  Stolle32 +  M2BBal + M2ABal + M3Liners +  M3QcArea +  Stolle42 +  M4B2Bal + m4Liners + QCMod1 +  Stolle41 +  Stolle43 + Stolle44 +  Balancer4B +  Balancer4A + Formatec) AS TOTAL "
+                + "FROM SpoilageByDay "
+                + "ORDER BY DateString DESC");
+        psmt.setQueryTimeout(10);
+        ResultSet rs = psmt.executeQuery();
+        DefaultTableModel dm = new DefaultTableModel();
+
+        // get column names
+        int len = rs.getMetaData().getColumnCount();
+        System.out.println("LEN : " + len);
+        Vector cols = new Vector(len);
+        for (int i = 1; i <= len; i++) {// Note starting at 1
+
+            cols.add(rs.getMetaData().getColumnName(i));
+            System.out.println(rs.getMetaData().getColumnName(i));
+
+        }
+
+        // Add Data
+        Vector data = new Vector();
+
+        while (rs.next()) {
+
+            Vector row = new Vector(len);
+
+            row.add(rs.getInt(1));
+            row.add(rs.getString(2));
+            row.add(rs.getInt(3));
+            row.add(rs.getInt(4));
+            row.add(rs.getInt(5));
+            row.add(rs.getInt(6));
+            row.add(rs.getInt(7));
+            row.add(rs.getInt(8));
+            row.add(rs.getInt(9));
+            row.add(rs.getInt(10));
+            row.add(rs.getInt(11));
+            row.add(rs.getInt(12));
+            row.add(rs.getInt(13));
+            row.add(rs.getInt(14));
+            row.add(rs.getInt(15));
+            row.add(rs.getInt(16));
+            row.add(rs.getInt(17));
+            row.add(rs.getInt(18));
+            row.add(rs.getInt(19));
+            row.add(rs.getInt(20));
+            row.add(rs.getInt(21));
+            row.add(rs.getInt(22));
+            row.add(rs.getInt(23));
+            row.add(rs.getInt(24));
+            row.add(rs.getInt(25));
+            row.add(rs.getInt(26));
+            row.add(rs.getInt(27));
+            row.add(rs.getInt(28));
+            row.add(rs.getInt(29));
+            row.add(rs.getInt(30));
+            row.add(rs.getInt(31));
+            row.add(rs.getInt(32));
+            row.add(rs.getInt(33));
+            row.add(rs.getInt(34));
+            row.add(rs.getInt(35));
+            row.add(rs.getInt(36));
+            data.add(row);
+        }
+
+        // Now create the table
+        DefaultTableModel model = new DefaultTableModel(data, cols);
+
+        JTable table = new JTable(model) {
+            public Component prepareRenderer(TableCellRenderer renderer, int index_row, int index_col) {
+                Component comp = super.prepareRenderer(renderer, index_row, index_col);
+                //odd col index, selected or not selected
+                if (isCellSelected(index_row, index_col)) {
+                    comp.setBackground(Color.GRAY);
+                } //                else if (index_col == 35 || index_col == 1 || index_col == 0) {
+                //                    comp.setBackground(Color.WHITE);                   
+                //                } 
+                else {
+                    comp.setBackground(Color.WHITE);
+                    setSelectionForeground(Color.WHITE);
+                    setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
+                    setSelectionBackground(Color.GRAY);
+                    // comp.setFont(new Font("Serif", Font.BOLD, 12));                  
+                }
+                return comp;
+            }
+        };
+
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        table.getColumnModel().getColumn(1).setMinWidth(90);
+        table.getColumnModel().getColumn(35).setMinWidth(60);
+
+        // Render Checkbox
+//        TableColumn tc = table.getColumnModel().getColumn(9);
+//        tc.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+                if (e.getClickCount() == 2) {
+                    JTable target = (JTable) e.getSource();
+
+                    int row = target.getSelectedRow() + 1;
+					// int column = target.getSelectedColumn();
+
+                    // System.out.println("Clicked : " + row );
+                    System.out.println(table.getValueAt(table.getSelectedRow(), 0).toString());
+
+                    String idString = table.getValueAt(table.getSelectedRow(), 0).toString();
+                    int id = Integer.valueOf(idString);
+                    ParEntry par = new ParEntry(2, "1", "August", "2014");
+                    ParEntry.setParToForm(1);
+
+                }
+            }
+        });
+
+        JTableHeader header = table.getTableHeader();
+
+        outerPanel.add(header, BorderLayout.NORTH);
+        outerPanel.add(table, BorderLayout.CENTER);
+
+        psmt.close();
+        stmt.close();
+        conn.close();
+
+        return outerPanel;
 
     }
 
@@ -10615,6 +13230,7 @@ public class SQLiteConnection {
     public static JTable OptimeProductionReturnJTable(String type, String query) throws SQLException {
 
         JTable table = new JTable();
+        table.setAutoCreateRowSorter(true);
 
         System.out.println("Query : " + query);
         System.out.println("Type : " + type);
@@ -10650,14 +13266,20 @@ public class SQLiteConnection {
             while (rs.next()) {
                 Vector row = new Vector(len);
 
+                int q1 = rs.getInt(5);
+                String q2 = String.format("%,d", q1);
+
+                int q3 = rs.getInt(8);
+                String q4 = String.format("%,d", q3);
+
                 row.add(rs.getString(1));
                 row.add(rs.getString(2));
                 row.add(rs.getString(3));
                 row.add(rs.getString(4));
-                row.add(rs.getString(5));
+                row.add(q2); //
                 row.add(rs.getString(6));
                 row.add(rs.getString(7));
-                row.add(rs.getString(8));
+                row.add(q4); //
                 row.add(rs.getString(9));
                 row.add(rs.getString(10));
                 row.add(rs.getString(11));
@@ -11219,7 +13841,7 @@ public class SQLiteConnection {
 
                 data.add(row);
             }
-            
+
         } else if (type.equalsIgnoreCase("Stolle Production")) {
 
             System.out.print(type);
@@ -11242,11 +13864,10 @@ public class SQLiteConnection {
                 row.add(rs.getInt(13));
                 row.add(rs.getInt(14));
                 row.add(rs.getString(15));
-                
 
                 data.add(row);
             }
-            
+
         } else if (type.equalsIgnoreCase("Stolle Spoilage")) {
 
             System.out.print(type);
@@ -11269,12 +13890,10 @@ public class SQLiteConnection {
                 row.add(rs.getDouble(13));
                 row.add(rs.getString(14));
 
-                
-
                 data.add(row);
             }
-            
-        }else if (type.equalsIgnoreCase("EHS Statutory Checks")) {
+
+        } else if (type.equalsIgnoreCase("EHS Statutory Checks")) {
 
             System.out.print(type);
 
@@ -11296,12 +13915,10 @@ public class SQLiteConnection {
                 row.add(rs.getDouble(13));
                 row.add(rs.getString(14));
 
-                
-
                 data.add(row);
             }
-            
-        }else if (type.equalsIgnoreCase("Machine OEE")) {
+
+        } else if (type.equalsIgnoreCase("Machine OEE")) {
 
             System.out.print(type);
 
@@ -11331,14 +13948,11 @@ public class SQLiteConnection {
                 row.add(rs.getInt(21));
                 row.add(rs.getInt(22));
                 row.add(rs.getString(23));
-                
-
-                
 
                 data.add(row);
             }
-            
-        }else if (type.equalsIgnoreCase("Stolle Downtime")) {
+
+        } else if (type.equalsIgnoreCase("Stolle Downtime")) {
 
             System.out.print(type);
 
@@ -11371,14 +13985,11 @@ public class SQLiteConnection {
                 row.add(rs.getDouble(24));
                 row.add(rs.getString(25));
                 row.add(rs.getString(26));
-                
-
-                
 
                 data.add(row);
             }
-            
-        }else if (type.equalsIgnoreCase("Line Balance")) {
+
+        } else if (type.equalsIgnoreCase("Line Balance")) {
 
             System.out.print(type);
 
@@ -11392,10 +14003,54 @@ public class SQLiteConnection {
                 row.add(rs.getInt(5));
                 row.add(rs.getInt(6));
                 row.add(rs.getString(7));
-                
+
                 data.add(row);
             }
-            
+        } else if (type.equalsIgnoreCase("Spoilage By Day")) {
+
+            System.out.print(type);
+
+            while (rs.next()) {
+                Vector row = new Vector(len);
+
+                row.add(rs.getInt(1));
+                row.add(rs.getString(2));
+                row.add(rs.getInt(3));
+                row.add(rs.getInt(4));
+                row.add(rs.getInt(5));
+                row.add(rs.getInt(6));
+                row.add(rs.getInt(7));
+                row.add(rs.getInt(8));
+                row.add(rs.getInt(9));
+                row.add(rs.getInt(10));
+                row.add(rs.getInt(11));
+                row.add(rs.getInt(12));
+                row.add(rs.getInt(13));
+                row.add(rs.getInt(14));
+                row.add(rs.getInt(15));
+                row.add(rs.getInt(16));
+                row.add(rs.getInt(17));
+                row.add(rs.getInt(18));
+                row.add(rs.getInt(19));
+                row.add(rs.getInt(20));
+                row.add(rs.getInt(21));
+                row.add(rs.getInt(22));
+                row.add(rs.getInt(23));
+                row.add(rs.getInt(24));
+                row.add(rs.getInt(25));
+                row.add(rs.getInt(26));
+                row.add(rs.getInt(27));
+                row.add(rs.getInt(28));
+                row.add(rs.getInt(29));
+                row.add(rs.getInt(30));
+                row.add(rs.getInt(31));
+                row.add(rs.getInt(32));
+                row.add(rs.getInt(33));
+                row.add(rs.getInt(34));
+
+                data.add(row);
+            }
+
         }
 
         table = new JTable(data, cols);
@@ -12212,6 +14867,7 @@ public class SQLiteConnection {
         DefaultTableModel model = new DefaultTableModel(data, cols);
 
         JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
 
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         table.getColumnModel().getColumn(0).setMaxWidth(40);
@@ -12222,37 +14878,47 @@ public class SQLiteConnection {
 
         // Render Checkbox
         TableColumn tc = table.getColumnModel().getColumn(9);
-        tc.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+        tc
+                .setCellRenderer(table.getDefaultRenderer(Boolean.class
+                        ));
 
-        table.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
+        table.addMouseListener(
+                new MouseAdapter() {
+                    @Override
+                    public void mousePressed(MouseEvent e
+                    ) {
 
-                if (e.getClickCount() == 2) {
-                    JTable target = (JTable) e.getSource();
+                        if (e.getClickCount() == 2) {
+                            JTable target = (JTable) e.getSource();
 
-                    int row = target.getSelectedRow() + 1;
+                            int row = target.getSelectedRow() + 1;
 					// int column = target.getSelectedColumn();
 
-                    // System.out.println("Clicked : " + row );
-                    System.out.println(table.getValueAt(table.getSelectedRow(), 0).toString());
+                            // System.out.println("Clicked : " + row );
+                            System.out.println(table.getValueAt(table.getSelectedRow(), 0).toString());
 
-                    String idString = table.getValueAt(table.getSelectedRow(), 0).toString();
-                    int id = Integer.valueOf(idString);
-                    ParEntry par = new ParEntry(2, "1", "August", "2014");
-                    ParEntry.setParToForm(1);
+                            String idString = table.getValueAt(table.getSelectedRow(), 0).toString();
+                            int id = Integer.valueOf(idString);
+                            ParEntry.frame.dispose();
+                            ParEntry par = new ParEntry(2, "1", "August", "2014");
+                            ParEntry.setParToForm(Integer.valueOf(idString));
 
+                        }
+
+                    }
                 }
-            }
-        });
+        );
 
         JTableHeader header = table.getTableHeader();
 
         outerPanel.add(header, BorderLayout.NORTH);
+
         outerPanel.add(table, BorderLayout.CENTER);
 
         psmt.close();
+
         stmt.close();
+
         conn.close();
 
         return outerPanel;
@@ -12262,6 +14928,7 @@ public class SQLiteConnection {
     public static JTable PARReturnJTable(String type, String query) throws SQLException {
 
         JTable table = new JTable();
+        table.setAutoCreateRowSorter(true);
 
         System.out.println("Query : " + query);
         System.out.println("Type : " + type);
@@ -12377,11 +15044,34 @@ public class SQLiteConnection {
         }
 
         table = new JTable(data, cols);
+        table.setAutoCreateRowSorter(true);
 
         // Now create the table
         DefaultTableModel model = new DefaultTableModel(data, cols);
 
         return table;
+
+    }
+
+    public static void ParDatabaseDelete(String formIn) throws SQLException {
+
+        Connection conn = Connect();
+        conn.setAutoCommit(false);
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String selTable = "Delete FROM ParEntry WHERE ParEntry.Form = " + formIn + ";";
+
+        System.out.println("Error : " + selTable);
+
+        s.execute(selTable);
+
+        // /////////////////////////////////////////////////////////////////////////////
+        conn.commit();
+        s.close();
+        conn.close();
 
     }
 
@@ -13115,6 +15805,28 @@ public class SQLiteConnection {
 
     }
 
+    public static void NCRStolleDelete(int idIn) throws SQLException {
+
+        Connection conn = Connect();
+        conn.setAutoCommit(false);
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String selTable = "Delete FROM NCRStolle WHERE NCRStolle.NCRNumber = " + idIn + ";";
+
+        System.out.println("Error : " + selTable);
+
+        s.execute(selTable);
+
+        // /////////////////////////////////////////////////////////////////////////////
+        conn.commit();
+        s.close();
+        conn.close();
+
+    }
+
     public static void NCRLinerInsert(
             int NCRNumberIn, String DepartmentIn, String CrewNameIn, String PressNameIn, String DefectIn, String GeneralIn, String IdentifiedByIn,
             String DateIssuedIn, String TimeIn, String NonConformanceIn, String ImmediateActionTakenIn, String PersonsAlertedIn,
@@ -13208,6 +15920,28 @@ public class SQLiteConnection {
         StolleInsert.executeUpdate();
 
         // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static void NCRLinerDelete(int idIn) throws SQLException {
+
+        Connection conn = Connect();
+        conn.setAutoCommit(false);
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String selTable = "Delete FROM NCRLiner WHERE NCRLiner.NCRNumber = " + idIn + ";";
+
+        System.out.println("Error : " + selTable);
+
+        s.execute(selTable);
+
+        // /////////////////////////////////////////////////////////////////////////////
+        conn.commit();
         s.close();
         conn.close();
 
@@ -13308,6 +16042,28 @@ public class SQLiteConnection {
 
     }
 
+    public static void NCRShellPressDelete(int idIn) throws SQLException {
+
+        Connection conn = Connect();
+        conn.setAutoCommit(false);
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String selTable = "Delete FROM NCRShellPress WHERE NCRShellPress.NCRNumber = " + idIn + ";";
+
+        System.out.println("Error : " + selTable);
+
+        s.execute(selTable);
+
+        // /////////////////////////////////////////////////////////////////////////////
+        conn.commit();
+        s.close();
+        conn.close();
+
+    }
+
     public static void NCROtherInsert(
             int NCRNumberIn, String DepartmentIn, String CrewNameIn, String PressNameIn, String DefectIn, String GeneralIn, String IdentifiedByIn,
             String DateIssuedIn, String TimeIn, String NonConformanceIn, String ImmediateActionTakenIn, String PersonsAlertedIn,
@@ -13371,6 +16127,28 @@ public class SQLiteConnection {
         StolleInsert.executeUpdate();
 
         // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static void NCROtherDelete(int idIn) throws SQLException {
+
+        Connection conn = Connect();
+        conn.setAutoCommit(false);
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String selTable = "Delete FROM NCROther WHERE NCROther.NCRNumber = " + idIn + ";";
+
+        System.out.println("Error : " + selTable);
+
+        s.execute(selTable);
+
+        // /////////////////////////////////////////////////////////////////////////////
+        conn.commit();
         s.close();
         conn.close();
 
@@ -14052,6 +16830,7 @@ public class SQLiteConnection {
         DefaultTableModel model = new DefaultTableModel(data, cols);
 
         JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
 
         table.addMouseListener(new MouseAdapter() {
             @Override
@@ -14066,14 +16845,18 @@ public class SQLiteConnection {
                     System.out.println(table.getValueAt(table.getSelectedRow(), 0).toString());
 
                     if (table.getValueAt(table.getSelectedRow(), 1).toString().equals("Stolle")) {
+                        //    StolleEntryMenu.frame.dispose();
                         StolleEntryMenu stolleMenu = new StolleEntryMenu(-1);
                         try {
+
                             StolleEntryMenu.setStolleEntryToNCR(Integer.valueOf(table.getValueAt(table.getSelectedRow(), 0).toString()));
+
                         } catch (Exception e1) {
                             // TODO Auto-generated catch block
                             e1.printStackTrace();
                         }
                     } else if (table.getValueAt(table.getSelectedRow(), 1).toString().equals("Liner")) {
+                        //    LinerEntryMenu.frame.dispose();
                         LinerEntryMenu linerMenu = new LinerEntryMenu(-1);
                         try {
                             LinerEntryMenu.setStolleEntryToNCR(Integer.valueOf(table.getValueAt(table.getSelectedRow(), 0).toString()));
@@ -14082,6 +16865,7 @@ public class SQLiteConnection {
                             e1.printStackTrace();
                         }
                     } else if (table.getValueAt(table.getSelectedRow(), 1).toString().equals("ShellPress")) {
+                        //    ShellPressEntryMenu.frame.dispose();
                         ShellPressEntryMenu shellPressMenu = new ShellPressEntryMenu(-1);
                         try {
                             ShellPressEntryMenu.setEntryToNCR(Integer.valueOf(table.getValueAt(table.getSelectedRow(), 0).toString()));
@@ -14090,6 +16874,7 @@ public class SQLiteConnection {
                             e1.printStackTrace();
                         }
                     } else if (table.getValueAt(table.getSelectedRow(), 1).toString().equals("Other")) {
+                        //    OtherEntryMenu.frame.dispose();
                         OtherEntryMenu otherMenu = new OtherEntryMenu(-1);
                         try {
                             OtherEntryMenu.setEntryToNCR(Integer.valueOf(table.getValueAt(table.getSelectedRow(), 0).toString()));
@@ -14108,6 +16893,8 @@ public class SQLiteConnection {
 
         outerPanel.add(header, BorderLayout.NORTH);
         outerPanel.add(table, BorderLayout.CENTER);
+
+        conn.close();
 
         return outerPanel;
 
@@ -14162,6 +16949,7 @@ public class SQLiteConnection {
     public static JTable NCRReturnJTable(String type, String query) throws SQLException {
 
         JTable table = new JTable();
+        table.setAutoCreateRowSorter(true);
 
         System.out.println("Query : " + query);
         System.out.println("Type : " + type);
@@ -14417,7 +17205,7 @@ public class SQLiteConnection {
 
     public static Object[] MaintenanceShellPressProductionReturnEntryByDate(Date dateIn) throws Exception {
 
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         String df = (sdf.format(dateIn));
 
         // Need to format dateIn to proper Syntax ----> #2/2/2012#
@@ -14436,15 +17224,15 @@ public class SQLiteConnection {
 
         while ((rs != null) && (rs.next())) {
 
-            result[0] = rs.getInt(1);
-            String df1 = (String) rs.getObject(2);
-            result[1] = df1;
-            result[2] = rs.getInt(3);
-            result[3] = rs.getInt(4);
-            result[4] = rs.getInt(5);
-            result[5] = rs.getInt(6);
-            result[6] = rs.getInt(7);
-            result[7] = rs.getInt(8);
+            result[0] = rs.getInt(1); // ID
+            String df1 = (String) rs.getObject(2); // DATE
+            result[1] = df1; // Date
+            result[2] = rs.getInt(3); // SP1
+            result[3] = rs.getInt(4); // SP2
+            result[4] = rs.getInt(5); // SP3
+            result[5] = rs.getInt(6); // SP41
+            result[6] = rs.getInt(7); // SP42
+            result[7] = rs.getInt(8); // SP4
             result[8] = rs.getString(9);
 
             rs.close();
@@ -14494,6 +17282,46 @@ public class SQLiteConnection {
 
         // //////////////////////////////////////////////////////////////////////
         return result;
+
+    }
+
+    public static boolean MaintenanceShellPressProductionEntryExists(String yearIn, String monthIn, String dayIn) throws SQLException {
+
+        boolean result = false;
+        int count = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT MainShellPressProduction.Date FROM MainShellPressProduction WHERE MainShellPressProduction.Date = \'" + yearIn + "-" + monthIn + "-" + dayIn + "\';";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            count++;
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        if (count > 0) {
+
+            System.out.println("True");
+            return true;
+
+        } else {
+
+            System.out.println("True");
+            return false;
+        }
 
     }
 
@@ -14551,6 +17379,36 @@ public class SQLiteConnection {
         ShellPressProductionUpdate.setInt(6, FMI42In);
         ShellPressProductionUpdate.setInt(7, SP04In);
         ShellPressProductionUpdate.setInt(8, idIn);
+
+        ShellPressProductionUpdate.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static void MaintenanceShellPressProductionUpdateByDate(int SP01In, int SP02In, int SP03In, int FMI41In, int FMI42In, int SP04In, String DateIn) throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String sql = "UPDATE MainShellPressProduction SET SP01=? , SP02=? , SP03=? , FMI41=?, FMI42=? , SP04=? WHERE MainShellPressProduction.Date=?";
+
+        System.out.println("DateIn : " + DateIn);
+
+        PreparedStatement ShellPressProductionUpdate = conn.prepareStatement(sql);
+
+        ShellPressProductionUpdate.setInt(1, SP01In);
+        ShellPressProductionUpdate.setInt(2, SP02In);
+        ShellPressProductionUpdate.setInt(3, SP03In);
+        ShellPressProductionUpdate.setInt(4, FMI41In);
+        ShellPressProductionUpdate.setInt(5, FMI42In);
+        ShellPressProductionUpdate.setInt(6, SP04In);
+        ShellPressProductionUpdate.setString(7, DateIn);
 
         ShellPressProductionUpdate.executeUpdate();
 
@@ -14791,14 +17649,32 @@ public class SQLiteConnection {
 
             Vector row = new Vector(len);
 
+            int q1 = rs.getInt(2);
+            String q2 = String.format("%,d", q1);
+
+            int q3 = rs.getInt(3);
+            String q4 = String.format("%,d", q3);
+
+            int q5 = rs.getInt(4);
+            String q6 = String.format("%,d", q5);
+
+            int q7 = rs.getInt(5);
+            String q8 = String.format("%,d", q7);
+
+            int q9 = rs.getInt(6);
+            String q10 = String.format("%,d", q9);
+
+            int q11 = rs.getInt(7);
+            String q12 = String.format("%,d", q11);
+
             row.add(rs.getString(1));
-            row.add(rs.getString(2));
-            row.add(rs.getString(3));
-            row.add(rs.getString(4));
-            row.add(rs.getString(5));
-            row.add(rs.getString(6));
-            row.add(rs.getString(7));
-            row.add(rs.getString(8));
+            row.add(q2);
+            row.add(q4);
+            row.add(q6);
+            row.add(q8);
+            row.add(q10);
+            row.add(q12);
+            row.add(rs.getInt(8));
 
             data.add(row);
         }
@@ -14807,43 +17683,45 @@ public class SQLiteConnection {
         DefaultTableModel model = new DefaultTableModel(data, cols);
 
         JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
 
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
         table.getColumnModel().getColumn(7).setMaxWidth(40);
 
-        // Render Checkbox
-//        TableColumn tc = table.getColumnModel().getColumn(9);
-//        tc.setCellRenderer(table.getDefaultRenderer(Boolean.class));
-        table.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mousePressed(MouseEvent e) {
+        table.addMouseListener(
+                new MouseAdapter() {
+                    @Override
+                    public void mousePressed(MouseEvent e
+                    ) {
 
-                if (e.getClickCount() == 2) {
-                    JTable target = (JTable) e.getSource();
+                        if (e.getClickCount() == 2) {
+                            JTable target = (JTable) e.getSource();
 
-                    int row = target.getSelectedRow() + 1;
+                            int row = target.getSelectedRow() + 1;
 					// int column = target.getSelectedColumn();
 
-                    // System.out.println("Clicked : " + row );
-                    System.out.println(table.getValueAt(table.getSelectedRow(), 7).toString());
+                            // System.out.println("Clicked : " + row );
+                            System.out.println(table.getValueAt(table.getSelectedRow(), 7).toString());
 
-                    String idString = table.getValueAt(table.getSelectedRow(), 7).toString();
-                    int id = Integer.valueOf(idString);
-                    ShellPressProduction linersAndShells;
-                    try {
-                        ShellPressProduction shellPressProduction = new ShellPressProduction(1, -2);
-                        shellPressProduction.setShellPressProductionToID(id);
-                    } catch (SQLException ex) {
-                        Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
+                            String idString = table.getValueAt(table.getSelectedRow(), 7).toString();
+                            int id = Integer.valueOf(idString);
+                            ShellPressProduction linersAndShells;
+                            try {
+                                ShellPressProduction shellPressProduction = new ShellPressProduction(1, -2);
+                                shellPressProduction.setShellPressProductionToID(id);
+
+                            } catch (SQLException ex) {
+                                Logger.getLogger(SQLiteConnection.class
+                                        .getName()).log(Level.SEVERE, null, ex);
+                            }
+
+                        }
                     }
-
                 }
-            }
-        });
+        );
 
         JTableHeader header = table.getTableHeader();
-
         outerPanel.add(header, BorderLayout.NORTH);
         outerPanel.add(table, BorderLayout.CENTER);
 
@@ -14855,7 +17733,7 @@ public class SQLiteConnection {
 
     }
 
-    // Maintenance ShellPressMaintenance
+// Maintenance ShellPressMaintenance
     public static int MaintenanceShellPressMaintenanceGetHighestID() throws SQLException {
 
         int highestID = 0;
@@ -14926,29 +17804,29 @@ public class SQLiteConnection {
             String df7 = (String) rs.getObject(10);
             result[9] = df7;
 
-            result[10] = rs.getInt(11);
-            result[11] = rs.getInt(12);
-            result[12] = rs.getInt(13);
-            result[13] = rs.getInt(14);
-            result[14] = rs.getInt(15);
-            result[15] = rs.getInt(16);
-            result[16] = rs.getInt(17);
+            result[10] = rs.getLong(11);
+            result[11] = rs.getLong(12);
+            result[12] = rs.getLong(13);
+            result[13] = rs.getLong(14);
+            result[14] = rs.getLong(15);
+            result[15] = rs.getLong(16);
+            result[16] = rs.getLong(17);
 
-            result[17] = rs.getInt(18);
-            result[18] = rs.getInt(19);
-            result[19] = rs.getInt(20);
-            result[20] = rs.getInt(21);
-            result[21] = rs.getInt(22);
-            result[22] = rs.getInt(23);
-            result[23] = rs.getInt(24);
+            result[17] = rs.getLong(18);
+            result[18] = rs.getLong(19);
+            result[19] = rs.getLong(20);
+            result[20] = rs.getLong(21);
+            result[21] = rs.getLong(22);
+            result[22] = rs.getLong(23);
+            result[23] = rs.getLong(24);
 
-            result[24] = rs.getInt(25);
-            result[25] = rs.getInt(26);
-            result[26] = rs.getInt(27);
-            result[27] = rs.getInt(28);
-            result[28] = rs.getInt(29);
-            result[29] = rs.getInt(30);
-            result[30] = rs.getInt(31);
+            result[24] = rs.getLong(25);
+            result[25] = rs.getLong(26);
+            result[26] = rs.getLong(27);
+            result[27] = rs.getLong(28);
+            result[28] = rs.getLong(29);
+            result[29] = rs.getLong(30);
+            result[30] = rs.getLong(31);
 
             String df8 = (String) rs.getObject(32);
             result[31] = df8;
@@ -15022,29 +17900,29 @@ public class SQLiteConnection {
             String df7 = (String) rs.getObject(10);
             result[9] = df7;
 
-            result[10] = rs.getInt(11);
-            result[11] = rs.getInt(12);
-            result[12] = rs.getInt(13);
-            result[13] = rs.getInt(14);
-            result[14] = rs.getInt(15);
-            result[15] = rs.getInt(16);
-            result[16] = rs.getInt(17);
+            result[10] = rs.getLong(11);
+            result[11] = rs.getLong(12);
+            result[12] = rs.getLong(13);
+            result[13] = rs.getLong(14);
+            result[14] = rs.getLong(15);
+            result[15] = rs.getLong(16);
+            result[16] = rs.getLong(17);
 
-            result[17] = rs.getInt(18);
-            result[18] = rs.getInt(19);
-            result[19] = rs.getInt(20);
-            result[20] = rs.getInt(21);
-            result[21] = rs.getInt(22);
-            result[22] = rs.getInt(23);
-            result[23] = rs.getInt(24);
+            result[17] = rs.getLong(18);
+            result[18] = rs.getLong(19);
+            result[19] = rs.getLong(20);
+            result[20] = rs.getLong(21);
+            result[21] = rs.getLong(22);
+            result[22] = rs.getLong(23);
+            result[23] = rs.getLong(24);
 
-            result[24] = rs.getInt(25);
-            result[25] = rs.getInt(26);
-            result[26] = rs.getInt(27);
-            result[27] = rs.getInt(28);
-            result[28] = rs.getInt(29);
-            result[29] = rs.getInt(30);
-            result[30] = rs.getInt(31);
+            result[24] = rs.getLong(25);
+            result[25] = rs.getLong(26);
+            result[26] = rs.getLong(27);
+            result[27] = rs.getLong(28);
+            result[28] = rs.getLong(29);
+            result[29] = rs.getLong(30);
+            result[30] = rs.getLong(31);
 
             String df8 = (String) rs.getObject(32);
             result[31] = df8;
@@ -15093,27 +17971,27 @@ public class SQLiteConnection {
             int LastMaintenanceDate5In,
             int LastMaintenanceDate6In,
             int LastMaintenanceDate7In,
-            int TargetProduction1In,
-            int TargetProduction2In,
-            int TargetProduction3In,
-            int TargetProduction4In,
-            int TargetProduction5In,
-            int TargetProduction6In,
-            int TargetProduction7In,
-            int Production1In,
-            int Production2In,
-            int Production3In,
-            int Production4In,
-            int Production5In,
-            int Production6In,
-            int Production7In,
-            int PlusMinus1In,
-            int PlusMinus2In,
-            int PlusMinus3In,
-            int PlusMinus4In,
-            int PlusMinus5In,
-            int PlusMinus6In,
-            int PlusMinus7In,
+            long TargetProduction1In,
+            long TargetProduction2In,
+            long TargetProduction3In,
+            long TargetProduction4In,
+            long TargetProduction5In,
+            long TargetProduction6In,
+            long TargetProduction7In,
+            long Production1In,
+            long Production2In,
+            long Production3In,
+            long Production4In,
+            long Production5In,
+            long Production6In,
+            long Production7In,
+            long PlusMinus1In,
+            long PlusMinus2In,
+            long PlusMinus3In,
+            long PlusMinus4In,
+            long PlusMinus5In,
+            long PlusMinus6In,
+            long PlusMinus7In,
             int MaintenanceDueDate1In,
             int MaintenanceDueDate2In,
             int MaintenanceDueDate3In,
@@ -15156,29 +18034,29 @@ public class SQLiteConnection {
         ShellPressMaintenanceInsert.setInt(9, LastMaintenanceDate6In);
         ShellPressMaintenanceInsert.setInt(10, LastMaintenanceDate7In);
 
-        ShellPressMaintenanceInsert.setInt(11, TargetProduction1In);
-        ShellPressMaintenanceInsert.setInt(12, TargetProduction2In);
-        ShellPressMaintenanceInsert.setInt(13, TargetProduction3In);
-        ShellPressMaintenanceInsert.setInt(14, TargetProduction4In);
-        ShellPressMaintenanceInsert.setInt(15, TargetProduction5In);
-        ShellPressMaintenanceInsert.setInt(16, TargetProduction6In);
-        ShellPressMaintenanceInsert.setInt(17, TargetProduction7In);
+        ShellPressMaintenanceInsert.setLong(11, TargetProduction1In);
+        ShellPressMaintenanceInsert.setLong(12, TargetProduction2In);
+        ShellPressMaintenanceInsert.setLong(13, TargetProduction3In);
+        ShellPressMaintenanceInsert.setLong(14, TargetProduction4In);
+        ShellPressMaintenanceInsert.setLong(15, TargetProduction5In);
+        ShellPressMaintenanceInsert.setLong(16, TargetProduction6In);
+        ShellPressMaintenanceInsert.setLong(17, TargetProduction7In);
 
-        ShellPressMaintenanceInsert.setInt(18, Production1In);
-        ShellPressMaintenanceInsert.setInt(19, Production2In);
-        ShellPressMaintenanceInsert.setInt(20, Production3In);
-        ShellPressMaintenanceInsert.setInt(21, Production4In);
-        ShellPressMaintenanceInsert.setInt(22, Production5In);
-        ShellPressMaintenanceInsert.setInt(23, Production6In);
-        ShellPressMaintenanceInsert.setInt(24, Production7In);
+        ShellPressMaintenanceInsert.setLong(18, Production1In);
+        ShellPressMaintenanceInsert.setLong(19, Production2In);
+        ShellPressMaintenanceInsert.setLong(20, Production3In);
+        ShellPressMaintenanceInsert.setLong(21, Production4In);
+        ShellPressMaintenanceInsert.setLong(22, Production5In);
+        ShellPressMaintenanceInsert.setLong(23, Production6In);
+        ShellPressMaintenanceInsert.setLong(24, Production7In);
 
-        ShellPressMaintenanceInsert.setInt(25, PlusMinus1In);
-        ShellPressMaintenanceInsert.setInt(26, PlusMinus2In);
-        ShellPressMaintenanceInsert.setInt(27, PlusMinus3In);
-        ShellPressMaintenanceInsert.setInt(28, PlusMinus4In);
-        ShellPressMaintenanceInsert.setInt(29, PlusMinus5In);
-        ShellPressMaintenanceInsert.setInt(30, PlusMinus6In);
-        ShellPressMaintenanceInsert.setInt(31, PlusMinus7In);
+        ShellPressMaintenanceInsert.setLong(25, PlusMinus1In);
+        ShellPressMaintenanceInsert.setLong(26, PlusMinus2In);
+        ShellPressMaintenanceInsert.setLong(27, PlusMinus3In);
+        ShellPressMaintenanceInsert.setLong(28, PlusMinus4In);
+        ShellPressMaintenanceInsert.setLong(29, PlusMinus5In);
+        ShellPressMaintenanceInsert.setLong(30, PlusMinus6In);
+        ShellPressMaintenanceInsert.setLong(31, PlusMinus7In);
 
         ShellPressMaintenanceInsert.setInt(32, MaintenanceDueDate1In);
         ShellPressMaintenanceInsert.setInt(33, MaintenanceDueDate2In);
@@ -15216,27 +18094,27 @@ public class SQLiteConnection {
             String LastMaintenanceDate5In,
             String LastMaintenanceDate6In,
             String LastMaintenanceDate7In,
-            int TargetProduction1In,
-            int TargetProduction2In,
-            int TargetProduction3In,
-            int TargetProduction4In,
-            int TargetProduction5In,
-            int TargetProduction6In,
-            int TargetProduction7In,
-            int Production1In,
-            int Production2In,
-            int Production3In,
-            int Production4In,
-            int Production5In,
-            int Production6In,
-            int Production7In,
-            int PlusMinus1In,
-            int PlusMinus2In,
-            int PlusMinus3In,
-            int PlusMinus4In,
-            int PlusMinus5In,
-            int PlusMinus6In,
-            int PlusMinus7In,
+            long TargetProduction1In,
+            long TargetProduction2In,
+            long TargetProduction3In,
+            long TargetProduction4In,
+            long TargetProduction5In,
+            long TargetProduction6In,
+            long TargetProduction7In,
+            long Production1In,
+            long Production2In,
+            long Production3In,
+            long Production4In,
+            long Production5In,
+            long Production6In,
+            long Production7In,
+            long PlusMinus1In,
+            long PlusMinus2In,
+            long PlusMinus3In,
+            long PlusMinus4In,
+            long PlusMinus5In,
+            long PlusMinus6In,
+            long PlusMinus7In,
             String MaintenanceDueDate1In,
             String MaintenanceDueDate2In,
             String MaintenanceDueDate3In,
@@ -15322,29 +18200,29 @@ public class SQLiteConnection {
         ShellPressMaintenanceUpdate.setString(8, LastMaintenanceDate6In);
         ShellPressMaintenanceUpdate.setString(9, LastMaintenanceDate7In);
 
-        ShellPressMaintenanceUpdate.setInt(10, TargetProduction1In);
-        ShellPressMaintenanceUpdate.setInt(11, TargetProduction2In);
-        ShellPressMaintenanceUpdate.setInt(12, TargetProduction3In);
-        ShellPressMaintenanceUpdate.setInt(13, TargetProduction4In);
-        ShellPressMaintenanceUpdate.setInt(14, TargetProduction5In);
-        ShellPressMaintenanceUpdate.setInt(15, TargetProduction6In);
-        ShellPressMaintenanceUpdate.setInt(16, TargetProduction7In);
+        ShellPressMaintenanceUpdate.setLong(10, TargetProduction1In);
+        ShellPressMaintenanceUpdate.setLong(11, TargetProduction2In);
+        ShellPressMaintenanceUpdate.setLong(12, TargetProduction3In);
+        ShellPressMaintenanceUpdate.setLong(13, TargetProduction4In);
+        ShellPressMaintenanceUpdate.setLong(14, TargetProduction5In);
+        ShellPressMaintenanceUpdate.setLong(15, TargetProduction6In);
+        ShellPressMaintenanceUpdate.setLong(16, TargetProduction7In);
 
-        ShellPressMaintenanceUpdate.setInt(17, Production1In);
-        ShellPressMaintenanceUpdate.setInt(18, Production2In);
-        ShellPressMaintenanceUpdate.setInt(19, Production3In);
-        ShellPressMaintenanceUpdate.setInt(20, Production4In);
-        ShellPressMaintenanceUpdate.setInt(21, Production5In);
-        ShellPressMaintenanceUpdate.setInt(22, Production6In);
-        ShellPressMaintenanceUpdate.setInt(23, Production7In);
+        ShellPressMaintenanceUpdate.setLong(17, Production1In);
+        ShellPressMaintenanceUpdate.setLong(18, Production2In);
+        ShellPressMaintenanceUpdate.setLong(19, Production3In);
+        ShellPressMaintenanceUpdate.setLong(20, Production4In);
+        ShellPressMaintenanceUpdate.setLong(21, Production5In);
+        ShellPressMaintenanceUpdate.setLong(22, Production6In);
+        ShellPressMaintenanceUpdate.setLong(23, Production7In);
 
-        ShellPressMaintenanceUpdate.setInt(24, PlusMinus1In);
-        ShellPressMaintenanceUpdate.setInt(25, PlusMinus2In);
-        ShellPressMaintenanceUpdate.setInt(26, PlusMinus3In);
-        ShellPressMaintenanceUpdate.setInt(27, PlusMinus4In);
-        ShellPressMaintenanceUpdate.setInt(28, PlusMinus5In);
-        ShellPressMaintenanceUpdate.setInt(29, PlusMinus6In);
-        ShellPressMaintenanceUpdate.setInt(30, PlusMinus7In);
+        ShellPressMaintenanceUpdate.setLong(24, PlusMinus1In);
+        ShellPressMaintenanceUpdate.setLong(25, PlusMinus2In);
+        ShellPressMaintenanceUpdate.setLong(26, PlusMinus3In);
+        ShellPressMaintenanceUpdate.setLong(27, PlusMinus4In);
+        ShellPressMaintenanceUpdate.setLong(28, PlusMinus5In);
+        ShellPressMaintenanceUpdate.setLong(29, PlusMinus6In);
+        ShellPressMaintenanceUpdate.setLong(30, PlusMinus7In);
 
         ShellPressMaintenanceUpdate.setString(31, MaintenanceDueDate1In);
         ShellPressMaintenanceUpdate.setString(32, MaintenanceDueDate2In);
@@ -15409,29 +18287,29 @@ public class SQLiteConnection {
             String df7 = (String) rs.getObject(10);
             result[9] = df7;
 
-            result[10] = rs.getInt(11);
-            result[11] = rs.getInt(12);
-            result[12] = rs.getInt(13);
-            result[13] = rs.getInt(14);
-            result[14] = rs.getInt(15);
-            result[15] = rs.getInt(16);
-            result[16] = rs.getInt(17);
+            result[10] = rs.getLong(11);
+            result[11] = rs.getLong(12);
+            result[12] = rs.getLong(13);
+            result[13] = rs.getLong(14);
+            result[14] = rs.getLong(15);
+            result[15] = rs.getLong(16);
+            result[16] = rs.getLong(17);
 
-            result[17] = rs.getInt(18);
-            result[18] = rs.getInt(19);
-            result[19] = rs.getInt(20);
-            result[20] = rs.getInt(21);
-            result[21] = rs.getInt(22);
-            result[22] = rs.getInt(23);
-            result[23] = rs.getInt(24);
+            result[17] = rs.getLong(18);
+            result[18] = rs.getLong(19);
+            result[19] = rs.getLong(20);
+            result[20] = rs.getLong(21);
+            result[21] = rs.getLong(22);
+            result[22] = rs.getLong(23);
+            result[23] = rs.getLong(24);
 
-            result[24] = rs.getInt(25);
-            result[25] = rs.getInt(26);
-            result[26] = rs.getInt(27);
-            result[27] = rs.getInt(28);
-            result[28] = rs.getInt(29);
-            result[29] = rs.getInt(30);
-            result[30] = rs.getInt(31);
+            result[24] = rs.getLong(25);
+            result[25] = rs.getLong(26);
+            result[26] = rs.getLong(27);
+            result[27] = rs.getLong(28);
+            result[28] = rs.getLong(29);
+            result[29] = rs.getLong(30);
+            result[30] = rs.getLong(31);
 
             String df8 = (String) rs.getObject(32);
             result[31] = df8;
@@ -15505,29 +18383,29 @@ public class SQLiteConnection {
             String df7 = (String) rs.getObject(10);
             result[9] = df7;
 
-            result[10] = rs.getInt(11);
-            result[11] = rs.getInt(12);
-            result[12] = rs.getInt(13);
-            result[13] = rs.getInt(14);
-            result[14] = rs.getInt(15);
-            result[15] = rs.getInt(16);
-            result[16] = rs.getInt(17);
+            result[10] = rs.getLong(11);
+            result[11] = rs.getLong(12);
+            result[12] = rs.getLong(13);
+            result[13] = rs.getLong(14);
+            result[14] = rs.getLong(15);
+            result[15] = rs.getLong(16);
+            result[16] = rs.getLong(17);
 
-            result[17] = rs.getInt(18);
-            result[18] = rs.getInt(19);
-            result[19] = rs.getInt(20);
-            result[20] = rs.getInt(21);
-            result[21] = rs.getInt(22);
-            result[22] = rs.getInt(23);
-            result[23] = rs.getInt(24);
+            result[17] = rs.getLong(18);
+            result[18] = rs.getLong(19);
+            result[19] = rs.getLong(20);
+            result[20] = rs.getLong(21);
+            result[21] = rs.getLong(22);
+            result[22] = rs.getLong(23);
+            result[23] = rs.getLong(24);
 
-            result[24] = rs.getInt(25);
-            result[25] = rs.getInt(26);
-            result[26] = rs.getInt(27);
-            result[27] = rs.getInt(28);
-            result[28] = rs.getInt(29);
-            result[29] = rs.getInt(30);
-            result[30] = rs.getInt(31);
+            result[24] = rs.getLong(25);
+            result[25] = rs.getLong(26);
+            result[26] = rs.getLong(27);
+            result[27] = rs.getLong(28);
+            result[28] = rs.getLong(29);
+            result[29] = rs.getLong(30);
+            result[30] = rs.getLong(31);
 
             String df8 = (String) rs.getObject(32);
             result[31] = df8;
@@ -15562,6 +18440,28 @@ public class SQLiteConnection {
 
         // //////////////////////////////////////////////////////////////////////
         return result;
+    }
+
+    public static void MaintenanceShellPressDelete(int idIn) throws SQLException {
+
+        Connection conn = Connect();
+        conn.setAutoCommit(false);
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String selTable = "Delete FROM MainShellPressProduction WHERE MainShellPressProduction.ID = " + idIn + ";";
+
+        System.out.println("Error : " + selTable);
+
+        s.execute(selTable);
+
+        // /////////////////////////////////////////////////////////////////////////////
+        conn.commit();
+        s.close();
+        conn.close();
+
     }
 
     // Maintenance Balancer Production
@@ -15680,6 +18580,46 @@ public class SQLiteConnection {
 
         // //////////////////////////////////////////////////////////////////////
         return result;
+
+    }
+
+    public static boolean MaintenanceBalancerProductionEntryExists(String yearIn, String monthIn, String dayIn) throws SQLException {
+
+        boolean result = false;
+        int count = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT MainBalancerProduction.Date FROM MainBalancerProduction WHERE MainBalancerProduction.Date = \'" + yearIn + "-" + monthIn + "-" + dayIn + "\';";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            count++;
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        if (count > 0) {
+
+            System.out.println("True");
+            return true;
+
+        } else {
+
+            System.out.println("True");
+            return false;
+        }
 
     }
 
@@ -16016,7 +18956,20 @@ public class SQLiteConnection {
         Statement stmt = conn.createStatement();
         stmt.setQueryTimeout(10);
 
-        PreparedStatement psmt = conn.prepareStatement("SELECT Date, Balancer1A, Balancer2A, Balancer3A, Balancer4A, Balancer4ANew, Balancer1B, Balancer2B, Balancer3B, Balancer4B, ID FROM MainBalancerProduction ORDER BY Date DESC");
+        PreparedStatement psmt = conn.prepareStatement(""
+                + " SELECT MainShellPressProduction.Date, "
+                + "(MainShellPressProduction.SP02)/2 AS Balancer1A, "
+                + "(MainShellPressProduction.SP02)/2 AS Balancer2A, "
+                + "MainShellPressProduction.SP03 AS Balancer3A,"
+                + " MainShellPressProduction.FMI41 AS Balancer4A,"
+                + " MainStolleProduction.Stolle11 + MainStolleProduction.Stolle12 AS Balancer4A,"
+                + " MainStolleProduction.Stolle21 + MainStolleProduction.Stolle22 AS Balancer4B,"
+                + " MainStolleProduction.Stolle31 + MainStolleProduction.Stolle32 + MainStolleProduction.Stolle33 AS Balancer4C,"
+                + " MainStolleProduction.Stolle41 + MainStolleProduction.Stolle42 + MainStolleProduction.Stolle43 + MainStolleProduction.Stolle44 AS Balancer4D"
+                + " FROM MainShellPressProduction"
+                + " INNER JOIN  MainStolleProduction"
+                + " ON MainShellPressProduction.Date=MainStolleProduction.Date"
+                + " ORDER BY MainShellPressProduction.Date DESC");
         psmt.setQueryTimeout(10);
         ResultSet rs = psmt.executeQuery();
         DefaultTableModel dm = new DefaultTableModel();
@@ -16039,17 +18992,39 @@ public class SQLiteConnection {
 
             Vector row = new Vector(len);
 
+            int q1 = rs.getInt(2);
+            String q2 = String.format("%,d", q1);
+
+            int q3 = rs.getInt(3);
+            String q4 = String.format("%,d", q3);
+
+            int q5 = rs.getInt(4);
+            String q6 = String.format("%,d", q5);
+
+            int q7 = rs.getInt(5);
+            String q8 = String.format("%,d", q7);
+
+            int q9 = rs.getInt(6);
+            String q10 = String.format("%,d", q9);
+
+            int q11 = rs.getInt(7);
+            String q12 = String.format("%,d", q11);
+
+            int q13 = rs.getInt(8);
+            String q14 = String.format("%,d", q13);
+
+            int q15 = rs.getInt(9);
+            String q16 = String.format("%,d", q15);
+
             row.add(rs.getString(1));
-            row.add(rs.getInt(2));
-            row.add(rs.getInt(3));
-            row.add(rs.getInt(4));
-            row.add(rs.getInt(5));
-            row.add(rs.getInt(6));
-            row.add(rs.getInt(7));
-            row.add(rs.getInt(8));
-            row.add(rs.getInt(9));
-            row.add(rs.getInt(10));
-            row.add(rs.getString(11));
+            row.add(q2);
+            row.add(q4);
+            row.add(q6);
+            row.add(q8);
+            row.add(q10);
+            row.add(q12);
+            row.add(q14);
+            row.add(q16);
 
             data.add(row);
         }
@@ -16058,11 +19033,11 @@ public class SQLiteConnection {
         DefaultTableModel model = new DefaultTableModel(data, cols);
 
         JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
 
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
-        table.getColumnModel().getColumn(10).setMaxWidth(40);
-
+//        table.getColumnModel().getColumn(10).setMaxWidth(40);
         // Render Checkbox
 //        TableColumn tc = table.getColumnModel().getColumn(9);
 //        tc.setCellRenderer(table.getDefaultRenderer(Boolean.class));
@@ -16085,8 +19060,10 @@ public class SQLiteConnection {
                     try {
                         BalancerProduction balancerProduction = new BalancerProduction(1, -2);
                         balancerProduction.setBalancerProductionToID(id);
+
                     } catch (SQLException ex) {
-                        Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
+                        Logger.getLogger(SQLiteConnection.class
+                                .getName()).log(Level.SEVERE, null, ex);
                     }
 
                 }
@@ -16139,11 +19116,11 @@ public class SQLiteConnection {
 
     public static Object[] MaintenanceLinerProductionReturnEntryByDate(Date dateIn) throws Exception {
 
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         String df = (sdf.format(dateIn));
 
         // Need to format dateIn to proper Syntax ----> #2/2/2012#
-        Object[] result = new Object[19];
+        Object[] result = new Object[21];
 
         Connection conn = Connect();
         Statement s = conn.createStatement();
@@ -16161,23 +19138,30 @@ public class SQLiteConnection {
             result[0] = rs.getInt(1);
             String df1 = (String) rs.getObject(2);
             result[1] = df1;
-            result[2] = rs.getInt(3);
+ 
+            result[2] = rs.getInt(3);   // M1
             result[3] = rs.getInt(4);
             result[4] = rs.getInt(5);
             result[5] = rs.getInt(6);
-            result[6] = rs.getInt(7);
+
+            result[6] = rs.getInt(7);   // M2
             result[7] = rs.getInt(8);
             result[8] = rs.getInt(9);
             result[9] = rs.getInt(10);
-            result[10] = rs.getInt(11);
+
+            result[10] = rs.getInt(11); // M3
             result[11] = rs.getInt(12);
             result[12] = rs.getInt(13);
             result[13] = rs.getInt(14);
-            result[14] = rs.getInt(15);
+
+            result[14] = rs.getInt(15); // M4
             result[15] = rs.getInt(16);
             result[16] = rs.getInt(17);
             result[17] = rs.getInt(18);
             result[18] = rs.getInt(19);
+            result[19] = rs.getInt(20);
+
+            result[20] = rs.getInt(21);
 
             rs.close();
             s.close();
@@ -16192,7 +19176,9 @@ public class SQLiteConnection {
 
     public static Object[] MaintenanceLinerProductionReturnEntryByID(int id) throws Exception {
 
-        Object[] result = new Object[19];
+        System.out.println("ID : " + id);
+
+        Object[] result = new Object[21];
 
         Connection conn = Connect();
         Statement s = conn.createStatement();
@@ -16227,6 +19213,8 @@ public class SQLiteConnection {
             result[16] = rs.getInt(17);
             result[17] = rs.getInt(18);
             result[18] = rs.getInt(19);
+            result[19] = rs.getInt(20);
+            result[20] = rs.getInt(21);
 
             rs.close();
             s.close();
@@ -16236,6 +19224,46 @@ public class SQLiteConnection {
 
         // //////////////////////////////////////////////////////////////////////
         return result;
+
+    }
+
+    public static boolean MaintenanceLinerProductionEntryExists(String yearIn, String monthIn, String dayIn) throws SQLException {
+
+        boolean result = false;
+        int count = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT MainLinerProduction.Date FROM MainLinerProduction WHERE MainLinerProduction.Date = \'" + yearIn + "-" + monthIn + "-" + dayIn + "\';";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            count++;
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        if (count > 0) {
+
+            System.out.println("True");
+            return true;
+
+        } else {
+
+            System.out.println("True");
+            return false;
+        }
 
     }
 
@@ -16257,7 +19285,9 @@ public class SQLiteConnection {
             int Liner41In,
             int Liner42In,
             int Liner43In,
-            int Liner44In
+            int Liner44In,
+            int Liner45In,
+            int Liner46In
     )
             throws SQLException {
 
@@ -16272,7 +19302,7 @@ public class SQLiteConnection {
 
         // QUERY
         // //////////////////////////////////////////////////////////////////////
-        PreparedStatement LinerProductionInsert = conn.prepareStatement("insert into MainLinerProduction values(?,?,?,?,?,?,?,?,?,?, ?,?,?,?,?,?,?,?,?)");
+        PreparedStatement LinerProductionInsert = conn.prepareStatement("insert into MainLinerProduction values(?,?,?,?,?,?,?,?,?,?,?,?, ?,?,?,?,?,?,?,?,?)");
 
         LinerProductionInsert.setInt(1, idIn);
         LinerProductionInsert.setString(2, DateIn);
@@ -16292,7 +19322,9 @@ public class SQLiteConnection {
         LinerProductionInsert.setInt(16, Liner42In);
         LinerProductionInsert.setInt(17, Liner43In);
         LinerProductionInsert.setInt(18, Liner44In);
-        LinerProductionInsert.setString(19, dateF);
+        LinerProductionInsert.setInt(19, Liner45In);
+        LinerProductionInsert.setInt(20, Liner46In);
+        LinerProductionInsert.setString(21, dateF);
 
         LinerProductionInsert.executeUpdate();
 
@@ -16320,6 +19352,8 @@ public class SQLiteConnection {
             int Liner42In,
             int Liner43In,
             int Liner44In,
+            int Liner45In,
+            int Liner46In,
             int idIn
     ) throws SQLException {
 
@@ -16330,7 +19364,7 @@ public class SQLiteConnection {
         // QUERY
         // //////////////////////////////////////////////////////////////////////
         String sql = "update MainLinerProduction set Date=?, Liner11=? , Liner12=? , Liner13=? , Liner14=?, Liner21=? , "
-                + "Liner22=?,  Liner23=?, Liner24=?, Liner31=?, Liner32=?, Liner33=?, Liner34=?, Liner41=?, Liner42=?, Liner43=?, Liner44=? where ID=?";
+                + "Liner22=?,  Liner23=?, Liner24=?, Liner31=?, Liner32=?, Liner33=?, Liner34=?, Liner41=?, Liner42=?, Liner43=?, Liner44=?, Liner45=?, Liner46=? where ID=?";
 
         PreparedStatement LinerProductionUpdate = conn.prepareStatement(sql);
 
@@ -16351,7 +19385,70 @@ public class SQLiteConnection {
         LinerProductionUpdate.setInt(15, Liner42In);
         LinerProductionUpdate.setInt(16, Liner43In);
         LinerProductionUpdate.setInt(17, Liner44In);
-        LinerProductionUpdate.setInt(18, idIn);
+        LinerProductionUpdate.setInt(18, Liner45In);
+        LinerProductionUpdate.setInt(19, Liner46In);
+        LinerProductionUpdate.setInt(20, idIn);
+
+        LinerProductionUpdate.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static void MaintenanceLinerProductionUpdateByDate(
+            int Liner11In,
+            int Liner12In,
+            int Liner13In,
+            int Liner14In,
+            int Liner21In,
+            int Liner22In,
+            int Liner23In,
+            int Liner24In,
+            int Liner31In,
+            int Liner32In,
+            int Liner33In,
+            int Liner34In,
+            int Liner41In,
+            int Liner42In,
+            int Liner43In,
+            int Liner44In,
+            int Liner45In,
+            int Liner46In,
+            String DateIn
+    ) throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String sql = "update MainLinerProduction set Liner11=? , Liner12=? , Liner13=? , Liner14=?, Liner21=? , "
+                + "Liner22=?,  Liner23=?, Liner24=?, Liner31=?, Liner32=?, Liner33=?, Liner34=?, Liner41=?, Liner42=?, Liner43=?, Liner44=?, Liner45=?, Liner46=? where Date=?";
+
+        PreparedStatement LinerProductionUpdate = conn.prepareStatement(sql);
+
+        LinerProductionUpdate.setInt(1, Liner11In);
+        LinerProductionUpdate.setInt(2, Liner12In);
+        LinerProductionUpdate.setInt(3, Liner13In);
+        LinerProductionUpdate.setInt(4, Liner14In);
+        LinerProductionUpdate.setInt(5, Liner21In);
+        LinerProductionUpdate.setInt(6, Liner22In);
+        LinerProductionUpdate.setInt(7, Liner23In);
+        LinerProductionUpdate.setInt(8, Liner24In);
+        LinerProductionUpdate.setInt(9, Liner31In);
+        LinerProductionUpdate.setInt(10, Liner32In);
+        LinerProductionUpdate.setInt(11, Liner33In);
+        LinerProductionUpdate.setInt(12, Liner34In);
+        LinerProductionUpdate.setInt(13, Liner41In);
+        LinerProductionUpdate.setInt(14, Liner42In);
+        LinerProductionUpdate.setInt(15, Liner43In);
+        LinerProductionUpdate.setInt(16, Liner44In);
+        LinerProductionUpdate.setInt(17, Liner45In);
+        LinerProductionUpdate.setInt(18, Liner46In);
+        LinerProductionUpdate.setString(19, DateIn);
 
         LinerProductionUpdate.executeUpdate();
 
@@ -16363,7 +19460,7 @@ public class SQLiteConnection {
 
     public static Object[] MaintenanceLinerProductionGetNextEntryById(int idIn) throws SQLException {
 
-        Object[] result = new Object[19];
+        Object[] result = new Object[21];
         int nextId = idIn + 1;
 
         Connection conn = Connect();
@@ -16399,6 +19496,8 @@ public class SQLiteConnection {
             result[16] = rs.getInt(17);
             result[17] = rs.getInt(18);
             result[18] = rs.getInt(19);
+            result[17] = rs.getInt(20);
+            result[18] = rs.getInt(21);
 
             rs.close();
             s.close();
@@ -16448,6 +19547,8 @@ public class SQLiteConnection {
             result[16] = rs.getInt(17);
             result[17] = rs.getInt(18);
             result[18] = rs.getInt(19);
+            result[17] = rs.getInt(20);
+            result[18] = rs.getInt(21);
 
             rs.close();
             s.close();
@@ -16519,6 +19620,8 @@ public class SQLiteConnection {
         String sql14 = "SELECT SUM(Liner42) FROM MainLinerProduction WHERE Date LIKE '%" + date + "%';";
         String sql15 = "SELECT SUM(Liner43) FROM MainLinerProduction WHERE Date LIKE '%" + date + "%';";
         String sql16 = "SELECT SUM(Liner44) FROM MainLinerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql17 = "SELECT SUM(Liner45) FROM MainLinerProduction WHERE Date LIKE '%" + date + "%';";
+        String sql18 = "SELECT SUM(Liner46) FROM MainLinerProduction WHERE Date LIKE '%" + date + "%';";
 
         s.setQueryTimeout(5);
 
@@ -16666,6 +19769,24 @@ public class SQLiteConnection {
         }
 
         // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql17);
+
+        ResultSet rs17 = s.getResultSet();
+        while ((rs17 != null) && (rs17.next())) {
+            total[16] = rs17.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql18);
+
+        ResultSet rs18 = s.getResultSet();
+        while ((rs18 != null) && (rs18.next())) {
+            total[17] = rs18.getInt(1);
+        }
+
+        // ///////////////////////////
         // ///////////////////////////
         rs1.close();
         rs2.close();
@@ -16683,6 +19804,8 @@ public class SQLiteConnection {
         rs14.close();
         rs15.close();
         rs16.close();
+        rs17.close();
+        rs18.close();
 
         s.close();
         conn.close();
@@ -16699,7 +19822,7 @@ public class SQLiteConnection {
         Statement stmt = conn.createStatement();
         stmt.setQueryTimeout(10);
 
-        PreparedStatement psmt = conn.prepareStatement("SELECT Date, Liner11, Liner12, Liner13, Liner14, Liner21, Liner22, Liner23, Liner24, Liner31, Liner32, Liner33, Liner34, Liner41, Liner42, Liner43, Liner44, ID FROM MainLinerProduction ORDER BY Date DESC");
+        PreparedStatement psmt = conn.prepareStatement("SELECT Date, Liner11, Liner12, Liner13, Liner14, Liner21, Liner22, Liner23, Liner24, Liner31, Liner32, Liner33, Liner34, Liner41, Liner42, Liner43, Liner44, Liner45, Liner46, ID FROM MainLinerProduction ORDER BY Date DESC");
         psmt.setQueryTimeout(10);
         ResultSet rs = psmt.executeQuery();
         DefaultTableModel dm = new DefaultTableModel();
@@ -16722,24 +19845,80 @@ public class SQLiteConnection {
 
             Vector row = new Vector(len);
 
+            int q1 = rs.getInt(2);
+            String q2 = String.format("%,d", q1);
+
+            int q3 = rs.getInt(3);
+            String q4 = String.format("%,d", q3);
+
+            int q5 = rs.getInt(4);
+            String q6 = String.format("%,d", q5);
+
+            int q7 = rs.getInt(5);
+            String q8 = String.format("%,d", q7);
+
+            int q9 = rs.getInt(6);
+            String q10 = String.format("%,d", q9);
+
+            int q11 = rs.getInt(7);
+            String q12 = String.format("%,d", q11);
+
+            int q13 = rs.getInt(8);
+            String q14 = String.format("%,d", q13);
+
+            int q15 = rs.getInt(9);
+            String q16 = String.format("%,d", q15);
+
+            int q17 = rs.getInt(10);
+            String q18 = String.format("%,d", q17);
+
+            int q19 = rs.getInt(11);
+            String q20 = String.format("%,d", q19);
+
+            int q21 = rs.getInt(12);
+            String q22 = String.format("%,d", q21);
+
+            int q23 = rs.getInt(13);
+            String q24 = String.format("%,d", q23);
+
+            int q25 = rs.getInt(14);
+            String q26 = String.format("%,d", q25);
+
+            int q27 = rs.getInt(15);
+            String q28 = String.format("%,d", q27);
+
+            int q29 = rs.getInt(16);
+            String q30 = String.format("%,d", q29);
+
+            int q31 = rs.getInt(17);
+            String q32 = String.format("%,d", q31);
+
+            int q33 = rs.getInt(18);
+            String q34 = String.format("%,d", q33);
+
+            int q35 = rs.getInt(19);
+            String q36 = String.format("%,d", q35);
+
             row.add(rs.getString(1));
-            row.add(rs.getInt(2));
-            row.add(rs.getInt(3));
-            row.add(rs.getInt(4));
-            row.add(rs.getInt(5));
-            row.add(rs.getInt(6));
-            row.add(rs.getInt(7));
-            row.add(rs.getInt(8));
-            row.add(rs.getInt(9));
-            row.add(rs.getInt(10));
-            row.add(rs.getInt(11));
-            row.add(rs.getInt(12));
-            row.add(rs.getInt(13));
-            row.add(rs.getInt(14));
-            row.add(rs.getInt(15));
-            row.add(rs.getInt(16));
-            row.add(rs.getString(17));
-            row.add(rs.getString(18));
+            row.add(q2);
+            row.add(q4);
+            row.add(q6);
+            row.add(q8);
+            row.add(q10);
+            row.add(q12);
+            row.add(q14);
+            row.add(q16);
+            row.add(q18);
+            row.add(q20);
+            row.add(q22);
+            row.add(q24);
+            row.add(q26);
+            row.add(q28);
+            row.add(q30);
+            row.add(q32);
+            row.add(q34);
+            row.add(q36);
+            row.add(rs.getString(20));
 
             data.add(row);
         }
@@ -16748,11 +19927,12 @@ public class SQLiteConnection {
         DefaultTableModel model = new DefaultTableModel(data, cols);
 
         JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
 
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
         table.getColumnModel().getColumn(0).setMinWidth(60);
-        table.getColumnModel().getColumn(17).setMaxWidth(40);
+        table.getColumnModel().getColumn(19).setMaxWidth(40);
 
         // Render Checkbox
 //        TableColumn tc = table.getColumnModel().getColumn(9);
@@ -16765,18 +19945,20 @@ public class SQLiteConnection {
                     JTable target = (JTable) e.getSource();
 
                     int row = target.getSelectedRow() + 1;
-					// int column = target.getSelectedColumn();
+                    int column = target.getSelectedColumn();
 
-                    // System.out.println("Clicked : " + row );
-                    System.out.println(table.getValueAt(table.getSelectedRow(), 17).toString());
+                    System.out.println("Clicked : " + column);
+                    System.out.println(table.getValueAt(table.getSelectedRow(), 19).toString());
 
-                    String idString = table.getValueAt(table.getSelectedRow(), 17).toString();
+                    String idString = table.getValueAt(table.getSelectedRow(), 19).toString();
                     int id = Integer.valueOf(idString);
                     try {
                         LinerProduction linerProduction = new LinerProduction(1, -2);
                         linerProduction.setLinerProductionToID(id);
+
                     } catch (SQLException ex) {
-                        Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
+                        Logger.getLogger(SQLiteConnection.class
+                                .getName()).log(Level.SEVERE, null, ex);
                     }
 
                 }
@@ -16793,6 +19975,28 @@ public class SQLiteConnection {
         conn.close();
 
         return outerPanel;
+
+    }
+
+    public static void MaintenanceLinerDelete(int idIn) throws SQLException {
+
+        Connection conn = Connect();
+        conn.setAutoCommit(false);
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String selTable = "Delete FROM MainLinerProduction WHERE MainLinerProduction.ID = " + idIn + ";";
+
+        System.out.println("Error : " + selTable);
+
+        s.execute(selTable);
+
+        // /////////////////////////////////////////////////////////////////////////////
+        conn.commit();
+        s.close();
+        conn.close();
 
     }
 
@@ -17711,11 +20915,23 @@ public class SQLiteConnection {
 
             Vector row = new Vector(len);
 
+            int q1 = rs.getInt(2);
+            String q2 = String.format("%,d", q1);
+
+            int q3 = rs.getInt(3);
+            String q4 = String.format("%,d", q3);
+
+            int q5 = rs.getInt(4);
+            String q6 = String.format("%,d", q5);
+
+            int q7 = rs.getInt(5);
+            String q8 = String.format("%,d", q7);
+
             row.add(rs.getString(1));
-            row.add(rs.getInt(2));
-            row.add(rs.getInt(3));
-            row.add(rs.getInt(4));
-            row.add(rs.getInt(5));
+            row.add(q2);
+            row.add(q4);
+            row.add(q6);
+            row.add(q8);
             row.add(rs.getInt(6));
 
             data.add(row);
@@ -17725,6 +20941,7 @@ public class SQLiteConnection {
         DefaultTableModel model = new DefaultTableModel(data, cols);
 
         JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
 
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
@@ -17751,8 +20968,10 @@ public class SQLiteConnection {
                     try {
                         LineBalance linerProduction = new LineBalance(1, -2);
                         linerProduction.setLineBalanceToID(id);
+
                     } catch (SQLException ex) {
-                        Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
+                        Logger.getLogger(SQLiteConnection.class
+                                .getName()).log(Level.SEVERE, null, ex);
                     }
 
                 }
@@ -17858,7 +21077,7 @@ public class SQLiteConnection {
 
     public static Object[] MaintenanceLinerSpoilageReturnEntryByID(int id) throws Exception {
 
-        Object[] result = new Object[19];
+        Object[] result = new Object[20];
 
         Connection conn = Connect();
         Statement s = conn.createStatement();
@@ -17893,6 +21112,7 @@ public class SQLiteConnection {
             result[16] = rs.getDouble(17);
             result[17] = rs.getDouble(18);
             result[18] = rs.getDouble(19);
+            result[19] = rs.getDouble(20);
 
             rs.close();
             s.close();
@@ -17905,9 +21125,31 @@ public class SQLiteConnection {
 
     }
 
+    public static void MaintenanceLinerSpoilageDelete(int idIn) throws SQLException {
+
+        Connection conn = Connect();
+        conn.setAutoCommit(false);
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String selTable = "Delete FROM MainLinerSpoilage WHERE MainLinerSpoilage.ID = " + idIn + ";";
+
+        System.out.println("Error : " + selTable);
+
+        s.execute(selTable);
+
+        // /////////////////////////////////////////////////////////////////////////////
+        conn.commit();
+        s.close();
+        conn.close();
+
+    }
+
     public static void MaintenanceLinerSpoilageInsert(int idIn, String DateIn, double Liner11In, double Liner12In, double Liner13In, double Liner14In,
             double Liner21In, double Liner22In, double Liner23In, double Liner24In, double Liner31In, double Liner32In, double Liner33In, double Liner34In,
-            double Liner41In, double Liner42In, double Liner43In, double Liner44In
+            double Liner41In, double Liner42In, double Liner43In, double Liner44In, double Liner45In, double Liner46In
     )
             throws SQLException {
 
@@ -17922,7 +21164,7 @@ public class SQLiteConnection {
 
         // QUERY
         // //////////////////////////////////////////////////////////////////////
-        PreparedStatement LinerProductionInsert = conn.prepareStatement("insert into MainLinerSpoilage values(?,?,?,?,?,?,?,?,?,?, ?,?,?,?,?,?,?,?,?)");
+        PreparedStatement LinerProductionInsert = conn.prepareStatement("insert into MainLinerSpoilage values(?,?,?,?,?,?,?,?,?,?,?,?, ?,?,?,?,?,?,?,?,?)");
 
         LinerProductionInsert.setInt(1, idIn);
         LinerProductionInsert.setString(2, DateIn);
@@ -17942,7 +21184,9 @@ public class SQLiteConnection {
         LinerProductionInsert.setDouble(16, Liner42In);
         LinerProductionInsert.setDouble(17, Liner43In);
         LinerProductionInsert.setDouble(18, Liner44In);
-        LinerProductionInsert.setString(19, dateF);
+        LinerProductionInsert.setDouble(19, Liner45In);
+        LinerProductionInsert.setDouble(20, Liner46In);
+        LinerProductionInsert.setString(21, dateF);
 
         LinerProductionInsert.executeUpdate();
 
@@ -17970,6 +21214,8 @@ public class SQLiteConnection {
             double Liner42In,
             double Liner43In,
             double Liner44In,
+            double Liner45In,
+            double Liner46In,
             int idIn
     ) throws SQLException {
 
@@ -17980,7 +21226,7 @@ public class SQLiteConnection {
         // QUERY
         // //////////////////////////////////////////////////////////////////////
         String sql = "update MainLinerSpoilage set Date=?, Liner11=? , Liner12=? , Liner13=? , Liner14=?, Liner21=? , "
-                + "Liner22=?,  Liner23=?, Liner24=?, Liner31=?, Liner32=?, Liner33=?, Liner34=?, Liner41=?, Liner42=?, Liner43=?, Liner44=? where ID=?";
+                + "Liner22=?,  Liner23=?, Liner24=?, Liner31=?, Liner32=?, Liner33=?, Liner34=?, Liner41=?, Liner42=?, Liner43=?, Liner44=?, Liner45=?, Liner46=? where ID=?";
 
         PreparedStatement LinerProductionUpdate = conn.prepareStatement(sql);
 
@@ -18001,7 +21247,9 @@ public class SQLiteConnection {
         LinerProductionUpdate.setDouble(15, Liner42In);
         LinerProductionUpdate.setDouble(16, Liner43In);
         LinerProductionUpdate.setDouble(17, Liner44In);
-        LinerProductionUpdate.setInt(18, idIn);
+        LinerProductionUpdate.setDouble(18, Liner45In);
+        LinerProductionUpdate.setDouble(19, Liner46In);
+        LinerProductionUpdate.setInt(20, idIn);
 
         LinerProductionUpdate.executeUpdate();
 
@@ -18049,6 +21297,8 @@ public class SQLiteConnection {
             result[16] = rs.getDouble(17);
             result[17] = rs.getDouble(18);
             result[18] = rs.getDouble(19);
+            result[19] = rs.getDouble(20);
+            result[20] = rs.getDouble(21);
 
             rs.close();
             s.close();
@@ -18098,6 +21348,8 @@ public class SQLiteConnection {
             result[16] = rs.getDouble(17);
             result[17] = rs.getDouble(18);
             result[18] = rs.getDouble(19);
+            result[19] = rs.getDouble(20);
+            result[20] = rs.getDouble(21);
 
             rs.close();
             s.close();
@@ -18169,6 +21421,8 @@ public class SQLiteConnection {
         String sql14 = "SELECT SUM(Liner42) FROM MainLinerSpoilage WHERE Date LIKE '%" + date + "%';";
         String sql15 = "SELECT SUM(Liner43) FROM MainLinerSpoilage WHERE Date LIKE '%" + date + "%';";
         String sql16 = "SELECT SUM(Liner44) FROM MainLinerSpoilage WHERE Date LIKE '%" + date + "%';";
+        String sql17 = "SELECT SUM(Liner45) FROM MainLinerSpoilage WHERE Date LIKE '%" + date + "%';";
+        String sql18 = "SELECT SUM(Liner46) FROM MainLinerSpoilage WHERE Date LIKE '%" + date + "%';";
 
         s.setQueryTimeout(5);
 
@@ -18316,6 +21570,24 @@ public class SQLiteConnection {
         }
 
         // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql17);
+
+        ResultSet rs17 = s.getResultSet();
+        while ((rs17 != null) && (rs17.next())) {
+            total[16] = rs17.getDouble(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql18);
+
+        ResultSet rs18 = s.getResultSet();
+        while ((rs18 != null) && (rs18.next())) {
+            total[17] = rs18.getDouble(1);
+        }
+
+        // ///////////////////////////
         // ///////////////////////////
         rs1.close();
         rs2.close();
@@ -18333,6 +21605,8 @@ public class SQLiteConnection {
         rs14.close();
         rs15.close();
         rs16.close();
+        rs17.close();
+        rs18.close();
 
         s.close();
         conn.close();
@@ -18349,7 +21623,7 @@ public class SQLiteConnection {
         Statement stmt = conn.createStatement();
         stmt.setQueryTimeout(10);
 
-        PreparedStatement psmt = conn.prepareStatement("SELECT Date, Liner11, Liner12, Liner13, Liner14, Liner21, Liner22, Liner23, Liner24, Liner31, Liner32, Liner33, Liner34, Liner41, Liner42, Liner43, Liner44, ID FROM MainLinerSpoilage ORDER BY Date DESC");
+        PreparedStatement psmt = conn.prepareStatement("SELECT Date, Liner11, Liner12, Liner13, Liner14, Liner21, Liner22, Liner23, Liner24, Liner31, Liner32, Liner33, Liner34, Liner41, Liner42, Liner43, Liner44,  Liner45, Liner46, ID FROM MainLinerSpoilage ORDER BY Date DESC");
         psmt.setQueryTimeout(10);
         ResultSet rs = psmt.executeQuery();
         DefaultTableModel dm = new DefaultTableModel();
@@ -18390,6 +21664,8 @@ public class SQLiteConnection {
             row.add(rs.getDouble(16));
             row.add(rs.getDouble(17));
             row.add(rs.getString(18));
+            row.add(rs.getDouble(19));
+            row.add(rs.getString(20));
 
             data.add(row);
         }
@@ -18398,6 +21674,7 @@ public class SQLiteConnection {
         DefaultTableModel model = new DefaultTableModel(data, cols);
 
         JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
 
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
@@ -18417,15 +21694,17 @@ public class SQLiteConnection {
 					// int column = target.getSelectedColumn();
 
                     // System.out.println("Clicked : " + row );
-                    System.out.println(table.getValueAt(table.getSelectedRow(), 17).toString());
+                    System.out.println(table.getValueAt(table.getSelectedRow(), 19).toString());
 
-                    String idString = table.getValueAt(table.getSelectedRow(), 17).toString();
+                    String idString = table.getValueAt(table.getSelectedRow(), 19).toString();
                     int id = Integer.valueOf(idString);
                     try {
                         LinerSpoilage linerSpoilage = new LinerSpoilage(1, -2);
                         linerSpoilage.setLinerSpoilageToID(id);
+
                     } catch (SQLException ex) {
-                        Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
+                        Logger.getLogger(SQLiteConnection.class
+                                .getName()).log(Level.SEVERE, null, ex);
                     }
 
                 }
@@ -18910,21 +22189,21 @@ public class SQLiteConnection {
             String LastMaintenanceDate3In,
             String LastMaintenanceDate4In,
             String LastMaintenanceDate7In,
-            int TargetProduction1In,
-            int TargetProduction2In,
-            int TargetProduction3In,
-            int TargetProduction4In,
-            int TargetProduction7In,
-            int Production1In,
-            int Production2In,
-            int Production3In,
-            int Production4In,
-            int Production7In,
-            int PlusMinus1In,
-            int PlusMinus2In,
-            int PlusMinus3In,
-            int PlusMinus4In,
-            int PlusMinus7In,
+            long TargetProduction1In,
+            long TargetProduction2In,
+            long TargetProduction3In,
+            long TargetProduction4In,
+            long TargetProduction7In,
+            long Production1In,
+            long Production2In,
+            long Production3In,
+            long Production4In,
+            long Production7In,
+            long PlusMinus1In,
+            long PlusMinus2In,
+            long PlusMinus3In,
+            long PlusMinus4In,
+            long PlusMinus7In,
             String MaintenanceDueDate1In,
             String MaintenanceDueDate2In,
             String MaintenanceDueDate3In,
@@ -18992,23 +22271,23 @@ public class SQLiteConnection {
         BalancerMaintenanceUpdate.setString(6, LastMaintenanceDate4In);
         BalancerMaintenanceUpdate.setString(7, LastMaintenanceDate7In);
 
-        BalancerMaintenanceUpdate.setInt(8, TargetProduction1In);
-        BalancerMaintenanceUpdate.setInt(9, TargetProduction2In);
-        BalancerMaintenanceUpdate.setInt(10, TargetProduction3In);
-        BalancerMaintenanceUpdate.setInt(11, TargetProduction4In);
-        BalancerMaintenanceUpdate.setInt(12, TargetProduction7In);
+        BalancerMaintenanceUpdate.setLong(8, TargetProduction1In);
+        BalancerMaintenanceUpdate.setLong(9, TargetProduction2In);
+        BalancerMaintenanceUpdate.setLong(10, TargetProduction3In);
+        BalancerMaintenanceUpdate.setLong(11, TargetProduction4In);
+        BalancerMaintenanceUpdate.setLong(12, TargetProduction7In);
 
-        BalancerMaintenanceUpdate.setInt(13, Production1In);
-        BalancerMaintenanceUpdate.setInt(14, Production2In);
-        BalancerMaintenanceUpdate.setInt(15, Production3In);
-        BalancerMaintenanceUpdate.setInt(16, Production4In);
-        BalancerMaintenanceUpdate.setInt(17, Production7In);
+        BalancerMaintenanceUpdate.setLong(13, Production1In);
+        BalancerMaintenanceUpdate.setLong(14, Production2In);
+        BalancerMaintenanceUpdate.setLong(15, Production3In);
+        BalancerMaintenanceUpdate.setLong(16, Production4In);
+        BalancerMaintenanceUpdate.setLong(17, Production7In);
 
-        BalancerMaintenanceUpdate.setInt(18, PlusMinus1In);
-        BalancerMaintenanceUpdate.setInt(19, PlusMinus2In);
-        BalancerMaintenanceUpdate.setInt(20, PlusMinus3In);
-        BalancerMaintenanceUpdate.setInt(21, PlusMinus4In);
-        BalancerMaintenanceUpdate.setInt(22, PlusMinus7In);
+        BalancerMaintenanceUpdate.setLong(18, PlusMinus1In);
+        BalancerMaintenanceUpdate.setLong(19, PlusMinus2In);
+        BalancerMaintenanceUpdate.setLong(20, PlusMinus3In);
+        BalancerMaintenanceUpdate.setLong(21, PlusMinus4In);
+        BalancerMaintenanceUpdate.setLong(22, PlusMinus7In);
 
         BalancerMaintenanceUpdate.setString(23, MaintenanceDueDate1In);
         BalancerMaintenanceUpdate.setString(24, MaintenanceDueDate2In);
@@ -19436,15 +22715,15 @@ public class SQLiteConnection {
             String LastMaintenanceDate1In,
             String LastMaintenanceDate2In,
             String LastMaintenanceDate7In,
-            int TargetProduction1In,
-            int TargetProduction2In,
-            int TargetProduction7In,
-            int Production1In,
-            int Production2In,
-            int Production7In,
-            int PlusMinus1In,
-            int PlusMinus2In,
-            int PlusMinus7In,
+            long TargetProduction1In,
+            long TargetProduction2In,
+            long TargetProduction7In,
+            long Production1In,
+            long Production2In,
+            long Production7In,
+            long PlusMinus1In,
+            long PlusMinus2In,
+            long PlusMinus7In,
             String MaintenanceDueDate1In,
             String MaintenanceDueDate2In,
             String MaintenanceDueDate7In,
@@ -19494,17 +22773,17 @@ public class SQLiteConnection {
         BalancerMaintenanceUpdate.setString(4, LastMaintenanceDate2In);
         BalancerMaintenanceUpdate.setString(5, LastMaintenanceDate7In);
 
-        BalancerMaintenanceUpdate.setInt(6, TargetProduction1In);
-        BalancerMaintenanceUpdate.setInt(7, TargetProduction2In);
-        BalancerMaintenanceUpdate.setInt(8, TargetProduction7In);
+        BalancerMaintenanceUpdate.setLong(6, TargetProduction1In);
+        BalancerMaintenanceUpdate.setLong(7, TargetProduction2In);
+        BalancerMaintenanceUpdate.setLong(8, TargetProduction7In);
 
-        BalancerMaintenanceUpdate.setInt(9, Production1In);
-        BalancerMaintenanceUpdate.setInt(10, Production2In);
-        BalancerMaintenanceUpdate.setInt(11, Production7In);
+        BalancerMaintenanceUpdate.setLong(9, Production1In);
+        BalancerMaintenanceUpdate.setLong(10, Production2In);
+        BalancerMaintenanceUpdate.setLong(11, Production7In);
 
-        BalancerMaintenanceUpdate.setInt(12, PlusMinus1In);
-        BalancerMaintenanceUpdate.setInt(13, PlusMinus2In);
-        BalancerMaintenanceUpdate.setInt(14, PlusMinus7In);
+        BalancerMaintenanceUpdate.setLong(12, PlusMinus1In);
+        BalancerMaintenanceUpdate.setLong(13, PlusMinus2In);
+        BalancerMaintenanceUpdate.setLong(14, PlusMinus7In);
 
         BalancerMaintenanceUpdate.setString(15, MaintenanceDueDate1In);
         BalancerMaintenanceUpdate.setString(16, MaintenanceDueDate2In);
@@ -19994,6 +23273,7 @@ public class SQLiteConnection {
         DefaultTableModel model = new DefaultTableModel(data, cols);
 
         JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
 
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
@@ -20021,8 +23301,10 @@ public class SQLiteConnection {
                     try {
                         LexanFingerTracking lexanFingerTracking = new LexanFingerTracking(1, -2);
                         lexanFingerTracking.setFingerLexanTrackingProductionToID(id);
+
                     } catch (SQLException ex) {
-                        Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
+                        Logger.getLogger(SQLiteConnection.class
+                                .getName()).log(Level.SEVERE, null, ex);
                     }
 
                 }
@@ -20075,11 +23357,11 @@ public class SQLiteConnection {
 
     public static Object[] MaintenanceStolleProductionReturnEntryByDate(Date dateIn) throws Exception {
 
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         String df = (sdf.format(dateIn));
 
         // Need to format dateIn to proper Syntax ----> #2/2/2012#
-        Object[] result = new Object[12];
+        Object[] result = new Object[16];
 
         Connection conn = Connect();
         Statement s = conn.createStatement();
@@ -20094,20 +23376,25 @@ public class SQLiteConnection {
 
         while ((rs != null) && (rs.next())) {
 
-            result[0] = rs.getInt(1);
+            result[0] = rs.getInt(1); // ID
             String df1 = (String) rs.getObject(2);
-            result[1] = df1;
-            result[2] = rs.getInt(3);
-            result[3] = rs.getInt(4);
-            result[4] = rs.getInt(5);
-            result[5] = rs.getInt(6);
-            result[6] = rs.getInt(7);
-            result[7] = rs.getInt(8);
-            result[8] = rs.getInt(9);
-            result[9] = rs.getInt(10);
-            result[10] = rs.getInt(11);
-            result[11] = rs.getInt(12);
-            result[12] = rs.getInt(13);
+            result[1] = df1; // Date
+            
+            result[2] = rs.getInt(3); // 11
+            result[3] = rs.getInt(4); // 12
+            
+            result[4] = rs.getInt(5); // 21         
+            result[5] = rs.getInt(6); // 22
+            
+            result[6] = rs.getInt(7); // 31           
+            result[7] = rs.getInt(8); // 32
+            result[8] = rs.getInt(9); // 33
+            
+            result[9] = rs.getInt(10); // 41
+            result[10] = rs.getInt(11); // 42
+            result[11] = rs.getInt(12); // 43
+            result[12] = rs.getInt(13); // 44
+            
             result[13] = rs.getString(14);
 
             rs.close();
@@ -20161,6 +23448,46 @@ public class SQLiteConnection {
 
         // //////////////////////////////////////////////////////////////////////
         return result;
+
+    }
+
+    public static boolean MaintenanceStolleProductionEntryExists(String yearIn, String monthIn, String dayIn) throws SQLException {
+
+        boolean result = false;
+        int count = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT MainStolleProduction.Date FROM MainStolleProduction WHERE MainStolleProduction.Date = \'" + yearIn + "-" + monthIn + "-" + dayIn + "\';";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            count++;
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        if (count > 0) {
+
+            System.out.println("True");
+            return true;
+
+        } else {
+
+            System.out.println("True");
+            return false;
+        }
 
     }
 
@@ -20280,6 +23607,67 @@ public class SQLiteConnection {
         BalancerProductionUpdate.setInt(12, stolle44In);
         BalancerProductionUpdate.setInt(13, dailyTotalIn);
         BalancerProductionUpdate.setInt(14, idIn);
+
+        BalancerProductionUpdate.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static void MaintenanceStolleProductionUpdateByDate(
+            int stolle11In,
+            int stolle12In,
+            int stolle21In,
+            int stolle22In,
+            int stolle31In,
+            int stolle32In,
+            int stolle33In,
+            int stolle41In,
+            int stolle42In,
+            int stolle43In,
+            int stolle44In,
+            int dailyTotalIn,
+            String DateIn
+    ) throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String sql = "update "
+                + "MainStolleProduction set Stolle11=? , "
+                + "Stolle12=? , "
+                + "Stolle21=? , "
+                + "Stolle22=?, "
+                + "Stolle31=? , "
+                + "Stolle32=?,  "
+                + "Stolle33=?, "
+                + "Stolle41=?, "
+                + "Stolle42=?, "
+                + "Stolle43=?, "
+                + "Stolle44=?, "
+                + "dailyTotal=? "
+                + "where Date=?";
+
+        PreparedStatement BalancerProductionUpdate = conn.prepareStatement(sql);
+
+        BalancerProductionUpdate.setInt(1, stolle11In);
+        BalancerProductionUpdate.setInt(2, stolle12In);
+        BalancerProductionUpdate.setInt(3, stolle21In);
+        BalancerProductionUpdate.setInt(4, stolle22In);
+        BalancerProductionUpdate.setInt(5, stolle31In);
+        BalancerProductionUpdate.setInt(6, stolle32In);
+        BalancerProductionUpdate.setInt(7, stolle33In);
+        BalancerProductionUpdate.setInt(8, stolle41In);
+        BalancerProductionUpdate.setInt(9, stolle42In);
+        BalancerProductionUpdate.setInt(10, stolle43In);
+        BalancerProductionUpdate.setInt(11, stolle44In);
+        BalancerProductionUpdate.setInt(12, dailyTotalIn);
+        BalancerProductionUpdate.setString(13, DateIn);
 
         BalancerProductionUpdate.executeUpdate();
 
@@ -20565,6 +23953,75 @@ public class SQLiteConnection {
         return total;
     }
 
+    public static int MaintenanceStolleProductionCalculateTotalsForMachine(String dateIn, String machineIn) throws SQLException {
+
+        // Convert Input into Date Range
+        int total = 0;
+
+        String maxDate = MaintenanceStolleProductionGetMaxDateForMachine(machineIn);
+
+        // Return the sum of the selected month and Line - SQL Query SUM WHERE
+        // Month Contains /06/
+        // Query ////////
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        String sql1 = "SELECT SUM(" + machineIn + ") FROM MainStolleProduction WHERE Date BETWEEN \'" + dateIn + "\' AND \'" + maxDate + "\';";
+
+        System.out.println(sql1);
+
+        s.setQueryTimeout(5);
+
+        // W11 /////////////////
+        s.execute(sql1);
+
+        ResultSet rs1 = s.getResultSet();
+        while ((rs1 != null) && (rs1.next())) {
+            total = rs1.getInt(1);
+        }
+
+        // ///////////////////////////
+        // ///////////////////////////
+        rs1.close();
+
+        s.close();
+        conn.close();
+
+        // ///////////////
+        return total;
+    }
+
+    public static String MaintenanceStolleProductionGetMaxDateForMachine(String machineIn) throws SQLException {
+
+        // Convert Input into Date Range
+        String date = "";
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        String sql1 = "SELECT MAX(Date) FROM MainStolleProduction ;";
+
+        s.setQueryTimeout(5);
+
+        // W11 /////////////////
+        s.execute(sql1);
+
+        ResultSet rs1 = s.getResultSet();
+        while ((rs1 != null) && (rs1.next())) {
+            date = rs1.getString(1);
+        }
+
+        // ///////////////////////////
+        // ///////////////////////////
+        rs1.close();
+
+        s.close();
+        conn.close();
+
+        // ///////////////
+        return date;
+    }
+
     public static JPanel MaintenanceStolleProductionSummaryTable(int in) throws SQLException {
 
         JPanel outerPanel = new JPanel(new BorderLayout());
@@ -20573,7 +24030,7 @@ public class SQLiteConnection {
         Statement stmt = conn.createStatement();
         stmt.setQueryTimeout(10);
 
-        PreparedStatement psmt = conn.prepareStatement("SELECT Date, Stolle11, Stolle12, Stolle21, Stolle22, Stolle31, Stolle32, Stolle33, Stolle41, Stolle42, Stolle43, Stolle44,DailyTotal, (DailyTotal/10) AS DailyAverage, ID FROM MainStolleProduction ORDER BY Date DESC");
+        PreparedStatement psmt = conn.prepareStatement("SELECT Date, Stolle11, Stolle12, Stolle21, Stolle22, Stolle31, Stolle32, Stolle33, Stolle41, Stolle42, Stolle43, Stolle44,DailyTotal, (DailyTotal/11) AS DailyAverage, ID FROM MainStolleProduction ORDER BY Date DESC");
         psmt.setQueryTimeout(10);
         ResultSet rs = psmt.executeQuery();
         DefaultTableModel dm = new DefaultTableModel();
@@ -20596,20 +24053,59 @@ public class SQLiteConnection {
 
             Vector row = new Vector(len);
 
+            int q1 = rs.getInt(2);
+            String q2 = String.format("%,d", q1);
+
+            int q3 = rs.getInt(3);
+            String q4 = String.format("%,d", q3);
+
+            int q5 = rs.getInt(4);
+            String q6 = String.format("%,d", q5);
+
+            int q7 = rs.getInt(5);
+            String q8 = String.format("%,d", q7);
+
+            int q9 = rs.getInt(6);
+            String q10 = String.format("%,d", q9);
+
+            int q11 = rs.getInt(7);
+            String q12 = String.format("%,d", q11);
+
+            int q13 = rs.getInt(8);
+            String q14 = String.format("%,d", q13);
+
+            int q15 = rs.getInt(9);
+            String q16 = String.format("%,d", q15);
+
+            int q17 = rs.getInt(10);
+            String q18 = String.format("%,d", q17);
+
+            int q19 = rs.getInt(11);
+            String q20 = String.format("%,d", q19);
+
+            int q21 = rs.getInt(12);
+            String q22 = String.format("%,d", q21);
+
+            int q23 = rs.getInt(13);
+            String q24 = String.format("%,d", q23);
+
+            int q25 = rs.getInt(14);
+            String q26 = String.format("%,d", q25);
+
             row.add(rs.getString(1));
-            row.add(rs.getInt(2));
-            row.add(rs.getInt(3));
-            row.add(rs.getInt(4));
-            row.add(rs.getInt(5));
-            row.add(rs.getInt(6));
-            row.add(rs.getInt(7));
-            row.add(rs.getInt(8));
-            row.add(rs.getInt(9));
-            row.add(rs.getInt(10));
-            row.add(rs.getInt(11));
-            row.add(rs.getInt(12));
-            row.add(rs.getInt(13));
-            row.add(rs.getInt(14));
+            row.add(q2);
+            row.add(q4);
+            row.add(q6);
+            row.add(q8);
+            row.add(q10);
+            row.add(q12);
+            row.add(q14);
+            row.add(q16);
+            row.add(q18);
+            row.add(q20);
+            row.add(q22);
+            row.add(q24);
+            row.add(q26);
             row.add(rs.getString(15));
 
             data.add(row);
@@ -20619,6 +24115,7 @@ public class SQLiteConnection {
         DefaultTableModel model = new DefaultTableModel(data, cols);
 
         JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
 
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
@@ -20645,8 +24142,10 @@ public class SQLiteConnection {
                     try {
                         StolleProduction stolleProduction = new StolleProduction(1, -2);
                         stolleProduction.setStolleProductionToID(id);
+
                     } catch (SQLException ex) {
-                        Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
+                        Logger.getLogger(SQLiteConnection.class
+                                .getName()).log(Level.SEVERE, null, ex);
                     }
 
                 }
@@ -20663,6 +24162,28 @@ public class SQLiteConnection {
         conn.close();
 
         return outerPanel;
+
+    }
+
+    public static void MaintenanceStolleDelete(int idIn) throws SQLException {
+
+        Connection conn = Connect();
+        conn.setAutoCommit(false);
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String selTable = "Delete FROM MainStolleProduction WHERE MainStolleProduction.ID = " + idIn + ";";
+
+        System.out.println("Error : " + selTable);
+
+        s.execute(selTable);
+
+        // /////////////////////////////////////////////////////////////////////////////
+        conn.commit();
+        s.close();
+        conn.close();
 
     }
 
@@ -21221,6 +24742,68 @@ public class SQLiteConnection {
 
     }
 
+    public static boolean MaintenanceStolleSpoilageEntryExists(String yearIn, String monthIn, String dayIn) throws SQLException {
+
+        boolean result = false;
+        int count = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT MainStolleSpoilage.Date FROM MainStolleSpoilage WHERE MainStolleSpoilage.Date = \'" + yearIn + "-" + monthIn + "-" + dayIn + "\';";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            count++;
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        if (count > 0) {
+
+            System.out.println("True");
+            return true;
+
+        } else {
+
+            System.out.println("True");
+            return false;
+        }
+
+    }
+
+    public static void MaintenanceStolleSpoilageDelete(int idIn) throws SQLException {
+
+        Connection conn = Connect();
+        conn.setAutoCommit(false);
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String selTable = "Delete FROM MainStolleSpoilage WHERE MainStolleSpoilage.ID = " + idIn + ";";
+
+        System.out.println("Error : " + selTable);
+
+        s.execute(selTable);
+
+        // /////////////////////////////////////////////////////////////////////////////
+        conn.commit();
+        s.close();
+        conn.close();
+
+    }
+
     public static void MaintenanceStolleSpoilageInsert(
             int idIn,
             String DateIn,
@@ -21328,6 +24911,66 @@ public class SQLiteConnection {
         LinerProductionUpdate.setDouble(11, Stolle43In);
         LinerProductionUpdate.setDouble(12, Stolle44In);
         LinerProductionUpdate.setInt(13, idIn);
+
+        LinerProductionUpdate.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static void MaintenanceStolleSpoilageUpdateByDate(
+            double Stolle11In,
+            double Stolle12In,
+            double Stolle21In,
+            double Stolle22In,
+            double Stolle31In,
+            double Stolle32In,
+            double Stolle33In,
+            double Stolle41In,
+            double Stolle42In,
+            double Stolle43In,
+            double Stolle44In,
+            String DateIn
+    ) throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String sql = "update "
+                + "MainStolleSpoilage set "
+                + "Stolle11=? , "
+                + "Stolle12=? , "
+                + "Stolle21=? , "
+                + "Stolle22=?,  "
+                + "Stolle31=?, "
+                + "Stolle32=?, "
+                + "Stolle33=?, "
+                + "Stolle41=?, "
+                + "Stolle42=?, "
+                + "Stolle43=?, "
+                + "Stolle44=? "
+                + "where "
+                + "Date=?";
+
+        PreparedStatement LinerProductionUpdate = conn.prepareStatement(sql);
+
+        LinerProductionUpdate.setDouble(1, Stolle11In);
+        LinerProductionUpdate.setDouble(2, Stolle12In);
+        LinerProductionUpdate.setDouble(3, Stolle21In);
+        LinerProductionUpdate.setDouble(4, Stolle22In);
+        LinerProductionUpdate.setDouble(5, Stolle31In);
+        LinerProductionUpdate.setDouble(6, Stolle32In);
+        LinerProductionUpdate.setDouble(7, Stolle33In);
+        LinerProductionUpdate.setDouble(8, Stolle41In);
+        LinerProductionUpdate.setDouble(9, Stolle42In);
+        LinerProductionUpdate.setDouble(10, Stolle43In);
+        LinerProductionUpdate.setDouble(11, Stolle44In);
+        LinerProductionUpdate.setString(12, DateIn);
 
         LinerProductionUpdate.executeUpdate();
 
@@ -21650,6 +25293,7 @@ public class SQLiteConnection {
         DefaultTableModel model = new DefaultTableModel(data, cols);
 
         JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
 
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
@@ -21676,8 +25320,10 @@ public class SQLiteConnection {
                     try {
                         StolleSpoilage stolleSpoilage = new StolleSpoilage(1, -2);
                         stolleSpoilage.setStolleSpoilageToID(id);
+
                     } catch (SQLException ex) {
-                        Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
+                        Logger.getLogger(SQLiteConnection.class
+                                .getName()).log(Level.SEVERE, null, ex);
                     }
 
                 }
@@ -23885,28 +27531,90 @@ public class SQLiteConnection {
 
             Vector row = new Vector(len);
 
+            int q1 = rs.getInt(3);
+            String q2 = String.format("%,d", q1);
+
+            int q3 = rs.getInt(4);
+            String q4 = String.format("%,d", q3);
+
+            int q5 = rs.getInt(5);
+            String q6 = String.format("%,d", q5);
+
+            int q7 = rs.getInt(6);
+            String q8 = String.format("%,d", q7);
+
+            int q9 = rs.getInt(7);
+            String q10 = String.format("%,d", q9);
+
+            int q11 = rs.getInt(8);
+            String q12 = String.format("%,d", q11);
+
+            int q13 = rs.getInt(9);
+            String q14 = String.format("%,d", q13);
+
+            int q15 = rs.getInt(10);
+            String q16 = String.format("%,d", q15);
+
+            int q17 = rs.getInt(11);
+            String q18 = String.format("%,d", q17);
+
+            int q19 = rs.getInt(12);
+            String q20 = String.format("%,d", q19);
+
+            int q21 = rs.getInt(13);
+            String q22 = String.format("%,d", q21);
+
+            int q23 = rs.getInt(14);
+            String q24 = String.format("%,d", q23);
+
+            int q25 = rs.getInt(15);
+            String q26 = String.format("%,d", q25);
+
+            int q27 = rs.getInt(16);
+            String q28 = String.format("%,d", q27);
+
+            int q29 = rs.getInt(17);
+            String q30 = String.format("%,d", q29);
+
+            int q31 = rs.getInt(18);
+            String q32 = String.format("%,d", q31);
+
+            int q33 = rs.getInt(19);
+            String q34 = String.format("%,d", q33);
+
+            int q35 = rs.getInt(20);
+            String q36 = String.format("%,d", q35);
+
+            int q37 = rs.getInt(21);
+            String q38 = String.format("%,d", q37);
+
+            int q39 = rs.getInt(22);
+            String q40 = String.format("%,d", q39);
+
             row.add(rs.getInt(1));
             row.add(rs.getString(2));
-            row.add(rs.getInt(3));
-            row.add(rs.getInt(4));
-            row.add(rs.getInt(5));
-            row.add(rs.getInt(6));
-            row.add(rs.getInt(7));
-            row.add(rs.getInt(8));
-            row.add(rs.getInt(9));
-            row.add(rs.getInt(10));
-            row.add(rs.getInt(11));
-            row.add(rs.getInt(12));
-            row.add(rs.getInt(13));
-            row.add(rs.getInt(14));
-            row.add(rs.getInt(15));
-            row.add(rs.getInt(16));
-            row.add(rs.getInt(17));
-            row.add(rs.getInt(18));
-            row.add(rs.getInt(19));
-            row.add(rs.getInt(20));
-            row.add(rs.getInt(21));
-            row.add(rs.getInt(22));
+
+            row.add(q2);
+            row.add(q4);
+            row.add(q6);
+            row.add(q8);
+            row.add(q10);
+            row.add(q12);
+            row.add(q14);
+            row.add(q16);
+            row.add(q18);
+            row.add(q20);
+            row.add(q22);
+            row.add(q24);
+            row.add(q26);
+            row.add(q28);
+            row.add(q30);
+            row.add(q32);
+            row.add(q34);
+            row.add(q36);
+            row.add(q38);
+            row.add(q40);
+
             row.add(rs.getString(23));
 
             data.add(row);
@@ -23916,6 +27624,7 @@ public class SQLiteConnection {
         DefaultTableModel model = new DefaultTableModel(data, cols);
 
         JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
 
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
@@ -23943,8 +27652,10 @@ public class SQLiteConnection {
                     try {
                         MachineOEE machineOEE = new MachineOEE(1, -2);
                         machineOEE.setMachineOEEToID(id);
+
                     } catch (SQLException ex) {
-                        Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
+                        Logger.getLogger(SQLiteConnection.class
+                                .getName()).log(Level.SEVERE, null, ex);
                     }
 
                 }
@@ -23966,15 +27677,15 @@ public class SQLiteConnection {
 
     public static int[] MaintenanceMachineOEEgetAverages(int idIn) throws SQLException {
 
-        String sql1 = null;      
+        String sql1 = null;
 
         Connection conn = Connect();
         Statement s = conn.createStatement();
         s.setQueryTimeout(10);
-        
+
         Calendar cal = Calendar.getInstance();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        
+
         // Get Todays Date as String
         String todaysDate = sdf.format(cal.getTime());
         // Get 7 Days Ago as String
@@ -23985,11 +27696,10 @@ public class SQLiteConnection {
         Calendar cal2 = Calendar.getInstance();
         cal2.add(Calendar.DAY_OF_MONTH, -30);
         String lastMonth = sdf.format(cal2.getTime());
-        
-        System.out.println("Today : "+todaysDate);
-        System.out.println("Last Week : "+lastWeek);
-        System.out.println("Last Month : "+lastMonth);
-        
+
+        System.out.println("Today : " + todaysDate);
+        System.out.println("Last Week : " + lastWeek);
+        System.out.println("Last Month : " + lastMonth);
 
         // Get avarage of last 7 days for 
         int[] averages = new int[20];
@@ -23998,10 +27708,9 @@ public class SQLiteConnection {
 
             sql1 = "SELECT SUM(SP1_2)/7, SUM(SP3)/7, SUM(SP41)/7, SUM(SP42)/7, SUM(SP4)/7, SUM(LinerM1)/7, SUM(LinerM2)/7, SUM(LinerM3)/7, SUM(LinerM4)/7, SUM(CP11)/7, SUM(CP12)/7, SUM(CP21)/7, SUM(CP22)/7, SUM(CP31)/7, SUM(CP32)/7, SUM(CP33)/7, SUM(CP41)/7, SUM(CP42)/7, SUM(CP43)/7, SUM(CP44)/7 FROM MainMachineOEE WHERE Date BETWEEN \'" + lastWeek + "\' AND \'" + todaysDate + "\';";
 
-     //       System.out.println(sql1);
-
+            //       System.out.println(sql1);
         } else if (idIn == 30) {
-            
+
             sql1 = "SELECT SUM(SP1_2)/30, SUM(SP3)/30, SUM(SP41)/30, SUM(SP42)/30, SUM(SP4)/30, SUM(LinerM1)/30, SUM(LinerM2)/30, SUM(LinerM3)/30, SUM(LinerM4)/30, SUM(CP11)/30, SUM(CP12)/30, SUM(CP21)/30, SUM(CP22)/30, SUM(CP31)/30, SUM(CP32)/30, SUM(CP33)/30, SUM(CP41)/30, SUM(CP42)/30, SUM(CP43)/30, SUM(CP44)/30 FROM MainMachineOEE WHERE Date BETWEEN \'" + lastMonth + "\' AND \'" + todaysDate + "\';";
             System.out.println(sql1);
 
@@ -24083,7 +27792,7 @@ public class SQLiteConnection {
 
     public static Object[] MaintenanceStolleDowntimeReturnEntryByDate(Date dateIn) throws Exception {
 
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         String df = (sdf.format(dateIn));
 
         // Need to format dateIn to proper Syntax ----> #2/2/2012#
@@ -24719,6 +28428,7 @@ public class SQLiteConnection {
         DefaultTableModel model = new DefaultTableModel(data, cols);
 
         JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
 
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
@@ -24743,10 +28453,12 @@ public class SQLiteConnection {
                     String idString = table.getValueAt(table.getSelectedRow(), 13).toString();
                     int id = Integer.valueOf(idString);
                     try {
-                        StolleDowntime StolleDowntime = new StolleDowntime(1, -2);
+                        StolleDowntimeDay StolleDowntime = new StolleDowntimeDay(1, -2);
                         StolleDowntime.setStolleDowntimeToID(id);
+
                     } catch (SQLException ex) {
-                        Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
+                        Logger.getLogger(SQLiteConnection.class
+                                .getName()).log(Level.SEVERE, null, ex);
                     }
 
                 }
@@ -24763,6 +28475,1794 @@ public class SQLiteConnection {
         conn.close();
 
         return outerPanel;
+
+    }
+
+    // Maintenance Stolle Shift Downtime
+    public static int MaintenanceStolleDowntimeShiftGetHighestID() throws SQLException {
+
+        int highestID = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT MAX(MainStolleDowntimeShift.[ID]) FROM MainStolleDowntimeShift;";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            highestID = rs.getInt(1);
+            System.out.println("Highest ID :  " + highestID);
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        return highestID;
+    }
+
+    public static Object[] MaintenanceStolleDowntimeShiftReturnEntryByDate(Date dateIn) throws Exception {
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        String df = (sdf.format(dateIn));
+
+        // Need to format dateIn to proper Syntax ----> #2/2/2012#
+        Object[] result = new Object[26];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainStolleDowntimeShift WHERE MainStolleDowntimeShift.Date = \"" + df + "\";";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2);
+            result[1] = df1;
+            result[2] = rs.getDouble(3);
+            result[3] = rs.getDouble(4);
+            result[4] = rs.getDouble(5);
+            result[5] = rs.getDouble(6);
+            result[6] = rs.getDouble(7);
+            result[7] = rs.getDouble(8);
+            result[8] = rs.getDouble(9);
+            result[9] = rs.getDouble(10);
+            result[10] = rs.getDouble(11);
+            result[11] = rs.getDouble(12);
+            result[12] = rs.getDouble(13);
+            result[13] = rs.getDouble(14);
+            result[14] = rs.getDouble(15);
+            result[15] = rs.getDouble(16);
+            result[16] = rs.getDouble(17);
+            result[17] = rs.getDouble(18);
+            result[18] = rs.getDouble(19);
+            result[19] = rs.getDouble(20);
+            result[20] = rs.getDouble(21);
+            result[21] = rs.getDouble(22);
+            result[22] = rs.getDouble(23);
+            result[23] = rs.getDouble(24);
+            result[24] = rs.getString(25);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+
+    }
+
+    public static Object[] MaintenanceStolleDowntimeShiftReturnEntryByID(int id) throws Exception {
+
+        Object[] result = new Object[30];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainStolleDowntimeShift WHERE MainStolleDowntimeShift.ID = \"" + id + "\";";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2);
+            result[1] = df1;
+            result[2] = rs.getDouble(3);
+            result[3] = rs.getDouble(4);
+            result[4] = rs.getDouble(5);
+            result[5] = rs.getDouble(6);
+            result[6] = rs.getDouble(7);
+            result[7] = rs.getDouble(8);
+            result[8] = rs.getDouble(9);
+            result[9] = rs.getDouble(10);
+            result[10] = rs.getDouble(11);
+            result[11] = rs.getDouble(12);
+            result[12] = rs.getDouble(13);
+            result[13] = rs.getDouble(14);
+            result[14] = rs.getDouble(15);
+            result[15] = rs.getDouble(16);
+            result[16] = rs.getDouble(17);
+            result[17] = rs.getDouble(18);
+            result[18] = rs.getDouble(19);
+            result[19] = rs.getDouble(20);
+            result[20] = rs.getDouble(21);
+            result[21] = rs.getDouble(22);
+            result[22] = rs.getDouble(23);
+            result[23] = rs.getDouble(24);
+            result[24] = rs.getString(25);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+
+    }
+
+    public static void MaintenanceStolleDowntimeShiftInsert(
+            int idIn,
+            String DateIn,
+            double stolle11In1,
+            double stolle12In1,
+            double stolle21In1,
+            double stolle22In1,
+            double stolle31In1,
+            double stolle32In1,
+            double stolle33In1,
+            double stolle41In1,
+            double stolle42In1,
+            double stolle43In1,
+            double stolle44In1,
+            double stolle11In2,
+            double stolle12In2,
+            double stolle21In2,
+            double stolle22In2,
+            double stolle31In2,
+            double stolle32In2,
+            double stolle33In2,
+            double stolle41In2,
+            double stolle42In2,
+            double stolle43In2,
+            double stolle44In2,
+            String commentIn
+    )
+            throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // TimeStamp in String Format
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date date = new Date();
+        String dateF = format.format(date);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        PreparedStatement BalancerProductionInsert = conn.prepareStatement("insert into MainStolleDowntimeShift values(?,?,?,?,?,?,?,?,?,?, ?,?,?,?,?,?,?,?,?,?, ?,?,?,?,?,? )");
+
+        BalancerProductionInsert.setInt(1, idIn);
+        BalancerProductionInsert.setString(2, DateIn);
+
+        BalancerProductionInsert.setDouble(3, stolle11In1);
+        BalancerProductionInsert.setDouble(4, stolle12In1);
+
+        BalancerProductionInsert.setDouble(5, stolle21In1);
+        BalancerProductionInsert.setDouble(6, stolle22In1);
+
+        BalancerProductionInsert.setDouble(7, stolle31In1);
+        BalancerProductionInsert.setDouble(8, stolle32In1);
+        BalancerProductionInsert.setDouble(9, stolle33In1);
+
+        BalancerProductionInsert.setDouble(10, stolle41In1);
+        BalancerProductionInsert.setDouble(11, stolle42In1);
+        BalancerProductionInsert.setDouble(12, stolle43In1);
+        BalancerProductionInsert.setDouble(13, stolle44In1);
+
+        BalancerProductionInsert.setDouble(14, stolle11In2);
+        BalancerProductionInsert.setDouble(15, stolle12In2);
+
+        BalancerProductionInsert.setDouble(16, stolle21In2);
+        BalancerProductionInsert.setDouble(17, stolle22In2);
+
+        BalancerProductionInsert.setDouble(18, stolle31In2);
+        BalancerProductionInsert.setDouble(19, stolle32In2);
+        BalancerProductionInsert.setDouble(20, stolle33In2);
+
+        BalancerProductionInsert.setDouble(21, stolle41In2);
+        BalancerProductionInsert.setDouble(22, stolle42In2);
+        BalancerProductionInsert.setDouble(23, stolle43In2);
+        BalancerProductionInsert.setDouble(24, stolle44In2);
+
+        BalancerProductionInsert.setString(25, commentIn);
+        BalancerProductionInsert.setString(26, dateF);
+
+        BalancerProductionInsert.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static void MaintenanceStolleDowntimeShiftUpdate(
+            String DateIn,
+            double stolle11In1,
+            double stolle12In1,
+            double stolle21In1,
+            double stolle22In1,
+            double stolle31In1,
+            double stolle32In1,
+            double stolle33In1,
+            double stolle41In1,
+            double stolle42In1,
+            double stolle43In1,
+            double stolle44In1,
+            double stolle11In2,
+            double stolle12In2,
+            double stolle21In2,
+            double stolle22In2,
+            double stolle31In2,
+            double stolle32In2,
+            double stolle33In2,
+            double stolle41In2,
+            double stolle42In2,
+            double stolle43In2,
+            double stolle44In2,
+            String commentIn,
+            int idIn
+    ) throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String sql = "update "
+                + "MainStolleDowntimeShift set "
+                + "Date=?, "
+                + "Stolle11=? , "
+                + "Stolle12=? , "
+                + "Stolle21=? , "
+                + "Stolle22=?, "
+                + "Stolle31=? , "
+                + "Stolle32=?,  "
+                + "Stolle33=?, "
+                + "Stolle41=?, "
+                + "Stolle42=?, "
+                + "Stolle43=?, "
+                + "Stolle44=?, "
+                + "Stolle11_1=? , "
+                + "Stolle12_1=? , "
+                + "Stolle21_1=? , "
+                + "Stolle22_1=?, "
+                + "Stolle31_1=? , "
+                + "Stolle32_1=?,  "
+                + "Stolle33_1=?, "
+                + "Stolle41_1=?, "
+                + "Stolle42_1=?, "
+                + "Stolle43_1=?, "
+                + "Stolle44_1=?, "
+                + "Comment=? "
+                + "where ID=?";
+
+        PreparedStatement BalancerProductionUpdate = conn.prepareStatement(sql);
+
+        BalancerProductionUpdate.setString(1, DateIn);
+        BalancerProductionUpdate.setDouble(2, stolle11In1);
+        BalancerProductionUpdate.setDouble(3, stolle12In1);
+        BalancerProductionUpdate.setDouble(4, stolle21In1);
+        BalancerProductionUpdate.setDouble(5, stolle22In1);
+        BalancerProductionUpdate.setDouble(6, stolle31In1);
+        BalancerProductionUpdate.setDouble(7, stolle32In1);
+        BalancerProductionUpdate.setDouble(8, stolle33In1);
+        BalancerProductionUpdate.setDouble(9, stolle41In1);
+        BalancerProductionUpdate.setDouble(10, stolle42In1);
+        BalancerProductionUpdate.setDouble(11, stolle43In1);
+        BalancerProductionUpdate.setDouble(12, stolle44In1);
+        BalancerProductionUpdate.setDouble(13, stolle11In2);
+        BalancerProductionUpdate.setDouble(14, stolle12In2);
+        BalancerProductionUpdate.setDouble(15, stolle21In2);
+        BalancerProductionUpdate.setDouble(16, stolle22In2);
+        BalancerProductionUpdate.setDouble(17, stolle31In2);
+        BalancerProductionUpdate.setDouble(18, stolle32In2);
+        BalancerProductionUpdate.setDouble(19, stolle33In2);
+        BalancerProductionUpdate.setDouble(20, stolle41In2);
+        BalancerProductionUpdate.setDouble(21, stolle42In2);
+        BalancerProductionUpdate.setDouble(22, stolle43In2);
+        BalancerProductionUpdate.setDouble(23, stolle44In2);
+        BalancerProductionUpdate.setString(24, commentIn);
+        BalancerProductionUpdate.setInt(25, idIn);
+
+        BalancerProductionUpdate.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        s.close();
+        conn.close();
+
+    }
+
+    public static Object[] MaintenanceStolleDowntimeShiftGetNextEntryById(int idIn) throws SQLException {
+
+        Object[] result = new Object[26];
+        int nextId = idIn + 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainStolleDowntimeShift WHERE MainStolleDowntimeShift.ID = \"" + nextId + "\";";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2);
+            result[1] = df1;
+            result[2] = rs.getDouble(3);
+            result[3] = rs.getDouble(4);
+            result[4] = rs.getDouble(5);
+            result[5] = rs.getDouble(6);
+            result[6] = rs.getDouble(7);
+            result[7] = rs.getDouble(8);
+            result[8] = rs.getDouble(9);
+            result[9] = rs.getDouble(10);
+            result[10] = rs.getDouble(11);
+            result[11] = rs.getDouble(12);
+            result[12] = rs.getDouble(13);
+            result[13] = rs.getDouble(14);
+            result[14] = rs.getDouble(15);
+            result[15] = rs.getDouble(16);
+            result[16] = rs.getDouble(17);
+            result[17] = rs.getDouble(18);
+            result[18] = rs.getDouble(19);
+            result[19] = rs.getDouble(20);
+            result[20] = rs.getDouble(21);
+            result[21] = rs.getDouble(22);
+            result[22] = rs.getDouble(23);
+            result[23] = rs.getDouble(24);
+            result[24] = rs.getString(25);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    public static Object[] MaintenanceStolleDowntimeShiftGetPreviousEntryById(int idIn) throws SQLException {
+
+        Object[] result = new Object[25];
+        int nextId = idIn - 1;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM MainStolleDowntimeShift WHERE MainStolleDowntimeShift.ID = \"" + nextId + "\";";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            String df1 = (String) rs.getObject(2);
+            result[1] = df1;
+            result[2] = rs.getDouble(3);
+            result[3] = rs.getDouble(4);
+            result[4] = rs.getDouble(5);
+            result[5] = rs.getDouble(6);
+            result[6] = rs.getDouble(7);
+            result[7] = rs.getDouble(8);
+            result[8] = rs.getDouble(9);
+            result[9] = rs.getDouble(10);
+            result[10] = rs.getDouble(11);
+            result[11] = rs.getDouble(12);
+            result[12] = rs.getDouble(13);
+            result[13] = rs.getDouble(14);
+            result[14] = rs.getDouble(15);
+            result[15] = rs.getDouble(16);
+            result[16] = rs.getDouble(17);
+            result[17] = rs.getDouble(18);
+            result[18] = rs.getDouble(19);
+            result[19] = rs.getDouble(20);
+            result[20] = rs.getDouble(21);
+            result[21] = rs.getDouble(22);
+            result[22] = rs.getDouble(23);
+            result[23] = rs.getDouble(24);
+            result[24] = rs.getString(25);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    public static Object[] MaintenanceStolleDowntimeShiftCalculateTotalsByMonth(String monthIn, String yearIn) throws SQLException {
+
+        // Convert Input into Date Range
+        String month = "";
+        String year = yearIn;
+
+        if (monthIn.equals("January")) {
+            month = "01";
+        } else if (monthIn.equals("February")) {
+            month = "02";
+        } else if (monthIn.equals("March")) {
+            month = "03";
+        } else if (monthIn.equals("April")) {
+            month = "04";
+        } else if (monthIn.equals("May")) {
+            month = "05";
+        } else if (monthIn.equals("June")) {
+            month = "06";
+        } else if (monthIn.equals("July")) {
+            month = "07";
+        } else if (monthIn.equals("August")) {
+            month = "08";
+        } else if (monthIn.equals("September")) {
+            month = "09";
+        } else if (monthIn.equals("October")) {
+            month = "10";
+        } else if (monthIn.equals("November")) {
+            month = "11";
+        } else if (monthIn.equals("December")) {
+            month = "12";
+        }
+
+        String date = (year + "-" + month);
+
+        System.out.println("Date : " + date);
+
+        Object[] total = new Object[15];
+
+        // Return the sum of the selected month and Line - SQL Query SUM WHERE
+        // Month Contains /06/
+        // Query ////////
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        String sql1 = "SELECT SUM(Stolle11) FROM MainStolleDowntimeShift WHERE Date LIKE '%" + date + "%';";
+        String sql2 = "SELECT SUM(Stolle12) FROM MainStolleDowntimeShift WHERE Date LIKE '%" + date + "%';";
+        String sql3 = "SELECT SUM(Stolle21) FROM MainStolleDowntimeShift WHERE Date LIKE '%" + date + "%';";
+        String sql4 = "SELECT SUM(Stolle22) FROM MainStolleDowntimeShift WHERE Date LIKE '%" + date + "%';";
+        String sql5 = "SELECT SUM(Stolle31) FROM MainStolleDowntimeShift WHERE Date LIKE '%" + date + "%';";
+        String sql6 = "SELECT SUM(Stolle32) FROM MainStolleDowntimeShift WHERE Date LIKE '%" + date + "%';";
+        String sql7 = "SELECT SUM(Stolle33) FROM MainStolleDowntimeShift WHERE Date LIKE '%" + date + "%';";
+        String sql8 = "SELECT SUM(Stolle41) FROM MainStolleDowntimeShift WHERE Date LIKE '%" + date + "%';";
+        String sql9 = "SELECT SUM(Stolle42) FROM MainStolleDowntimeShift WHERE Date LIKE '%" + date + "%';";
+        String sql10 = "SELECT SUM(Stolle43) FROM MainStolleDowntimeShift WHERE Date LIKE '%" + date + "%';";
+
+        String sql11 = "SELECT AVG(Stolle11 + Stolle12 + Stolle21 + Stolle22 + Stolle31 + Stolle32 + Stolle33 + Stolle41 + Stolle42 + Stolle43) FROM MainStolleDowntimeShift WHERE Date BETWEEN date('now', '-1 month') AND date('now');";
+
+        s.setQueryTimeout(5);
+
+        // W11 /////////////////
+        s.execute(sql1);
+
+        ResultSet rs1 = s.getResultSet();
+        while ((rs1 != null) && (rs1.next())) {
+            total[0] = rs1.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W12 //////////////////
+        s.execute(sql2);
+
+        ResultSet rs2 = s.getResultSet();
+        while ((rs2 != null) && (rs2.next())) {
+            total[1] = rs2.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W21 /////////////////
+        s.execute(sql3);
+
+        ResultSet rs3 = s.getResultSet();
+        while ((rs3 != null) && (rs3.next())) {
+            total[2] = rs3.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W22 /////////////////
+        s.execute(sql4);
+
+        ResultSet rs4 = s.getResultSet();
+        while ((rs4 != null) && (rs4.next())) {
+            total[3] = rs4.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql5);
+
+        ResultSet rs5 = s.getResultSet();
+        while ((rs5 != null) && (rs5.next())) {
+            total[4] = rs5.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql6);
+
+        ResultSet rs6 = s.getResultSet();
+        while ((rs6 != null) && (rs6.next())) {
+            total[5] = rs6.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql7);
+
+        ResultSet rs7 = s.getResultSet();
+        while ((rs7 != null) && (rs7.next())) {
+            total[6] = rs7.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql8);
+
+        ResultSet rs8 = s.getResultSet();
+        while ((rs8 != null) && (rs8.next())) {
+            total[7] = rs8.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql9);
+
+        ResultSet rs9 = s.getResultSet();
+        while ((rs9 != null) && (rs9.next())) {
+            total[8] = rs9.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql10);
+
+        ResultSet rs10 = s.getResultSet();
+        while ((rs10 != null) && (rs10.next())) {
+            total[9] = rs10.getInt(1);
+        }
+
+        // ///////////////////////////
+        // W32 /////////////////
+        s.execute(sql11);
+
+        ResultSet rs11 = s.getResultSet();
+        while ((rs11 != null) && (rs11.next())) {
+            total[10] = rs11.getInt(1);
+        }
+
+        // ///////////////////////////
+        // ///////////////////////////
+        rs1.close();
+        rs2.close();
+        rs3.close();
+        rs4.close();
+        rs5.close();
+        rs6.close();
+        rs7.close();
+        rs8.close();
+        rs9.close();
+        rs10.close();
+
+        s.close();
+        conn.close();
+
+        // ///////////////
+        return total;
+    }
+
+    public static JPanel MaintenanceStolleDowntimeShiftSummaryTable(int in) throws SQLException {
+
+        JPanel outerPanel = new JPanel(new BorderLayout());
+
+        Connection conn = Connect();
+        Statement stmt = conn.createStatement();
+        stmt.setQueryTimeout(10);
+
+        PreparedStatement psmt = conn.prepareStatement("SELECT Date, Stolle11, Stolle12, Stolle21, Stolle22, Stolle31, Stolle32, Stolle33, Stolle41, Stolle42, Stolle43, Stolle44, Comment, ID FROM MainStolleDowntimeShift ORDER BY Date DESC");
+        psmt.setQueryTimeout(10);
+        ResultSet rs = psmt.executeQuery();
+        DefaultTableModel dm = new DefaultTableModel();
+
+        // get column names
+        int len = rs.getMetaData().getColumnCount();
+        System.out.println("LEN : " + len);
+        Vector cols = new Vector(len);
+        for (int i = 1; i <= len; i++) {// Note starting at 1
+
+            cols.add(rs.getMetaData().getColumnName(i));
+            System.out.println(rs.getMetaData().getColumnName(i));
+
+        }
+
+        // Add Data
+        Vector data = new Vector();
+
+        while (rs.next()) {
+
+            Vector row = new Vector(len);
+
+            row.add(rs.getString(1));
+            row.add(rs.getDouble(2));
+            row.add(rs.getDouble(3));
+            row.add(rs.getDouble(4));
+            row.add(rs.getDouble(5));
+            row.add(rs.getDouble(6));
+            row.add(rs.getDouble(7));
+            row.add(rs.getDouble(8));
+            row.add(rs.getDouble(9));
+            row.add(rs.getDouble(10));
+            row.add(rs.getDouble(11));
+            row.add(rs.getDouble(12));
+            row.add(rs.getString(13));
+            row.add(rs.getInt(14));
+
+            data.add(row);
+        }
+
+        // Now create the table
+        DefaultTableModel model = new DefaultTableModel(data, cols);
+
+        JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
+
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+        table.getColumnModel().getColumn(13).setMaxWidth(40);
+
+        // Render Checkbox
+//        TableColumn tc = table.getColumnModel().getColumn(9);
+//        tc.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+        table.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mousePressed(MouseEvent e) {
+
+                if (e.getClickCount() == 2) {
+                    JTable target = (JTable) e.getSource();
+
+                    int row = target.getSelectedRow() + 1;
+					// int column = target.getSelectedColumn();
+
+                    // System.out.println("Clicked : " + row );
+                    System.out.println(table.getValueAt(table.getSelectedRow(), 13).toString());
+
+                    String idString = table.getValueAt(table.getSelectedRow(), 13).toString();
+                    int id = Integer.valueOf(idString);
+                    try {
+                        StolleDowntimeShift StolleDowntime = new StolleDowntimeShift(1, -2);
+                        StolleDowntime.setStolleDowntimeToID(id);
+
+                    } catch (SQLException ex) {
+                        Logger.getLogger(SQLiteConnection.class
+                                .getName()).log(Level.SEVERE, null, ex);
+                    }
+
+                }
+            }
+        });
+
+        JTableHeader header = table.getTableHeader();
+
+        outerPanel.add(header, BorderLayout.NORTH);
+        outerPanel.add(table, BorderLayout.CENTER);
+
+        psmt.close();
+        stmt.close();
+        conn.close();
+
+        return outerPanel;
+
+    }
+
+    
+    // Defects Methods
+    public static int DefectsGetHighestID() throws SQLException {
+
+        int highestID = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT MAX(Defects.[ID]) FROM Defects;";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            highestID = rs.getInt(1);
+            System.out.println("Highest ID :  " + highestID);
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        return highestID;
+    }
+
+    public static boolean DefectsExists(String IdIn) throws SQLException {
+
+        boolean result = false;
+        int count = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT Defects.ID FROM Defects WHERE Defects.ID = " + IdIn + ";";
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            count++;
+            System.out.println("Count++");
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        if (count > 0) {
+
+            System.out.println("True");
+            return true;
+
+        } else {
+
+            System.out.println("True");
+            return false;
+        }
+
+    }
+
+    public static int DefectsGetLowestID() throws SQLException {
+
+        int highestID = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT Min(Defects.[ID]) FROM Defects;";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            highestID = rs.getInt(1);
+            System.out.println("Lowest ID :  " + highestID);
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        return highestID;
+    }
+
+    public static Object[] DefectsReturnEntryByGeneral(String nameIn) throws Exception {
+
+        Object[] result = new Object[10];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM Defects WHERE Defects.General LIKE \"%" + nameIn + "%\";";
+        System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            result[1] = rs.getString(2);
+            result[2] = rs.getString(3);
+            result[3] = rs.getString(4);
+            result[4] = rs.getString(5);
+            result[5] = rs.getString(6);
+
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+
+    }
+
+    public static Object[] DefectsReturnEntryById(int idIn) throws Exception {
+
+        Object[] result = new Object[10];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM Defects WHERE Defects.ID = " + idIn + ";";
+        System.out.println(selTable);
+        s.setQueryTimeout(3);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            result[1] = rs.getString(2);
+            result[2] = rs.getString(3);
+            result[3] = rs.getString(4);
+            result[4] = rs.getString(5);
+            result[5] = rs.getString(6);
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        rs.close();
+        s.close();
+        conn.close();
+
+        return result;
+
+    }
+
+    public static int DefectsReturnIdByName(String NameIn) throws Exception {
+
+        Object[] result = new Object[1];
+
+        int id = 0;
+
+        Connection conn = Connect();
+        conn.setAutoCommit(false);
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT ID FROM Defects WHERE Defects.ID = \'" + NameIn + "\';";
+        System.out.println(selTable);
+        s.setQueryTimeout(3);
+        s.execute(selTable);
+        // conn.commit();
+
+        ResultSet rs = s.getResultSet();
+
+        id = rs.getInt(1);
+
+        // //////////////////////////////////////////////////////////////////////
+        conn.commit();
+        rs.close();
+        s.close();
+        conn.close();
+
+        System.out.println("ID : " + id);
+        return id;
+
+    }
+
+    public static void DefectsInsert(
+            int idIn, String defectGroupIn, String generalIn, String areaOfOriginIn, String possibleCausesIn, String actionsIn
+    ) throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // TimeStamp in String Format
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date date = new Date();
+        String dateF = format.format(date);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        PreparedStatement updateLproductionMeeting = conn.prepareStatement("insert into Defects values(?,?,?,?,?,?)");
+
+        updateLproductionMeeting.setInt(1, idIn);
+        updateLproductionMeeting.setString(2, defectGroupIn);
+        updateLproductionMeeting.setString(3, generalIn);
+        updateLproductionMeeting.setString(4, areaOfOriginIn);
+        updateLproductionMeeting.setString(5, possibleCausesIn);
+        updateLproductionMeeting.setString(6, actionsIn);
+
+        updateLproductionMeeting.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        updateLproductionMeeting.close();
+        s.close();
+        conn.close();
+
+    }
+
+    public static void DefectsUpdate(
+            String defectGroupIn, String generalIn, String areaOfOriginIn, String possibleCausesIn, String actionsIn, int idIn
+    )
+            throws SQLException {
+
+        Connection conn = Connect();
+        conn.setAutoCommit(false);
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(2);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String sql = "update Defects set DefectGroup=?, General=? , AreaOfOrigin=? , PossibleCauses=? , Actions=? where ID=?";
+
+        PreparedStatement updateEmployees = conn.prepareStatement(sql);
+        updateEmployees.setQueryTimeout(10);
+
+        updateEmployees.setString(1, defectGroupIn);
+        updateEmployees.setString(2, generalIn);
+        updateEmployees.setString(3, areaOfOriginIn);
+        updateEmployees.setString(4, possibleCausesIn);
+        updateEmployees.setString(5, actionsIn);
+        updateEmployees.setInt(6, idIn);
+        updateEmployees.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        // updateEmployees.close();
+        conn.commit();
+        s.close();
+        conn.close();
+
+    }
+
+    public static void DefectsDelete(int idIn) throws SQLException {
+
+        Connection conn = Connect();
+        conn.setAutoCommit(false);
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String selTable = "Delete FROM Defects WHERE Defects.ID = " + idIn + ";";
+
+        System.out.println("Error : " + selTable);
+
+        s.execute(selTable);
+
+        // /////////////////////////////////////////////////////////////////////////////
+        conn.commit();
+        s.close();
+        conn.close();
+
+    }
+
+    public static Object[] DefectsGetNextEntryById(String nameIn) throws SQLException {
+
+        Object[] result = new Object[21];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable2 = "SELECT * FROM Defects WHERE ID = \"" + nameIn + "\" ORDER BY name ASC LIMIT 1";
+        System.out.println("Query : " + selTable2);
+        s.setQueryTimeout(10);
+        s.execute(selTable2);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            result[1] = rs.getString(2);
+            result[2] = rs.getString(3);
+            result[3] = rs.getString(4);
+            result[4] = rs.getString(5);
+            result[5] = rs.getString(6);
+            result[6] = rs.getString(7);
+            result[7] = rs.getString(8);
+            result[8] = rs.getInt(9);
+            result[9] = rs.getString(10);
+
+            for (int i = 0; i < result.length; i++) {
+
+                System.out.println("Result : " + result[i]);
+
+            }
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    public static Object[] DefectsGetPreviousEntryById(String nameIn) throws SQLException {
+
+        Object[] result = new Object[21];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable2 = "SELECT * FROM Defects WHERE ID = \"" + nameIn + "\" ORDER BY name DESC LIMIT 1";
+        System.out.println("Query : " + selTable2);
+        s.setQueryTimeout(10);
+        s.execute(selTable2);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            result[1] = rs.getString(2);
+            result[2] = rs.getString(3);
+            result[3] = rs.getString(4);
+            result[4] = rs.getString(5);
+            result[5] = rs.getString(6);
+            result[6] = rs.getString(7);
+            result[7] = rs.getString(8);
+            result[8] = rs.getInt(9);
+            result[9] = rs.getString(10);
+
+            for (int i = 0; i < result.length; i++) {
+
+                System.out.println("Result : " + result[i]);
+
+            }
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    public static int DefectsGetRowCount() throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(5);
+        ResultSet r = s.executeQuery("SELECT COUNT(ID) AS rowcount FROM Defects");
+        r.next();
+        int count = r.getInt("rowcount");
+        System.out.println("Row Count : " + count);
+
+        s.close();
+        conn.close();
+        r.close();
+
+        return count;
+
+    }
+
+    public static Object[] DefectsGetArraySorted() throws SQLException {
+
+        Object[] array = new Object[EmployeeGetRowCount()];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(5);
+        ResultSet r = s.executeQuery("SELECT * FROM Employees ORDER by Name ASC");
+
+        while ((r != null) && (r.next())) {
+
+            System.out.println("Entry : " + r.getString(2));
+
+        }
+
+        s.close();
+        conn.close();
+        r.close();
+
+        return array;
+
+    }
+
+    public static JPanel DefectsSummaryTable() throws SQLException {
+
+        JPanel outerPanel = new JPanel(new BorderLayout());
+
+        Connection conn = Connect();
+        Statement stmt = conn.createStatement();
+        stmt.setQueryTimeout(10);
+
+        PreparedStatement psmt = conn.prepareStatement("SELECT DefectGroup, General AS DefectType, AreaOfOrigin, PossibleCauses, Actions, ID  FROM Defects ORDER BY DefectGroup, General ASC");
+        psmt.setQueryTimeout(10);
+        ResultSet rs = psmt.executeQuery();
+        DefaultTableModel dm = new DefaultTableModel();
+
+        // get column names
+        int len = rs.getMetaData().getColumnCount();
+        System.out.println("LEN : " + len);
+        Vector cols = new Vector(len);
+        for (int i = 1; i <= len; i++) {// Note starting at 1
+
+            cols.add(rs.getMetaData().getColumnName(i));
+            System.out.println(rs.getMetaData().getColumnName(i));
+
+        }
+
+        // Add Data
+        Vector data = new Vector();
+
+        while (rs.next()) {
+
+            Vector row = new Vector(len);
+
+            row.add(rs.getString(1));
+            row.add(rs.getString(2));
+            row.add(rs.getString(3));
+            row.add(rs.getString(4));
+            row.add(rs.getString(5));
+            row.add(rs.getInt(6));
+
+            data.add(row);
+        }
+
+        // Now create the table
+        DefaultTableModel model = new DefaultTableModel(data, cols);
+
+        JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
+
+        //      table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        table.getColumnModel().getColumn(0).setMinWidth(120);
+        table.getColumnModel().getColumn(1).setMinWidth(120);
+        table.getColumnModel().getColumn(2).setMinWidth(180);
+
+        table.getColumnModel().getColumn(0).setMaxWidth(130);
+        table.getColumnModel().getColumn(1).setMaxWidth(130);
+        table.getColumnModel().getColumn(2).setMaxWidth(210);
+
+        table.getColumnModel().getColumn(5).setMaxWidth(60);
+
+//        TableColumn tc = table.getColumnModel().getColumn(3);       
+//        tc.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc1 = table.getColumnModel().getColumn(4);
+//        tc1.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc2 = table.getColumnModel().getColumn(5);
+//        tc2.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc3 = table.getColumnModel().getColumn(6);
+//        tc3.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc4 = table.getColumnModel().getColumn(7);
+//        tc4.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc5 = table.getColumnModel().getColumn(8);
+//        tc5.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc6 = table.getColumnModel().getColumn(9);
+//        tc6.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc7 = table.getColumnModel().getColumn(10);
+//        tc7.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc8 = table.getColumnModel().getColumn(11);
+//        tc8.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc9 = table.getColumnModel().getColumn(12);
+//        tc9.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc10 = table.getColumnModel().getColumn(13);
+//        tc10.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc11 = table.getColumnModel().getColumn(14);
+//        tc11.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc12 = table.getColumnModel().getColumn(15);
+//        tc12.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc13 = table.getColumnModel().getColumn(16);
+//        tc13.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+        JTableHeader header = table.getTableHeader();
+
+        outerPanel.add(header, BorderLayout.NORTH);
+        outerPanel.add(table, BorderLayout.CENTER);
+
+        psmt.close();
+        stmt.close();
+        conn.close();
+
+        JScrollPane scrollPane = new JScrollPane(outerPanel);
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(scrollPane);
+
+        return panel;
+
+    }
+
+    public static JTable DefectsOvertimeSummaryTableGrouped() throws SQLException {
+
+        JPanel outerPanel = new JPanel(new BorderLayout());
+
+        Connection conn = Connect();
+        Statement stmt = conn.createStatement();
+        stmt.setQueryTimeout(10);
+
+        PreparedStatement psmt = conn.prepareStatement(" SELECT Employees.Name, EmployeeOvertime.Job, EmployeeOvertime.Crew, EmployeeOvertime.Status FROM EmployeeOvertime");
+        psmt.setQueryTimeout(10);
+        ResultSet rs = psmt.executeQuery();
+        DefaultTableModel dm = new DefaultTableModel();
+
+        // get column names
+        int len = rs.getMetaData().getColumnCount();
+        System.out.println("LEN : " + len);
+        Vector cols = new Vector(len);
+        for (int i = 1; i <= len; i++) {// Note starting at 1
+
+            cols.add(rs.getMetaData().getColumnName(i));
+            System.out.println(rs.getMetaData().getColumnName(i));
+
+        }
+
+        // Add Data
+        Vector data = new Vector();
+
+        while (rs.next()) {
+
+            Vector row = new Vector(len);
+
+            row.add(rs.getString(1));
+            row.add(rs.getString(2));
+            row.add(rs.getString(3));
+
+            data.add(row);
+        }
+
+        // Now create the table
+        DefaultTableModel model = new DefaultTableModel(data, cols);
+
+        JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
+
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+//        table.getColumnModel().getColumn(0).setMinWidth(100);
+//        table.getColumnModel().getColumn(2).setMaxWidth(40);
+//        table.getColumnModel().getColumn(17).setMaxWidth(40);
+//
+//        TableColumn tc = table.getColumnModel().getColumn(3);
+//        tc.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc1 = table.getColumnModel().getColumn(4);
+//        tc1.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc2 = table.getColumnModel().getColumn(5);
+//        tc2.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc3 = table.getColumnModel().getColumn(6);
+//        tc3.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc4 = table.getColumnModel().getColumn(7);
+//        tc4.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc5 = table.getColumnModel().getColumn(8);
+//        tc5.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc6 = table.getColumnModel().getColumn(9);
+//        tc6.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc7 = table.getColumnModel().getColumn(10);
+//        tc7.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc8 = table.getColumnModel().getColumn(11);
+//        tc8.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc9 = table.getColumnModel().getColumn(12);
+//        tc9.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc10 = table.getColumnModel().getColumn(13);
+//        tc10.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc11 = table.getColumnModel().getColumn(14);
+//        tc11.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc12 = table.getColumnModel().getColumn(15);
+//        tc12.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+//        TableColumn tc13 = table.getColumnModel().getColumn(16);
+//        tc13.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+        JTableHeader header = table.getTableHeader();
+
+        outerPanel.add(header, BorderLayout.NORTH);
+        outerPanel.add(table, BorderLayout.CENTER);
+
+        psmt.close();
+        stmt.close();
+        conn.close();
+
+        JScrollPane scrollPane = new JScrollPane(outerPanel);
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(scrollPane);
+
+        return table;
+
+    }
+
+    public static void DefectsDeleteByID(String nameIn) {
+
+        Connection c = null;
+        Statement stmt = null;
+        try {
+            Class.forName("org.sqlite.JDBC");
+            c = Connect();
+            c.setAutoCommit(false);
+            System.out.println("Opened database successfully");
+
+            stmt = c.createStatement();
+            String sql = "DELETE from Defects where ID LIKE \'" + nameIn + "\';";
+            System.out.println(sql);
+            stmt.executeUpdate(sql);
+            c.commit();
+            stmt.close();
+            c.close();
+        } catch (Exception e) {
+            System.err.println(e.getClass().getName() + ": " + e.getMessage());
+            System.exit(0);
+        }
+        System.out.println("Operation done successfully");
+
+    }
+
+    // Help Methods
+    public static int HelpGetHighestID() throws SQLException {
+
+        int highestID = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT MAX(Help.[ID]) FROM Help;";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            highestID = rs.getInt(1);
+            System.out.println("Highest ID :  " + highestID);
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        return highestID;
+    }
+
+    public static boolean HelpExists(String IdIn) throws SQLException {
+
+        boolean result = false;
+        int count = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT Help.ID FROM Help WHERE Help.ID = " + IdIn + ";";
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            count++;
+            System.out.println("Count++");
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        if (count > 0) {
+
+            System.out.println("True");
+            return true;
+
+        } else {
+
+            System.out.println("True");
+            return false;
+        }
+
+    }
+
+    public static int HelpGetLowestID() throws SQLException {
+
+        int highestID = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT Min(Help.[ID]) FROM Help;";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            highestID = rs.getInt(1);
+            System.out.println("Lowest ID :  " + highestID);
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        return highestID;
+    }
+
+    public static Object[] HelpReturnEntryById(int idIn) throws Exception {
+
+        Object[] result = new Object[10];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM Help WHERE Help.ID = " + idIn + ";";
+        System.out.println(selTable);
+        s.setQueryTimeout(3);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getString(2);
+            result[1] = rs.getString(3);
+            result[2] = rs.getString(4);
+            result[3] = rs.getString(5);
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        rs.close();
+        s.close();
+        conn.close();
+
+        return result;
+
+    }
+
+    public static int HelpReturnIdByName(String NameIn) throws Exception {
+
+        Object[] result = new Object[1];
+
+        int id = 0;
+
+        Connection conn = Connect();
+        conn.setAutoCommit(false);
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT ID FROM Help WHERE Help.ID = \'" + NameIn + "\';";
+        System.out.println(selTable);
+        s.setQueryTimeout(3);
+        s.execute(selTable);
+        // conn.commit();
+
+        ResultSet rs = s.getResultSet();
+
+        id = rs.getInt(1);
+
+        // //////////////////////////////////////////////////////////////////////
+        conn.commit();
+        rs.close();
+        s.close();
+        conn.close();
+
+        System.out.println("ID : " + id);
+        return id;
+
+    }
+
+    public static void HelpInsert(
+            int idIn, String sectionIn, String nameIn, String problemIn, String solutionIn
+    ) throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // TimeStamp in String Format
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date date = new Date();
+        String dateF = format.format(date);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        PreparedStatement updateLproductionMeeting = conn.prepareStatement("insert into Help values(?,?,?,?,?,?)");
+
+        updateLproductionMeeting.setInt(1, idIn);
+        updateLproductionMeeting.setString(2, sectionIn);
+        updateLproductionMeeting.setString(3, nameIn);
+        updateLproductionMeeting.setString(4, problemIn);
+        updateLproductionMeeting.setString(5, solutionIn);
+        updateLproductionMeeting.setString(6, dateF);
+
+        updateLproductionMeeting.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        updateLproductionMeeting.close();
+        s.close();
+        conn.close();
+
+    }
+
+    public static void HelpUpdate(
+            String sectionIn, String nameIn, String problemIn, String solutionIn, int idIn
+    )
+            throws SQLException {
+
+        Connection conn = Connect();
+        conn.setAutoCommit(false);
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(2);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        System.out.print("ID : " + idIn);
+        String sql = "UPDATE Help SET Section=?, Name=?, Problem=?, Solution=? WHERE ID=?";
+        System.out.print("SQL : " + sql);
+
+        PreparedStatement updateEmployees = conn.prepareStatement(sql);
+        updateEmployees.setQueryTimeout(10);
+
+        updateEmployees.setString(1, sectionIn);
+        updateEmployees.setString(2, nameIn);
+        updateEmployees.setString(3, problemIn);
+        updateEmployees.setString(4, solutionIn);
+        updateEmployees.setInt(5, idIn);
+        updateEmployees.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        // updateEmployees.close();
+        conn.commit();
+        s.close();
+        conn.close();
+
+    }
+
+    public static void HelpDelete(int idIn) throws SQLException {
+
+        Connection conn = Connect();
+        conn.setAutoCommit(false);
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String selTable = "Delete FROM Help WHERE Help.ID = " + idIn + ";";
+
+        System.out.println("Error : " + selTable);
+
+        s.execute(selTable);
+
+        // /////////////////////////////////////////////////////////////////////////////
+        conn.commit();
+        s.close();
+        conn.close();
+
+    }
+
+    public static int HelpGetRowCount() throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(5);
+        ResultSet r = s.executeQuery("SELECT COUNT(ID) AS rowcount FROM Help");
+        r.next();
+        int count = r.getInt("rowcount");
+        System.out.println("Row Count : " + count);
+
+        s.close();
+        conn.close();
+        r.close();
+
+        return count;
+
+    }
+
+    public static Object[] HelpGetArraySorted() throws SQLException {
+
+        Object[] array = new Object[EmployeeGetRowCount()];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(5);
+        ResultSet r = s.executeQuery("SELECT * FROM Help ORDER by section ASC");
+
+        while ((r != null) && (r.next())) {
+
+            System.out.println("Entry : " + r.getString(2));
+
+        }
+
+        s.close();
+        conn.close();
+        r.close();
+
+        return array;
+
+    }
+
+    public static JPanel HelpSummaryTable() throws SQLException {
+
+        JPanel outerPanel = new JPanel(new BorderLayout());
+
+        Connection conn = Connect();
+        Statement stmt = conn.createStatement();
+        stmt.setQueryTimeout(10);
+
+        PreparedStatement psmt = conn.prepareStatement("SELECT section, name, problem , solution, dateReported, ID FROM Help ORDER BY dateReported ASC");
+        psmt.setQueryTimeout(10);
+        ResultSet rs = psmt.executeQuery();
+        DefaultTableModel dm = new DefaultTableModel();
+
+        // get column names
+        int len = rs.getMetaData().getColumnCount();
+        System.out.println("LEN : " + len);
+        Vector cols = new Vector(len);
+        for (int i = 1; i <= len; i++) {// Note starting at 1
+
+            cols.add(rs.getMetaData().getColumnName(i));
+            System.out.println(rs.getMetaData().getColumnName(i));
+
+        }
+
+        // Add Data
+        Vector data = new Vector();
+
+        while (rs.next()) {
+
+            Vector row = new Vector(len);
+
+            row.add(rs.getString(1));
+            row.add(rs.getString(2));
+            row.add(rs.getString(3));
+            row.add(rs.getString(4));
+            row.add(rs.getString(5));
+            row.add(rs.getInt(6));
+
+            data.add(row);
+        }
+
+        // Now create the table
+        DefaultTableModel model = new DefaultTableModel(data, cols);
+
+        JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
+
+        table.getColumnModel().getColumn(0).setMinWidth(160);
+        table.getColumnModel().getColumn(0).setMaxWidth(161);
+
+        table.getColumnModel().getColumn(1).setMinWidth(150);
+        table.getColumnModel().getColumn(1).setMaxWidth(151);
+
+        table.getColumnModel().getColumn(4).setMinWidth(180);
+        table.getColumnModel().getColumn(4).setMaxWidth(185);
+
+        table.getColumnModel().getColumn(5).setMinWidth(50);
+        table.getColumnModel().getColumn(5).setMaxWidth(55);
+
+//        TableColumn tc = table.getColumnModel().getColumn(3);       
+//        tc.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+        JTableHeader header = table.getTableHeader();
+
+        outerPanel.add(header, BorderLayout.NORTH);
+        outerPanel.add(table, BorderLayout.CENTER);
+
+        psmt.close();
+        stmt.close();
+        conn.close();
+
+        JScrollPane scrollPane = new JScrollPane(outerPanel);
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(scrollPane);
+
+        return panel;
+
+    }
+
+    public static void HelpDeleteByID(String nameIn) {
+
+        Connection c = null;
+        Statement stmt = null;
+        try {
+            Class.forName("org.sqlite.JDBC");
+            c = Connect();
+            c.setAutoCommit(false);
+            System.out.println("Opened database successfully");
+
+            stmt = c.createStatement();
+            String sql = "DELETE from Help where ID LIKE \'" + nameIn + "\';";
+            System.out.println(sql);
+            stmt.executeUpdate(sql);
+            c.commit();
+            stmt.close();
+            c.close();
+        } catch (Exception e) {
+            System.err.println(e.getClass().getName() + ": " + e.getMessage());
+            System.exit(0);
+        }
+        System.out.println("Operation done successfully");
 
     }
 
@@ -25379,6 +30879,7 @@ public class SQLiteConnection {
         DefaultTableModel model = new DefaultTableModel(data, cols);
 
         JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
 
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
@@ -25406,8 +30907,10 @@ public class SQLiteConnection {
                     try {
                         EHSStatutoryChecks EHSStatutoryChecks = new EHSStatutoryChecks(1, -2);
                         EHSStatutoryChecks.setEHSStatutoryChecksToID(id);
+
                     } catch (SQLException ex) {
-                        Logger.getLogger(SQLiteConnection.class.getName()).log(Level.SEVERE, null, ex);
+                        Logger.getLogger(SQLiteConnection.class
+                                .getName()).log(Level.SEVERE, null, ex);
                     }
 
                 }
@@ -25490,11 +30993,11 @@ public class SQLiteConnection {
         conn.close();
     }
 
-    public static int getTotalViews(String columnHeader) throws SQLException {
+    public static int getTotalViews(String NameIn) throws SQLException {
 
         int total = 0;
 
-        String sql = "SELECT SUM(" + columnHeader + ") FROM Analytics;";
+        String sql = "SELECT TimesOpened FROM Analytics WHERE Name = \'" + NameIn + "\';";
         Connection conn = Connect();
         Statement s = conn.createStatement();
         s.setQueryTimeout(2);
@@ -25512,6 +31015,494 @@ public class SQLiteConnection {
         conn.close();
 
         return total;
+    }
+
+    public static void AnalyticsUpdate(String TitleIn) {
+
+//        Connection conn = Connect();
+//        // Statement s = conn.createStatement();
+//
+//        Object[] entry;
+//        int TimesOpened = 0;
+//        try {
+//            entry = AnalyticsReturnEntryByTitle(TitleIn);
+//            TimesOpened = (int) (entry[1]) + 1;
+//
+//        } catch (SQLException ex) {
+//            Logger.getLogger(SQLiteConnection.class
+//                    .getName()).log(Level.SEVERE, null, ex);
+//        }
+//
+//        // TimeStamp in String Format
+//        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+//        Date date = new Date();
+//        String dateF = format.format(date);
+//
+//        // QUERY
+//        // //////////////////////////////////////////////////////////////////////
+//        String sql = "update Analytics set TimesOpened=?, TimeStamp=? where Name=?";
+//
+//        PreparedStatement AnalyticsUpdate;
+//        try {
+//            AnalyticsUpdate = conn.prepareStatement(sql);
+//
+//            AnalyticsUpdate.setInt(1, TimesOpened);
+//            AnalyticsUpdate.setString(2, dateF);
+//            AnalyticsUpdate.setString(3, TitleIn);
+//
+//            AnalyticsUpdate.executeUpdate();
+//
+//            // /////////////////////////////////////////////////////////////////////////////
+//            conn.close();
+//
+//        } catch (SQLException ex) {
+//            Logger.getLogger(SQLiteConnection.class
+//                    .getName()).log(Level.SEVERE, null, ex);
+//        }
+//        
+//     //   SQLOnlineConnection.updateTimesOpened(TitleIn);
+    }
+
+    public static Object[] AnalyticsReturnEntryByTitle(String TitleIn) throws SQLException {
+
+        Object[] result = new Object[3];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM Analytics WHERE Analytics.Name = \"" + TitleIn + "\";";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getString(1);
+            result[1] = rs.getInt(2);
+            result[2] = rs.getString(3);
+
+            rs.close();
+            s.close();
+            conn.close();
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        return result;
+    }
+
+    public static JPanel AnalyticsSummaryTable() throws SQLException {
+
+        JPanel outerPanel = new JPanel(new BorderLayout());
+
+        Connection conn = Connect();
+        Statement stmt = conn.createStatement();
+        stmt.setQueryTimeout(10);
+
+        PreparedStatement psmt = conn.prepareStatement("SELECT  Name as MenuScreen, TimesOpened As TimesUsed, TimeStamp AS LastUsed FROM Analytics ORDER BY TimesOpened DESC");
+        psmt.setQueryTimeout(10);
+        ResultSet rs = psmt.executeQuery();
+        DefaultTableModel dm = new DefaultTableModel();
+
+        // get column names
+        int len = rs.getMetaData().getColumnCount();
+        System.out.println("LEN : " + len);
+        Vector cols = new Vector(len);
+        for (int i = 1; i <= len; i++) {// Note starting at 1
+
+            cols.add(rs.getMetaData().getColumnName(i));
+            System.out.println(rs.getMetaData().getColumnName(i));
+
+        }
+
+        // Add Data
+        Vector data = new Vector();
+
+        while (rs.next()) {
+
+            Vector row = new Vector(len);
+
+            row.add(rs.getString(1));
+            row.add(rs.getInt(2));
+            row.add(rs.getString(3));
+
+            data.add(row);
+        }
+
+        // Now create the table
+        DefaultTableModel model = new DefaultTableModel(data, cols);
+
+        JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
+
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        JTableHeader header = table.getTableHeader();
+
+        outerPanel.add(header, BorderLayout.NORTH);
+        outerPanel.add(table, BorderLayout.CENTER);
+
+        psmt.close();
+        stmt.close();
+        conn.close();
+
+        return outerPanel;
+
+    }
+
+    //  ShellType Methods
+    public static int ShellTypeGetHighestID() throws SQLException {
+
+        int highestID = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT MAX(ShellType.[ID]) FROM ShellType;";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            highestID = rs.getInt(1);
+            System.out.println("Highest ID :  " + highestID);
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        return highestID;
+    }
+
+    public static boolean ShellTypeExists(String IdIn) throws SQLException {
+
+        boolean result = false;
+        int count = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT ShellType.ID FROM ShellType WHERE ShellType.ID = " + IdIn + ";";
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            count++;
+            System.out.println("Count++");
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        if (count > 0) {
+
+            System.out.println("True");
+            return true;
+
+        } else {
+
+            System.out.println("True");
+            return false;
+        }
+
+    }
+
+    public static int ShellTypeGetLowestID() throws SQLException {
+
+        int highestID = 0;
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT Min(ShellType.[ID]) FROM ShellType;";
+        // System.out.println(selTable);
+        s.setQueryTimeout(10);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            highestID = rs.getInt(1);
+            System.out.println("Lowest ID :  " + highestID);
+
+        }
+
+        rs.close();
+        s.close();
+        conn.close();
+
+        // //////////////////////////////////////////////////////////////////////
+        return highestID;
+    }
+
+    public static Object[] ShellTypeReturnEntryById(int idIn) throws Exception {
+
+        Object[] result = new Object[3];
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT * FROM ShellType WHERE ShellType.ID = " + idIn + ";";
+        System.out.println(selTable);
+        s.setQueryTimeout(3);
+        s.execute(selTable);
+
+        ResultSet rs = s.getResultSet();
+
+        while ((rs != null) && (rs.next())) {
+
+            result[0] = rs.getInt(1);
+            result[1] = rs.getString(2);
+
+        }
+
+        // //////////////////////////////////////////////////////////////////////
+        rs.close();
+        s.close();
+        conn.close();
+
+        return result;
+
+    }
+
+    public static int ShellTypeReturnIdByName(String NameIn) throws Exception {
+
+        Object[] result = new Object[1];
+
+        int id = 0;
+
+        Connection conn = Connect();
+        conn.setAutoCommit(false);
+        Statement s = conn.createStatement();
+
+        // QUERY /////////////////////////////////////////////////////////////
+        String selTable = "SELECT ID FROM ShellType WHERE ShellType.ID = \'" + NameIn + "\';";
+        System.out.println(selTable);
+        s.setQueryTimeout(3);
+        s.execute(selTable);
+        // conn.commit();
+
+        ResultSet rs = s.getResultSet();
+
+        id = rs.getInt(1);
+
+        // //////////////////////////////////////////////////////////////////////
+        conn.commit();
+        rs.close();
+        s.close();
+        conn.close();
+
+        System.out.println("ID : " + id);
+        return id;
+
+    }
+
+    public static void ShellTypeInsert(
+            int idIn, String nameIn
+    ) throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // TimeStamp in String Format
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date date = new Date();
+        String dateF = format.format(date);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        PreparedStatement updateLproductionMeeting = conn.prepareStatement("insert into ShellType values(?,?)");
+
+        updateLproductionMeeting.setInt(1, idIn);
+        updateLproductionMeeting.setString(2, nameIn);
+        updateLproductionMeeting.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        updateLproductionMeeting.close();
+        s.close();
+        conn.close();
+
+    }
+
+    public static void ShellTypeUpdate(
+            String newNameIn, String oldNameIn
+    )
+            throws SQLException {
+
+        Connection conn = Connect();
+        conn.setAutoCommit(false);
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(2);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String sql = "UPDATE ShellType SET ShellTypeName=? WHERE ShellTypeName=?";
+        System.out.print("SQL : " + sql);
+
+        PreparedStatement updateEmployees = conn.prepareStatement(sql);
+        updateEmployees.setQueryTimeout(10);
+
+        updateEmployees.setString(1, newNameIn);
+        updateEmployees.setString(2, oldNameIn);
+        updateEmployees.executeUpdate();
+
+        // /////////////////////////////////////////////////////////////////////////////
+        // updateEmployees.close();
+        conn.commit();
+        s.close();
+        conn.close();
+
+    }
+
+    public static void ShellTypeDelete(String nameIn) throws SQLException {
+
+        Connection conn = Connect();
+        conn.setAutoCommit(false);
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(10);
+
+        // QUERY
+        // //////////////////////////////////////////////////////////////////////
+        String selTable = "Delete FROM ShellType WHERE ShellType.ShellTypeName = \'" + nameIn + "\' ;";
+
+        System.out.println("Error : " + selTable);
+
+        s.execute(selTable);
+
+        // /////////////////////////////////////////////////////////////////////////////
+        conn.commit();
+        s.close();
+        conn.close();
+
+    }
+
+    public static int ShellTypeGetRowCount() throws SQLException {
+
+        Connection conn = Connect();
+        Statement s = conn.createStatement();
+        s.setQueryTimeout(5);
+        ResultSet r = s.executeQuery("SELECT COUNT(ID) AS rowcount FROM ShellType");
+        r.next();
+        int count = r.getInt("rowcount");
+        System.out.println("Row Count : " + count);
+
+        s.close();
+        conn.close();
+        r.close();
+
+        return count;
+
+    }
+
+    public static JPanel ShellTypeSummaryTable() throws SQLException {
+
+        JPanel outerPanel = new JPanel(new BorderLayout());
+
+        Connection conn = Connect();
+        Statement stmt = conn.createStatement();
+        stmt.setQueryTimeout(10);
+
+        PreparedStatement psmt = conn.prepareStatement("SELECT ShellType.ShellTypeName, ID FROM ShellType ORDER BY ShellTypeName ASC");
+        psmt.setQueryTimeout(10);
+        ResultSet rs = psmt.executeQuery();
+        DefaultTableModel dm = new DefaultTableModel();
+
+        // get column names
+        int len = rs.getMetaData().getColumnCount();
+        System.out.println("LEN : " + len);
+        Vector cols = new Vector(len);
+        for (int i = 1; i <= len; i++) {// Note starting at 1
+
+            cols.add(rs.getMetaData().getColumnName(i));
+            System.out.println(rs.getMetaData().getColumnName(i));
+
+        }
+
+        // Add Data
+        Vector data = new Vector();
+
+        while (rs.next()) {
+
+            Vector row = new Vector(len);
+
+            row.add(rs.getString(1));
+            row.add(rs.getInt(2));
+
+            data.add(row);
+        }
+
+        // Now create the table
+        DefaultTableModel model = new DefaultTableModel(data, cols);
+
+        JTable table = new JTable(model);
+        table.setAutoCreateRowSorter(true);
+
+        table.getColumnModel().getColumn(1).setMinWidth(50);
+        table.getColumnModel().getColumn(1).setMaxWidth(55);
+
+//        TableColumn tc = table.getColumnModel().getColumn(3);       
+//        tc.setCellRenderer(table.getDefaultRenderer(Boolean.class));
+//
+        JTableHeader header = table.getTableHeader();
+
+        outerPanel.add(header, BorderLayout.NORTH);
+        outerPanel.add(table, BorderLayout.CENTER);
+
+        psmt.close();
+        stmt.close();
+        conn.close();
+
+        JScrollPane scrollPane = new JScrollPane(outerPanel);
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.add(scrollPane);
+
+        return panel;
+
+    }
+
+    public static void ShellTypeDeleteByID(String nameIn) {
+
+        Connection c = null;
+        Statement stmt = null;
+        try {
+            Class.forName("org.sqlite.JDBC");
+            c = Connect();
+            c.setAutoCommit(false);
+            System.out.println("Opened database successfully");
+
+            stmt = c.createStatement();
+            String sql = "DELETE from ShellType where ShellType.ShellTypeName LIKE \'" + nameIn + "\';";
+            System.out.println(sql);
+            stmt.executeUpdate(sql);
+            c.commit();
+            stmt.close();
+            c.close();
+        } catch (Exception e) {
+            System.err.println(e.getClass().getName() + ": " + e.getMessage());
+            System.exit(0);
+        }
+        System.out.println("Operation done successfully");
+
     }
 
     // General Methods

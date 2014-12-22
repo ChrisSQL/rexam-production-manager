@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Created with Jaspersoft Studio version 5.6.1.final using JasperReports Library version 5.6.1  -->
-<!-- 2014-09-13T00:33:22 -->
+<!-- Created with Jaspersoft Studio version last-->
 <jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="ParReport" pageWidth="595" pageHeight="842" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="7976d6ee-144e-411a-94f7-cd3e8ba57193">
 	<property name="com.jaspersoft.studio.data.defaultdataadapter" value="SQLite"/>
 	<parameter name="ReferenceNumber" class="java.lang.Integer"/>
@@ -104,9 +103,9 @@
 				</textElement>
 				<text><![CDATA[W Q F 8.5.3/01-R1]]></text>
 			</staticText>
-			<image>
-				<reportElement x="-1" y="20" width="272" height="70" uuid="d57eddbe-d8f0-486c-92d5-4f6b5a37f353"/>
-				<imageExpression><![CDATA["C:/Users/Chris/JaspersoftWorkspace/MyReports/rexam.jpg"]]></imageExpression>
+			<image onErrorType="Blank">
+				<reportElement x="20" y="10" width="226" height="60" uuid="e42090e3-e9ca-4194-9738-d862a05dc4a4"/>
+				<imageExpression><![CDATA["rexam-logo.png"]]></imageExpression>
 			</image>
 		</band>
 	</title>
@@ -2963,7 +2962,7 @@
 				</textElement>
 				<textFieldExpression><![CDATA[$F{Score6D}]]></textFieldExpression>
 			</textField>
-			<image>
+			<image onErrorType="Blank">
 				<reportElement x="310" y="239" width="141" height="101" uuid="a234d9a7-3320-44e5-a97d-39637caa02be"/>
 				<imageExpression><![CDATA["C:/Users/Chris/JaspersoftWorkspace/MyReports/ring.jpg"]]></imageExpression>
 			</image>

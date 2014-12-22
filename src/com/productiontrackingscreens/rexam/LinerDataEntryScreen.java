@@ -35,6 +35,7 @@ import com.database.rexam.SQLiteConnection;
 import static com.productiontrackingscreens.rexam.OptimeDataEntryScreen.item;
 import static com.productiontrackingscreens.rexam.OptimeDataEntryScreen.query;
 import java.awt.Desktop;
+import java.awt.Frame;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -764,6 +765,7 @@ public class LinerDataEntryScreen {
         frameSummary = new JFrame("Liner Data Report");
         frameSummary.toFront();
         frameSummary.setSize(1366, 768);
+        frameSummary.setExtendedState(Frame.MAXIMIZED_BOTH);
         frameSummary.setLocationRelativeTo(null);
 
         // JPanel

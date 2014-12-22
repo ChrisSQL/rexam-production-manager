@@ -29,13 +29,15 @@ import net.sourceforge.jdatepicker.impl.JDatePickerImpl;
 import net.sourceforge.jdatepicker.impl.UtilDateModel;
 
 import com.database.rexam.SQLiteConnection;
-import com.par.rexam.ParEntry;
 import java.awt.Desktop;
+import java.awt.Frame;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JCheckBox;
+import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.TableModel;
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
@@ -66,19 +68,18 @@ public class BalancerProduction {
 
     public static void main(String[] args) throws SQLException {
 
-        new BalancerProduction(1, -1);
+       
+                try {
+                    BalancerProduction.createSummaryScreen();
+                } catch (SQLException ex) {
+                    Logger.getLogger(BalancerProduction.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
+           
 
     }
 
     public BalancerProduction(int idIn, int view) throws SQLException {
-
-        // Add a view to analytics.
-        try {
-            SQLiteConnection.incrementViewsAnalytics(0, 0, 0, 0, 0, 0, 0, 0, 1);
-        } catch (SQLException e2) {
-            // TODO Auto-generated catch block
-            e2.printStackTrace();
-        }
 
         try {
             for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
@@ -91,6 +92,8 @@ public class BalancerProduction {
             // If Nimbus is not available, you can set the GUI to another look
             // and feel.
         }
+        
+        createSummaryScreen();
 
         JFrame frame15 = new JFrame();
         // frame15.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -256,7 +259,7 @@ public class BalancerProduction {
 
             }
         });
-        
+
         Balancer2BJTextField = new JTextField();
         Balancer2BJTextField.setText("0");
         PlainDocument doc5A = (PlainDocument) Balancer2BJTextField.getDocument();
@@ -277,7 +280,7 @@ public class BalancerProduction {
 
             }
         });
-        
+
         Balancer3BJTextField = new JTextField();
         Balancer3BJTextField.setText("0");
         PlainDocument doc5B = (PlainDocument) Balancer3BJTextField.getDocument();
@@ -298,7 +301,7 @@ public class BalancerProduction {
 
             }
         });
-        
+
         Balancer4BJTextField = new JTextField();
         Balancer4BJTextField.setText("0");
         PlainDocument doc5C = (PlainDocument) Balancer4BJTextField.getDocument();
@@ -319,7 +322,7 @@ public class BalancerProduction {
 
             }
         });
-        
+
         Balancer1AMonthlyJTextField = new JTextField();
         PlainDocument doc02 = (PlainDocument) Balancer1AMonthlyJTextField.getDocument();
         doc02.setDocumentFilter(new MyIntFilter());
@@ -335,7 +338,7 @@ public class BalancerProduction {
         Balancer4ANewMonthlyTextField = new JTextField();
         PlainDocument doc16 = (PlainDocument) Balancer4ANewMonthlyTextField.getDocument();
         doc16.setDocumentFilter(new MyIntFilter());
-        
+
         Balancer1BMonthlyTextField = new JTextField();
         PlainDocument doc17A = (PlainDocument) Balancer1BMonthlyTextField.getDocument();
         doc17A.setDocumentFilter(new MyIntFilter());
@@ -357,12 +360,12 @@ public class BalancerProduction {
 
                 String month = monthCombo.getSelectedItem().toString();
                 String year = yearCombo.getSelectedItem().toString();
-                
+
                 System.out.print("Month : " + month);
                 System.out.print("Year : " + year);
 
                 try {
-                    Object[] total = SQLiteConnection.MaintenanceShellPressProductionCalculateTotalsByMonth(month, year);
+                    Object[] total = SQLiteConnection.MaintenanceBalancerProductionCalculateTotalsByMonth(month, year);
                     System.out.println("Total0 " + total[0]);
 
                     Balancer1AMonthlyJTextField.setText(String.valueOf(total[0]));
@@ -371,6 +374,9 @@ public class BalancerProduction {
                     Balancer4AMonthlyTextField.setText(String.valueOf(total[3]));
                     Balancer4ANewMonthlyTextField.setText(String.valueOf(total[4]));
                     Balancer1BMonthlyTextField.setText(String.valueOf(total[5]));
+                    Balancer2BMonthlyTextField.setText(String.valueOf(total[6]));
+                    Balancer3BMonthlyTextField.setText(String.valueOf(total[7]));
+                    Balancer4BMonthlyTextField.setText(String.valueOf(total[8]));
 
                 } catch (SQLException e1) {
                     // TODO Auto-generated catch block
@@ -409,16 +415,21 @@ public class BalancerProduction {
 
                 // Get int value of a JTextfield
                 calculateTotals();
+                
+
 
                 try {
-                    SQLiteConnection.MaintenanceShellPressProductionInsert(SQLiteConnection.MaintenanceShellPressProductionGetHighestID() + 1,
+                    SQLiteConnection.MaintenanceBalancerProductionInsert(SQLiteConnection.MaintenanceBalancerProductionGetHighestID() + 1,
                             date,
                             Integer.valueOf(Balancer1AJTextField.getText()),
                             Integer.valueOf(Balancer2AJTextField.getText()),
                             Integer.valueOf(Balancer3AJTextField.getText()),
                             Integer.valueOf(Balancer4AJTextField.getText()),
                             Integer.valueOf(Balancer4ANewJTextField.getText()),
-                            Integer.valueOf(Balancer1BJTextField.getText())
+                            Integer.valueOf(Balancer1BJTextField.getText()),
+                            Integer.valueOf(Balancer2BJTextField.getText()),
+                            Integer.valueOf(Balancer3BJTextField.getText()),
+                            Integer.valueOf(Balancer4BJTextField.getText())
                     );
 
                 } catch (SQLException e1) {
@@ -438,14 +449,12 @@ public class BalancerProduction {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-                // TODO Auto-generated method stub
-                try {
-                    new BalancerProduction(1, -1);
-                } catch (SQLException e1) {
-                    // TODO Auto-generated catch block
-                    e1.printStackTrace();
-                }
                 frame15.dispose();
+                try {
+                    BalancerProduction.createSummaryScreen();
+                } catch (SQLException ex) {
+                    Logger.getLogger(BalancerProduction.class.getName()).log(Level.SEVERE, null, ex);
+                }
 
             }
         });
@@ -456,15 +465,12 @@ public class BalancerProduction {
             @Override
             public void actionPerformed(ActionEvent e) {
 
-                // TODO Auto-generated method stub
-                try {
-                    new BalancerProduction(1, -2);
-                    setLastEntry();
-                } catch (SQLException e1) {
-                    // TODO Auto-generated catch block
-                    e1.printStackTrace();
-                }
                 frame15.dispose();
+                try {
+                    BalancerProduction.createSummaryScreen();
+                } catch (SQLException ex) {
+                    Logger.getLogger(BalancerProduction.class.getName()).log(Level.SEVERE, null, ex);
+                }
 
             }
         });
@@ -487,37 +493,7 @@ public class BalancerProduction {
             }
         });
 
-        update = new JButton("Update Record");
-        update.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-
-                selectedDate = (Date) datePicker.getModel().getValue();
-                String date = new SimpleDateFormat("yyyy-MM-dd").format(selectedDate);
-
-                try {
-                    SQLiteConnection.MaintenanceShellPressProductionUpdate(date,
-                            Integer.valueOf(Balancer1AJTextField.getText()),
-                            Integer.valueOf(Balancer2AJTextField.getText()),
-                            Integer.valueOf(Balancer3AJTextField.getText()),
-                            Integer.valueOf(Balancer4AJTextField.getText()),
-                            Integer.valueOf(Balancer4ANewJTextField.getText()),
-                            Integer.valueOf(Balancer1BJTextField.getText()),
-                            currentId
-                    );
-
-                    frame15.dispose();
-                    new BalancerProduction(1, -2);
-
-                } catch (SQLException e1) {
-                    // TODO Auto-generated catch block
-                    e1.printStackTrace();
-                }
-
-                // TODO Auto-generated method stub
-            }
-        });
+        update = new JButton("Update Record");      
 
         summary = new JButton("Summary");
         summary.addActionListener(new ActionListener() {
@@ -546,7 +522,7 @@ public class BalancerProduction {
                 try {
                     selectedDate = (Date) datePicker.getModel().getValue();
 
-                    Object[] total = SQLiteConnection.MaintenanceShellPressProductionReturnEntryByDate(selectedDate);
+                    Object[] total = SQLiteConnection.MaintenanceBalancerProductionReturnEntryByDate(selectedDate);
 
                     if (total[1] == null) {
 
@@ -588,7 +564,7 @@ public class BalancerProduction {
                 // Set ID
                 try {
 
-                    Object[] total = SQLiteConnection.MaintenanceShellPressProductionGetNextEntryById(currentId);
+                    Object[] total = SQLiteConnection.MaintenanceBalancerProductionGetNextEntryById(currentId);
 
                     if (total[0] == null) {
 
@@ -613,6 +589,9 @@ public class BalancerProduction {
                         Balancer4AJTextField.setText(String.valueOf(total[5]));
                         Balancer4ANewJTextField.setText(String.valueOf(total[6]));
                         Balancer1BJTextField.setText(String.valueOf(total[7]));
+                        Balancer2BJTextField.setText(String.valueOf(total[8]));
+                        Balancer3BJTextField.setText(String.valueOf(total[9]));
+                        Balancer4BJTextField.setText(String.valueOf(total[10]));
 
                     }
 
@@ -643,7 +622,7 @@ public class BalancerProduction {
                 // Set ID
                 try {
 
-                    Object[] total = SQLiteConnection.MaintenanceShellPressProductionGetPreviousEntryById(currentId);
+                    Object[] total = SQLiteConnection.MaintenanceBalancerProductionGetPreviousEntryById(currentId);
 
                     if (total[0] == null) {
 
@@ -653,9 +632,9 @@ public class BalancerProduction {
 
                         String dateFormatted = (String) total[1];
                         System.out.println("Date Formatted : " + dateFormatted);
-                        
-                        int day = Integer.parseInt(dateFormatted.substring(8,10)); // Correct
-                        int month = Integer.parseInt(dateFormatted.substring(5,7)) - 1; // Correct
+
+                        int day = Integer.parseInt(dateFormatted.substring(8, 10)); // Correct
+                        int month = Integer.parseInt(dateFormatted.substring(5, 7)) - 1; // Correct
                         int year = Integer.parseInt(dateFormatted.substring(0, 4)); // Correct
 
                         model.setDate(year, month, day);
@@ -669,6 +648,9 @@ public class BalancerProduction {
                         Balancer4AJTextField.setText(String.valueOf(total[5]));
                         Balancer4ANewJTextField.setText(String.valueOf(total[6]));
                         Balancer1BJTextField.setText(String.valueOf(total[7]));
+                        Balancer2BJTextField.setText(String.valueOf(total[8]));
+                        Balancer3BJTextField.setText(String.valueOf(total[9]));
+                        Balancer4BJTextField.setText(String.valueOf(total[10]));
 
                     }
 
@@ -786,20 +768,20 @@ public class BalancerProduction {
 
             optionPanel1.add(new JLabel("Balancer 1B", SwingConstants.CENTER));
             optionPanel1.add(Balancer1BJTextField);
-            
+
             optionPanel1.add(new JLabel("Balancer 2B", SwingConstants.CENTER));
             optionPanel1.add(Balancer2BJTextField);
-            
+
             optionPanel1.add(new JLabel("Balancer 3B", SwingConstants.CENTER));
             optionPanel1.add(Balancer3BJTextField);
-            
+
             optionPanel1.add(new JLabel("Balancer 4B", SwingConstants.CENTER));
             optionPanel1.add(Balancer4BJTextField);
 
         } // Searching
         else if (view == -2) {
 
-            currentId = SQLiteConnection.MaintenanceShellPressProductionGetHighestID();
+            currentId = SQLiteConnection.MaintenanceBalancerProductionGetHighestID();
             buttonsPanel.setBackground(Color.GRAY);
             search.setVisible(false);
             model.setDate(yearInt, monthInt, dayInt);
@@ -828,17 +810,23 @@ public class BalancerProduction {
 
             optionPanel1.add(new JLabel("Balancer 1B", SwingConstants.CENTER));
             optionPanel1.add(Balancer1BJTextField);
-            
+
             optionPanel1.add(new JLabel("Balancer 2B", SwingConstants.CENTER));
             optionPanel1.add(Balancer2BJTextField);
-            
+
             optionPanel1.add(new JLabel("Balancer 3B", SwingConstants.CENTER));
             optionPanel1.add(Balancer3BJTextField);
-            
+
             optionPanel1.add(new JLabel("Balancer 4B", SwingConstants.CENTER));
             optionPanel1.add(Balancer4BJTextField);
 
-        } // Monthly
+        }
+        else if(view == -5){
+        
+        
+        
+        }
+        // Monthly
         else {
 
             optionPanel1 = new JPanel(new GridLayout(9, 2));
@@ -863,13 +851,13 @@ public class BalancerProduction {
 
             optionPanel1.add(new JLabel("Balancer 1B", SwingConstants.CENTER));
             optionPanel1.add(Balancer1BMonthlyTextField);
-            
+
             optionPanel1.add(new JLabel("Balancer 2B", SwingConstants.CENTER));
             optionPanel1.add(Balancer2BMonthlyTextField);
-            
+
             optionPanel1.add(new JLabel("Balancer 3B", SwingConstants.CENTER));
             optionPanel1.add(Balancer3BMonthlyTextField);
-            
+
             optionPanel1.add(new JLabel("Balancer 4B", SwingConstants.CENTER));
             optionPanel1.add(Balancer4BMonthlyTextField);
 
@@ -894,8 +882,8 @@ public class BalancerProduction {
         optionsPanel2.add(addNew);
         optionsPanel2.add(search);
         optionsPanel2.add(monthly);
-        optionsPanel2.add(update);
-        optionsPanel2.add(add);
+      //  optionsPanel2.add(update);
+      //  optionsPanel2.add(add);
         optionsPanel2.add(back);
         optionsPanel2.setBackground(Color.GRAY);
 
@@ -908,7 +896,9 @@ public class BalancerProduction {
         outerPanel.repaint();
         frame15.add(outerPanel);
 
-        frame15.setVisible(true);
+     //   frame15.setVisible(true);
+
+        SQLiteConnection.AnalyticsUpdate("BalancerProduction");
 
     }
 
@@ -916,15 +906,15 @@ public class BalancerProduction {
 
         int highestID = 0;
         try {
-            highestID = SQLiteConnection.MaintenanceShellPressProductionGetHighestID();
-            System.out.println("MaintenanceShellPressProductionGetHighestID  " + highestID);
+            highestID = SQLiteConnection.MaintenanceBalancerProductionGetHighestID();
+            System.out.println("MaintenanceBalancerProductionGetHighestID  " + highestID);
         } catch (SQLException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
         Object[] result = new Object[16];
         try {
-            result = SQLiteConnection.MaintenanceShellPressProductionReturnEntryByID(highestID);
+            result = SQLiteConnection.MaintenanceBalancerProductionReturnEntryByID(highestID);
         } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -943,7 +933,7 @@ public class BalancerProduction {
         model.setDate(year, month, day);
         model.setSelected(true);
 
-        currentId = currentId + 1;
+        currentId = currentId;
 
         Balancer1AJTextField.setText(String.valueOf(result[2]));
         Balancer2AJTextField.setText(String.valueOf(result[3]));
@@ -951,6 +941,9 @@ public class BalancerProduction {
         Balancer4AJTextField.setText(String.valueOf(result[5]));
         Balancer4ANewJTextField.setText(String.valueOf(result[6]));
         Balancer1BJTextField.setText(String.valueOf(result[7]));
+        Balancer2BJTextField.setText(String.valueOf(result[8]));
+        Balancer3BJTextField.setText(String.valueOf(result[9]));
+        Balancer4BJTextField.setText(String.valueOf(result[10]));
 
         currentId = highestID;
 
@@ -1003,9 +996,26 @@ public class BalancerProduction {
             }
         });
 
+        JButton importFromExcel = new JButton("Import From Viscan");
+        importFromExcel.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                try {
+                    frameSummary.dispose();
+                    ShellPressProduction.importFromExcel();
+                } catch (IOException ex) {
+                    Logger.getLogger(ShellPressProduction.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
+            }
+        });
+
         // Outer Frame
-        frameSummary = new JFrame("Shell Production Report");
+        frameSummary = new JFrame("Balancer Production Report");
         frameSummary.setSize(1300, 700);
+        frameSummary.setExtendedState(Frame.MAXIMIZED_BOTH);
         frameSummary.setLocationRelativeTo(null);
 
         // JPanel
@@ -1014,13 +1024,15 @@ public class BalancerProduction {
 
         JPanel optionsPanel2 = new JPanel(new FlowLayout());
 
-        optionsPanel2.add(addNew);
-        optionsPanel2.add(summary);
-        optionsPanel2.add(refresh);
-        //   optionsPanel2.add(print);
-        optionsPanel2.add(ExportToExcel);
+//       optionsPanel2.add(addNew);
+//        optionsPanel2.add(summary);
+//        optionsPanel2.add(refresh);
+//   optionsPanel2.add(print);
+//   optionsPanel2.add(ExportToExcel);
+        optionsPanel2.add(importFromExcel);
 
-        JPanel summaryPanel = SQLiteConnection.MaintenanceShellPressProductionSummaryTable(1);
+        JPanel summaryPanel = SQLiteConnection.MaintenanceBalancerProductionSummaryTable(1);
+        JScrollPane scrollPane = new JScrollPane(summaryPanel);
 
 //        print.addActionListener(new ActionListener() {
 //
@@ -1033,15 +1045,15 @@ public class BalancerProduction {
 //        });
         optionsPanel2.setBackground(Color.GRAY);
 
-        outerPanel.add(summaryPanel, BorderLayout.CENTER);
+        outerPanel.add(scrollPane, BorderLayout.CENTER);
         outerPanel.add(optionsPanel2, BorderLayout.SOUTH);
-        summary.setVisible(false);
+//        summary.setVisible(false);
         frameSummary.add(outerPanel);
         frameSummary.setVisible(true);
 
     }
 
-    public void setShellPressProductionToID(int idIn) {
+    public void setBalancerProductionToID(int idIn) {
 
         try {
 
@@ -1049,7 +1061,7 @@ public class BalancerProduction {
 
             currentId = idIn;
 
-            Object[] total = SQLiteConnection.MaintenanceShellPressProductionReturnEntryByID(currentId);
+            Object[] total = SQLiteConnection.MaintenanceBalancerProductionReturnEntryByID(currentId);
 
             if (total[0] == null) {
 
@@ -1074,6 +1086,9 @@ public class BalancerProduction {
                 Balancer4AJTextField.setText(String.valueOf(total[5]));
                 Balancer4ANewJTextField.setText(String.valueOf(total[6]));
                 Balancer1BJTextField.setText(String.valueOf(total[7]));
+                Balancer2BJTextField.setText(String.valueOf(total[8]));
+                Balancer3BJTextField.setText(String.valueOf(total[9]));
+                Balancer4BJTextField.setText(String.valueOf(total[10]));
 
             }
 
@@ -1095,6 +1110,22 @@ public class BalancerProduction {
 
     }
 
+    public void setBalancerProductionToInput(int year, int month, int day, int balancer1A, int balancer2A, int balancer3A, int balancer4A, int balancer4ANew, int balancer1B, int balancer2B, int balancer3B, int balancer4B) {
+
+        model.setDate(year, month, day);
+
+        Balancer1AJTextField.setText(balancer1A + "");
+        Balancer2AJTextField.setText(balancer2A + "");
+        Balancer3AJTextField.setText(balancer3A + "");
+        Balancer4AJTextField.setText(balancer4A + "");
+        Balancer4ANewJTextField.setText(balancer4ANew + "");
+        Balancer1BJTextField.setText(balancer1B + "");
+        Balancer2BJTextField.setText(balancer2B + "");
+        Balancer3BJTextField.setText(balancer3B + "");
+        Balancer4BJTextField.setText(balancer4B + "");
+
+    }
+
     public static void calculateTotals() {
 
         // TODO Auto-generated method stub
@@ -1108,7 +1139,7 @@ public class BalancerProduction {
 
     public static void exportToExcel() {
 
-        String[] typesArray = {"Shell Press Production", };
+        String[] typesArray = {"Balancer Production"};
         JComboBox typeCombo = new JComboBox(typesArray);
         JCheckBox datesCheck = new JCheckBox();
 
@@ -1140,12 +1171,12 @@ public class BalancerProduction {
                 String modifiedDate1 = new SimpleDateFormat("yyyy-MM-dd").format((Date) excelPicker1.getModel().getValue());
                 String modifiedDate2 = new SimpleDateFormat("yyyy-MM-dd").format((Date) excelPicker2.getModel().getValue());
                 item = typeCombo.getSelectedItem() + "";
-                
-                System.out.println("Modified Date 1 : "+modifiedDate1);
-                System.out.println("Modified Date 2 : "+modifiedDate2);
-                System.out.println("Item : "+item);
 
-                query = "SELECT * FROM MainShellPressProduction WHERE Date BETWEEN \'" + modifiedDate1 + "\' AND \'" + modifiedDate2 + "\' ORDER BY " + sortTypesCombo.getSelectedItem() + ";";
+                System.out.println("Modified Date 1 : " + modifiedDate1);
+                System.out.println("Modified Date 2 : " + modifiedDate2);
+                System.out.println("Item : " + item);
+
+                query = "SELECT * FROM MainBalancerProduction WHERE Date BETWEEN \'" + modifiedDate1 + "\' AND \'" + modifiedDate2 + "\' ORDER BY " + sortTypesCombo.getSelectedItem() + ";";
 
                 System.out.println(query);
                 generateExcelFile(item, query);
@@ -1232,11 +1263,11 @@ public class BalancerProduction {
         }
 
         try {
-            FileOutputStream output = new FileOutputStream("MaintenanceExcel.xls");
+            FileOutputStream output = new FileOutputStream("ExcelFiles/MaintenanceExcel.xls");
             workBook.write(output);
 
             Desktop dt = Desktop.getDesktop();
-            dt.open(new File("MaintenanceExcel.xls"));
+            dt.open(new File("ExcelFiles/MaintenanceExcel.xls"));
 
             output.close();
         } catch (Exception e) {
@@ -1244,6 +1275,5 @@ public class BalancerProduction {
         }
 
     }
-
 
 }
