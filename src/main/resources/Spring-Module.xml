@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
+
+	<import resource="Database/Spring-Datasource.xml" />
+	<import resource="ShellPressProduction/Spring-ShellPressProduction.xml" />
+	<import resource="ShellPressProduction/Spring-ShellPressMaintenance.xml" />
+	<import resource="ShellPressProduction/Spring-TransferBelt.xml" />
+	<import resource="ShellPressProduction/Spring-BalancerMaintenance.xml" />
+	<import resource="ShellPressProduction/Spring-BalancerProduction.xml" />
+	<import resource="ShellPressProduction/Spring-LexanFingerTracking.xml" />
+	<import resource="ShellPressProduction/Spring-LinerProduction.xml" />
+	<import resource="ShellPressProduction/Spring-LinerMaintenance.xml" />
+	<import resource="ShellPressProduction/Spring-LinerSpoilage.xml" />
+	<import resource="ShellPressProduction/Spring-LineBalance.xml" />
+	
+	<import resource="BinEntry/Spring-LinerDefects.xml" />
+	<import resource="BinEntry/Spring-EndCounts.xml" />
+	<import resource="BinEntry/Spring-ProductionWeeklyReport.xml" />
+	
+	<import resource="Production/Spring-OpTime.xml" />
+	<import resource="Production/Spring-LinerData.xml" />
+	<import resource="Production/Spring-LinerUsage.xml" />
+	<import resource="Production/Spring-StolleData.xml" />
+	<import resource="Production/Spring-LSSPMActivity.xml" />
+	<import resource="Production/Spring-ProductionMeeting.xml" />
+	<import resource="Production/Spring-MeetingQuality.xml" />
+	
+	<import resource="Par/Spring-Par.xml" />
+	
+	<import resource="Employee/Spring-Employee.xml" />
+	
+
+</beans>

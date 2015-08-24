@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beansProjectDescription>
+	<version>1</version>
+	<pluginVersion><![CDATA[3.7.0.201506251244-RELEASE]]></pluginVersion>
+	<configSuffixes>
+		<configSuffix><![CDATA[xml]]></configSuffix>
+	</configSuffixes>
+	<enableImports><![CDATA[false]]></enableImports>
+	<configs>
+		<config>src/main/resources/ShellPressProduction/Spring-ShellPressProduction.xml</config>
+		<config>src/main/resources/Database/Spring-Datasource.xml</config>
+		<config>src/main/resources/Spring-Module.xml</config>
+		<config>src/main/resources/ShellPressProduction/Spring-ShellPressMaintenance.xml</config>
+		<config>src/main/resources/ShellPressProduction/Spring-TransferBelt.xml</config>
+		<config>src/main/resources/ShellPressProduction/Spring-BalancerMaintenance.xml</config>
+		<config>src/main/resources/ShellPressProduction/Spring-LexanFingerTracking.xml</config>
+		<config>src/main/resources/ShellPressProduction/Spring-LinerProduction.xml</config>
+		<config>src/main/resources/ShellPressProduction/Spring-LinerMaintenance.xml</config>
+		<config>src/main/resources/ShellPressProduction/Spring-LinerSpoilage.xml</config>
+		<config>src/main/resources/ShellPressProduction/Spring-LineBalance.xml</config>
+		<config>src/main/resources/BinEntry/Spring-LinerDefects.xml</config>
+		<config>src/main/resources/BinEntry/Spring-EndCounts.xml</config>
+		<config>src/main/resources/BinEntry/Spring-ProductionWeeklyReport.xml</config>
+		<config>src/main/resources/Production/Spring-OpTime.xml</config>
+		<config>src/main/resources/Production/Spring-LinerData.xml</config>
+		<config>src/main/resources/Production/Spring-LinerUsage.xml</config>
+		<config>src/main/resources/Production/Spring-StolleData.xml</config>
+		<config>src/main/resources/Production/Spring-LSSPMActivity.xml</config>
+		<config>src/main/resources/Production/Spring-ProductionMeeting.xml</config>
+		<config>src/main/resources/Production/Spring-MeetingQuality.xml</config>
+		<config>src/main/resources/Par/Spring-Par.xml</config>
+		<config>src/main/resources/ShellPressProduction/Spring-BalancerProduction.xml</config>
+		<config>src/main/resources/Employee/Spring-Employee.xml</config>
+	</configs>
+	<autoconfigs>
+	</autoconfigs>
+	<configSets>
+	</configSets>
+</beansProjectDescription>
